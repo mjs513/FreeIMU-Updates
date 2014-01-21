@@ -1,0 +1,207 @@
+\hypertarget{classFreeIMU}{\section{Free\-I\-M\-U Class Reference}
+\label{classFreeIMU}\index{Free\-I\-M\-U@{Free\-I\-M\-U}}
+}
+
+
+{\ttfamily \#include $<$Free\-I\-M\-U.\-h$>$}
+
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classFreeIMU_a185003bc29552ca92d26818974ecdd44}{Free\-I\-M\-U} ()
+\item 
+void \hyperlink{classFreeIMU_ad1e754f18d487fe4a96a1b06785f48e6}{init} ()
+\item 
+void \hyperlink{classFreeIMU_ae425675f021e7b51fd6b585b5a1d45c1}{init} (bool fastmode)
+\item 
+void \hyperlink{classFreeIMU_a2c01b69cc66a7cee2a173c40ffb498dc}{init} (int acc\-\_\-addr, int gyro\-\_\-addr, bool fastmode)
+\item 
+void \hyperlink{classFreeIMU_aabe8509df00112add146cd4586052357}{get\-Raw\-Values} (int $\ast$raw\-\_\-values)
+\item 
+void \hyperlink{classFreeIMU_a0e907d7b71daac30eae359a9862a82cc}{get\-Values} (float $\ast$values)
+\item 
+void \hyperlink{classFreeIMU_a9e6c9c29fd3218c48ae5085fcab85d28}{get\-Q} (float $\ast$q)
+\item 
+void \hyperlink{classFreeIMU_adb4f824c9dcc816e9480e6f9b9e2b4d5}{get\-Euler} (float $\ast$angles)
+\item 
+void \hyperlink{classFreeIMU_acf0833c0ad1367de460dcbbe434468ff}{get\-Yaw\-Pitch\-Roll} (float $\ast$ypr)
+\item 
+void \hyperlink{classFreeIMU_ad983cd9107481f382600dcbc64c063b6}{get\-Euler\-Rad} (float $\ast$angles)
+\item 
+void \hyperlink{classFreeIMU_afba87b9bd2b20628ea920bbab319bfc3}{get\-Yaw\-Pitch\-Roll\-Rad} (float $\ast$ypr)
+\end{DoxyCompactItemize}
+\subsection*{Data Fields}
+\begin{DoxyCompactItemize}
+\item 
+A\-D\-X\-L345 \hyperlink{classFreeIMU_ade36ccbb22a704d64910125a0384694c}{acc}
+\item 
+H\-M\-C58\-X3 \hyperlink{classFreeIMU_adb282f340688d9589a1cf6011d46b749}{magn}
+\item 
+I\-T\-G3200 \hyperlink{classFreeIMU_a2422a26293b645b2d4e3c0f80eb1c80b}{gyro}
+\item 
+M\-S561101\-B\-A \hyperlink{classFreeIMU_ab9538cb3bd99da32d79c69f041d4f42f}{baro}
+\item 
+int $\ast$ \hyperlink{classFreeIMU_a03e39edc065347b17276c15b522b122b}{raw\-\_\-acc}
+\item 
+int \hyperlink{classFreeIMU_a6d668123b8df4b76458e71c871c6078b}{raw\-\_\-gyro}
+\item 
+int \hyperlink{classFreeIMU_a8d115cb256ff28f33635fa58bf75589d}{raw\-\_\-magn}
+\end{DoxyCompactItemize}
+
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classFreeIMU_a185003bc29552ca92d26818974ecdd44}{\index{Free\-I\-M\-U@{Free\-I\-M\-U}!Free\-I\-M\-U@{Free\-I\-M\-U}}
+\index{Free\-I\-M\-U@{Free\-I\-M\-U}!FreeIMU@{Free\-I\-M\-U}}
+\subsubsection[{Free\-I\-M\-U}]{\setlength{\rightskip}{0pt plus 5cm}Free\-I\-M\-U\-::\-Free\-I\-M\-U (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classFreeIMU_a185003bc29552ca92d26818974ecdd44}
+
+
+\subsection{Member Function Documentation}
+\hypertarget{classFreeIMU_adb4f824c9dcc816e9480e6f9b9e2b4d5}{\index{Free\-I\-M\-U@{Free\-I\-M\-U}!get\-Euler@{get\-Euler}}
+\index{get\-Euler@{get\-Euler}!FreeIMU@{Free\-I\-M\-U}}
+\subsubsection[{get\-Euler}]{\setlength{\rightskip}{0pt plus 5cm}void Free\-I\-M\-U\-::get\-Euler (
+\begin{DoxyParamCaption}
+\item[{float $\ast$}]{angles}
+\end{DoxyParamCaption}
+)}}\label{classFreeIMU_adb4f824c9dcc816e9480e6f9b9e2b4d5}
+Returns the Euler angles in degrees defined with the Aerospace sequence. See Sebastian O.\-H. Madwick report \char`\"{}\-An efficient orientation filter for 
+inertial and intertial/magnetic sensor arrays\char`\"{} Chapter 2 Quaternion representation
+
+
+\begin{DoxyParams}{Parameters}
+{\em angles} & three floats array which will be populated by the Euler angles in degrees \\
+\hline
+\end{DoxyParams}
+\hypertarget{classFreeIMU_ad983cd9107481f382600dcbc64c063b6}{\index{Free\-I\-M\-U@{Free\-I\-M\-U}!get\-Euler\-Rad@{get\-Euler\-Rad}}
+\index{get\-Euler\-Rad@{get\-Euler\-Rad}!FreeIMU@{Free\-I\-M\-U}}
+\subsubsection[{get\-Euler\-Rad}]{\setlength{\rightskip}{0pt plus 5cm}void Free\-I\-M\-U\-::get\-Euler\-Rad (
+\begin{DoxyParamCaption}
+\item[{float $\ast$}]{angles}
+\end{DoxyParamCaption}
+)}}\label{classFreeIMU_ad983cd9107481f382600dcbc64c063b6}
+Returns the Euler angles in radians defined with the Aerospace sequence. See Sebastian O.\-H. Madwick report \char`\"{}\-An efficient orientation filter for 
+inertial and intertial/magnetic sensor arrays\char`\"{} Chapter 2 Quaternion representation
+
+
+\begin{DoxyParams}{Parameters}
+{\em angles} & three floats array which will be populated by the Euler angles in radians \\
+\hline
+\end{DoxyParams}
+\hypertarget{classFreeIMU_a9e6c9c29fd3218c48ae5085fcab85d28}{\index{Free\-I\-M\-U@{Free\-I\-M\-U}!get\-Q@{get\-Q}}
+\index{get\-Q@{get\-Q}!FreeIMU@{Free\-I\-M\-U}}
+\subsubsection[{get\-Q}]{\setlength{\rightskip}{0pt plus 5cm}void Free\-I\-M\-U\-::get\-Q (
+\begin{DoxyParamCaption}
+\item[{float $\ast$}]{q}
+\end{DoxyParamCaption}
+)}}\label{classFreeIMU_a9e6c9c29fd3218c48ae5085fcab85d28}
+Populates array q with a quaternion representing the I\-M\-U orientation with respect to the Earth
+
+
+\begin{DoxyParams}{Parameters}
+{\em q} & the quaternion to populate using the q = \mbox{[} \mbox{]} \\
+\hline
+\end{DoxyParams}
+\hypertarget{classFreeIMU_aabe8509df00112add146cd4586052357}{\index{Free\-I\-M\-U@{Free\-I\-M\-U}!get\-Raw\-Values@{get\-Raw\-Values}}
+\index{get\-Raw\-Values@{get\-Raw\-Values}!FreeIMU@{Free\-I\-M\-U}}
+\subsubsection[{get\-Raw\-Values}]{\setlength{\rightskip}{0pt plus 5cm}void Free\-I\-M\-U\-::get\-Raw\-Values (
+\begin{DoxyParamCaption}
+\item[{int $\ast$}]{raw\-\_\-values}
+\end{DoxyParamCaption}
+)}}\label{classFreeIMU_aabe8509df00112add146cd4586052357}
+\hypertarget{classFreeIMU_a0e907d7b71daac30eae359a9862a82cc}{\index{Free\-I\-M\-U@{Free\-I\-M\-U}!get\-Values@{get\-Values}}
+\index{get\-Values@{get\-Values}!FreeIMU@{Free\-I\-M\-U}}
+\subsubsection[{get\-Values}]{\setlength{\rightskip}{0pt plus 5cm}void Free\-I\-M\-U\-::get\-Values (
+\begin{DoxyParamCaption}
+\item[{float $\ast$}]{values}
+\end{DoxyParamCaption}
+)}}\label{classFreeIMU_a0e907d7b71daac30eae359a9862a82cc}
+\hypertarget{classFreeIMU_acf0833c0ad1367de460dcbbe434468ff}{\index{Free\-I\-M\-U@{Free\-I\-M\-U}!get\-Yaw\-Pitch\-Roll@{get\-Yaw\-Pitch\-Roll}}
+\index{get\-Yaw\-Pitch\-Roll@{get\-Yaw\-Pitch\-Roll}!FreeIMU@{Free\-I\-M\-U}}
+\subsubsection[{get\-Yaw\-Pitch\-Roll}]{\setlength{\rightskip}{0pt plus 5cm}void Free\-I\-M\-U\-::get\-Yaw\-Pitch\-Roll (
+\begin{DoxyParamCaption}
+\item[{float $\ast$}]{ypr}
+\end{DoxyParamCaption}
+)}}\label{classFreeIMU_acf0833c0ad1367de460dcbbe434468ff}
+Returns the yaw pitch and roll angles, respectively defined as the angles in degrees between the Earth North and the I\-M\-U X axis (yaw), the Earth ground plane and the I\-M\-U X axis (pitch) and the Earth ground plane and the I\-M\-U Y axis.
+
+\begin{DoxyNote}{Note}
+This is not an Euler representation\-: the rotations aren't consecutive rotations but only angles from Earth and the I\-M\-U. For Euler representation Yaw, Pitch and Roll see \hyperlink{classFreeIMU_adb4f824c9dcc816e9480e6f9b9e2b4d5}{Free\-I\-M\-U\-::get\-Euler}
+\end{DoxyNote}
+
+\begin{DoxyParams}{Parameters}
+{\em ypr} & three floats array which will be populated by Yaw, Pitch and Roll angles in degrees \\
+\hline
+\end{DoxyParams}
+\hypertarget{classFreeIMU_afba87b9bd2b20628ea920bbab319bfc3}{\index{Free\-I\-M\-U@{Free\-I\-M\-U}!get\-Yaw\-Pitch\-Roll\-Rad@{get\-Yaw\-Pitch\-Roll\-Rad}}
+\index{get\-Yaw\-Pitch\-Roll\-Rad@{get\-Yaw\-Pitch\-Roll\-Rad}!FreeIMU@{Free\-I\-M\-U}}
+\subsubsection[{get\-Yaw\-Pitch\-Roll\-Rad}]{\setlength{\rightskip}{0pt plus 5cm}void Free\-I\-M\-U\-::get\-Yaw\-Pitch\-Roll\-Rad (
+\begin{DoxyParamCaption}
+\item[{float $\ast$}]{ypr}
+\end{DoxyParamCaption}
+)}}\label{classFreeIMU_afba87b9bd2b20628ea920bbab319bfc3}
+Returns the yaw pitch and roll angles, respectively defined as the angles in radians between the Earth North and the I\-M\-U X axis (yaw), the Earth ground plane and the I\-M\-U X axis (pitch) and the Earth ground plane and the I\-M\-U Y axis.
+
+\begin{DoxyNote}{Note}
+This is not an Euler representation\-: the rotations aren't consecutive rotations but only angles from Earth and the I\-M\-U. For Euler representation Yaw, Pitch and Roll see \hyperlink{classFreeIMU_adb4f824c9dcc816e9480e6f9b9e2b4d5}{Free\-I\-M\-U\-::get\-Euler}
+\end{DoxyNote}
+
+\begin{DoxyParams}{Parameters}
+{\em ypr} & three floats array which will be populated by Yaw, Pitch and Roll angles in radians \\
+\hline
+\end{DoxyParams}
+\hypertarget{classFreeIMU_ad1e754f18d487fe4a96a1b06785f48e6}{\index{Free\-I\-M\-U@{Free\-I\-M\-U}!init@{init}}
+\index{init@{init}!FreeIMU@{Free\-I\-M\-U}}
+\subsubsection[{init}]{\setlength{\rightskip}{0pt plus 5cm}void Free\-I\-M\-U\-::init (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classFreeIMU_ad1e754f18d487fe4a96a1b06785f48e6}
+\hypertarget{classFreeIMU_ae425675f021e7b51fd6b585b5a1d45c1}{\index{Free\-I\-M\-U@{Free\-I\-M\-U}!init@{init}}
+\index{init@{init}!FreeIMU@{Free\-I\-M\-U}}
+\subsubsection[{init}]{\setlength{\rightskip}{0pt plus 5cm}void Free\-I\-M\-U\-::init (
+\begin{DoxyParamCaption}
+\item[{bool}]{fastmode}
+\end{DoxyParamCaption}
+)}}\label{classFreeIMU_ae425675f021e7b51fd6b585b5a1d45c1}
+\hypertarget{classFreeIMU_a2c01b69cc66a7cee2a173c40ffb498dc}{\index{Free\-I\-M\-U@{Free\-I\-M\-U}!init@{init}}
+\index{init@{init}!FreeIMU@{Free\-I\-M\-U}}
+\subsubsection[{init}]{\setlength{\rightskip}{0pt plus 5cm}void Free\-I\-M\-U\-::init (
+\begin{DoxyParamCaption}
+\item[{int}]{acc\-\_\-addr, }
+\item[{int}]{gyro\-\_\-addr, }
+\item[{bool}]{fastmode}
+\end{DoxyParamCaption}
+)}}\label{classFreeIMU_a2c01b69cc66a7cee2a173c40ffb498dc}
+
+
+\subsection{Field Documentation}
+\hypertarget{classFreeIMU_ade36ccbb22a704d64910125a0384694c}{\index{Free\-I\-M\-U@{Free\-I\-M\-U}!acc@{acc}}
+\index{acc@{acc}!FreeIMU@{Free\-I\-M\-U}}
+\subsubsection[{acc}]{\setlength{\rightskip}{0pt plus 5cm}A\-D\-X\-L345 Free\-I\-M\-U\-::acc}}\label{classFreeIMU_ade36ccbb22a704d64910125a0384694c}
+\hypertarget{classFreeIMU_ab9538cb3bd99da32d79c69f041d4f42f}{\index{Free\-I\-M\-U@{Free\-I\-M\-U}!baro@{baro}}
+\index{baro@{baro}!FreeIMU@{Free\-I\-M\-U}}
+\subsubsection[{baro}]{\setlength{\rightskip}{0pt plus 5cm}M\-S561101\-B\-A Free\-I\-M\-U\-::baro}}\label{classFreeIMU_ab9538cb3bd99da32d79c69f041d4f42f}
+\hypertarget{classFreeIMU_a2422a26293b645b2d4e3c0f80eb1c80b}{\index{Free\-I\-M\-U@{Free\-I\-M\-U}!gyro@{gyro}}
+\index{gyro@{gyro}!FreeIMU@{Free\-I\-M\-U}}
+\subsubsection[{gyro}]{\setlength{\rightskip}{0pt plus 5cm}I\-T\-G3200 Free\-I\-M\-U\-::gyro}}\label{classFreeIMU_a2422a26293b645b2d4e3c0f80eb1c80b}
+\hypertarget{classFreeIMU_adb282f340688d9589a1cf6011d46b749}{\index{Free\-I\-M\-U@{Free\-I\-M\-U}!magn@{magn}}
+\index{magn@{magn}!FreeIMU@{Free\-I\-M\-U}}
+\subsubsection[{magn}]{\setlength{\rightskip}{0pt plus 5cm}H\-M\-C58\-X3 Free\-I\-M\-U\-::magn}}\label{classFreeIMU_adb282f340688d9589a1cf6011d46b749}
+\hypertarget{classFreeIMU_a03e39edc065347b17276c15b522b122b}{\index{Free\-I\-M\-U@{Free\-I\-M\-U}!raw\-\_\-acc@{raw\-\_\-acc}}
+\index{raw\-\_\-acc@{raw\-\_\-acc}!FreeIMU@{Free\-I\-M\-U}}
+\subsubsection[{raw\-\_\-acc}]{\setlength{\rightskip}{0pt plus 5cm}int$\ast$ Free\-I\-M\-U\-::raw\-\_\-acc}}\label{classFreeIMU_a03e39edc065347b17276c15b522b122b}
+\hypertarget{classFreeIMU_a6d668123b8df4b76458e71c871c6078b}{\index{Free\-I\-M\-U@{Free\-I\-M\-U}!raw\-\_\-gyro@{raw\-\_\-gyro}}
+\index{raw\-\_\-gyro@{raw\-\_\-gyro}!FreeIMU@{Free\-I\-M\-U}}
+\subsubsection[{raw\-\_\-gyro}]{\setlength{\rightskip}{0pt plus 5cm}int Free\-I\-M\-U\-::raw\-\_\-gyro}}\label{classFreeIMU_a6d668123b8df4b76458e71c871c6078b}
+\hypertarget{classFreeIMU_a8d115cb256ff28f33635fa58bf75589d}{\index{Free\-I\-M\-U@{Free\-I\-M\-U}!raw\-\_\-magn@{raw\-\_\-magn}}
+\index{raw\-\_\-magn@{raw\-\_\-magn}!FreeIMU@{Free\-I\-M\-U}}
+\subsubsection[{raw\-\_\-magn}]{\setlength{\rightskip}{0pt plus 5cm}int Free\-I\-M\-U\-::raw\-\_\-magn}}\label{classFreeIMU_a8d115cb256ff28f33635fa58bf75589d}
+
+
+The documentation for this class was generated from the following files\-:\begin{DoxyCompactItemize}
+\item 
+\hyperlink{FreeIMU_8h}{Free\-I\-M\-U.\-h}\item 
+\hyperlink{FreeIMU_8cpp}{Free\-I\-M\-U.\-cpp}\end{DoxyCompactItemize}

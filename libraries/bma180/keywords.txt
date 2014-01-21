@@ -1,0 +1,50 @@
+#######################################
+# Syntax Coloring Map for BMA180
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+BMA180	KEYWORD1
+GSENSITIVITY	KEYWORD1
+FILTER	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+setAddress	KEYWORD2
+readAccel	KEYWORD2
+getGSense	KEYWORD2
+getXValFloat	KEYWORD2
+getYValFloat	KEYWORD2
+getZValFloat	KEYWORD2
+setRegValue	KEYWORD2
+getRegValue	KEYWORD2
+setGSensitivity	KEYWORD2
+setFilter	KEYWORD2
+setISRMode	KEYWORD2
+softReset	KEYWORD2
+setSMPSkip	KEYWORD2
+getIDs	KEYWORD2
+enableWrite	KEYWORD2
+disableWrite	KEYWORD2
+#######################################
+# Constants (LITERAL1)
+#######################################
+checkResult KEYWORD3
+F10HZ	KEYWORD3
+F20HZ	KEYWORD3
+F75HZ	KEYWORD3
+F15HZ0	KEYWORD3
+F300HZ	KEYWORD3
+F600HZ	KEYWORD3
+F1200HZ	KEYWORD3
+G1	KEYWORD3
+G15	KEYWORD3
+G2	KEYWORD3
+G3	KEYWORD3
+G4	KEYWORD3
+G8	KEYWORD3
+G16	KEYWORD3

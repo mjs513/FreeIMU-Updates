@@ -1,0 +1,388 @@
+=== modified file 'HMC58X3.cpp'
+--- HMC58X3.cpp	2011-04-26 22:01:36 +0000
++++ HMC58X3.cpp	2011-11-28 14:34:46 +0000
+@@ -27,18 +27,48 @@
+ 
+ */
+ 
++//#define DEBUG (1)
+ 
+ #include "WProgram.h"
+ #include <HMC58X3.h>
+-
++//#include <DebugUtils.h>
++#define DEBUG_PRINT
++
++
++/*!
++    Counts/milli-gauss per gain for the self test bias current.
++*/
++#if defined(ISHMC5843)
++  const int counts_per_milligauss[8]={  
++    1620,
++    1300,
++     970,
++     780,
++     530,
++     460,
++     390,
++     280
++  };
++#else // HMC5883L
++  const int counts_per_milligauss[8]={  
++    1370,
++    1090,
++    820,
++    660,
++    440,
++    390,
++    330,
++    230
++  };
++#endif
+ 
+ /* PUBLIC METHODS */
+ 
+ HMC58X3::HMC58X3() { 
+   
+-  x_scale=1;
+-  y_scale=1;
+-  z_scale=1;
++  x_scale=1.0F;
++  y_scale=1.0F;
++  z_scale=1.0F;
+ }
+ 
+ 
+@@ -56,7 +86,7 @@
+ }
+ 
+ 
+-void HMC58X3::setMode(unsigned char mode) { 
++void HMC58X3::setMode(unsigned char mode) {
+   if (mode > 2) {
+     return;
+   }
+@@ -65,7 +95,12 @@
+   delay(100);
+ }
+ 
+-
++/*
++    Calibrate which has a few weaknesses.
++    1. Uses wrong gain for first reading.
++    2. Uses max instead of max of average when normalizing the axis to one another.
++    3. Doesn't use neg bias. (possible improvement in measurement).
++*/
+ void HMC58X3::calibrate(unsigned char gain) {
+   x_scale=1; // get actual values
+   y_scale=1;
+@@ -92,9 +127,138 @@
+   x_scale=max/mx; // calc scales
+   y_scale=max/my;
+   z_scale=max/mz;
++
+   writeReg(HMC58X3_R_CONFA, 0x010); // set RegA/DOR back to default
+-}
+-
++}   // calibrate().
++
++/*!
++    \brief Calibrate using the self test operation.
++  
++    Average the values using bias mode to obtain the scale factors.
++
++    \param gain [in] Gain setting for the sensor. See data sheet.
++    \param n_samples [in] Number of samples to average together while applying the positive and negative bias.
++    \return Returns false if any of the following occurs:
++        # Invalid input parameters. (gain>7 or n_samples=0).
++        # Id registers are wrong for the compiled device. Unfortunately, we can't distinguish between HMC5843 and HMC5883L.
++        # Calibration saturates during the positive or negative bias on any of the readings.
++        # Readings are outside of the expected range for bias current. 
++*/
++bool HMC58X3::calibrate(unsigned char gain,unsigned int n_samples) 
++{
++    int xyz[3];                     // 16 bit integer values for each axis.
++    long int xyz_total[3]={0,0,0};  // 32 bit totals so they won't overflow.
++    bool bret=true;                 // Function return value.  Will return false if the wrong identifier is returned, saturation is detected or response is out of range to self test bias.
++    char id[3];                     // Three identification registers should return 'H43'.
++    long int low_limit, high_limit;                                    
++    /*
++        Make sure we are talking to the correct device.
++        Hard to believe Honeywell didn't change the identifier.
++    */
++    if ((8>gain) && (0<n_samples)) // Notice this allows gain setting of 7 which the data sheet warns against.
++    {
++        getID(id);
++        if (('H' == id[0]) && ('4' == id[1]) && ('3' == id[2]))
++        {   /*
++                Use the positive bias current to impose a known field on each axis.
++                This field depends on the device and the axis.
++            */
++            writeReg(HMC58X3_R_CONFA, 0x010 + HMC_POS_BIAS); // Reg A DOR=0x010 + MS1,MS0 set to pos bias
++            /*
++                Note that the  very first measurement after a gain change maintains the same gain as the previous setting. 
++                The new gain setting is effective from the second measurement and on.
++            */
++            setGain(gain);                      
++            setMode(1);                         // Change to single measurement mode.
++            getRaw(&xyz[0],&xyz[1],&xyz[2]);    // Get the raw values and ignore since this reading may use previous gain.
++
++            for (unsigned int i=0; i<n_samples; i++) 
++            { 
++                setMode(1);
++                getRaw(&xyz[0],&xyz[1],&xyz[2]);   // Get the raw values in case the scales have already been changed.
++                /*
++                    Since the measurements are noisy, they should be averaged rather than taking the max.
++                */
++                xyz_total[0]+=xyz[0];
++                xyz_total[1]+=xyz[1];
++                xyz_total[2]+=xyz[2];
++                /*
++                    Detect saturation.
++                */
++                if (-(1<<12) >= min(xyz[0],min(xyz[1],xyz[2])))
++                {
++                    DEBUG_PRINT("HMC58x3 Self test saturated. Increase range.");
++                    bret=false;
++                    break;  // Breaks out of the for loop.  No sense in continuing if we saturated.
++                }
++            }
++            /*
++                Apply the negative bias. (Same gain)
++            */
++            writeReg(HMC58X3_R_CONFA, 0x010 + HMC_NEG_BIAS); // Reg A DOR=0x010 + MS1,MS0 set to negative bias.
++            for (unsigned int i=0; i<n_samples; i++) 
++            { 
++                setMode(1);
++                getRaw(&xyz[0],&xyz[1],&xyz[2]);   // Get the raw values in case the scales have already been changed.
++                /*
++                    Since the measurements are noisy, they should be averaged.
++                */
++                xyz_total[0]-=xyz[0];
++                xyz_total[1]-=xyz[1];
++                xyz_total[2]-=xyz[2];
++                /*
++                    Detect saturation.
++                */
++                if (-(1<<12) >= min(xyz[0],min(xyz[1],xyz[2])))
++                {
++                    DEBUG_PRINT("HMC58x3 Self test saturated. Increase range.");
++                    bret=false;
++                    break;  // Breaks out of the for loop.  No sense in continuing if we saturated.
++                }
++            }
++            /*
++                Compare the values against the expected self test bias gauss.
++                Notice, the same limits are applied to all axis.
++            */
++            low_limit =SELF_TEST_LOW_LIMIT *counts_per_milligauss[gain]*2*n_samples;
++            high_limit=SELF_TEST_HIGH_LIMIT*counts_per_milligauss[gain]*2*n_samples;
++
++            if ((true==bret) && 
++                (low_limit <= xyz_total[0]) && (high_limit >= xyz_total[0]) &&
++                (low_limit <= xyz_total[1]) && (high_limit >= xyz_total[1]) &&
++                (low_limit <= xyz_total[2]) && (high_limit >= xyz_total[2]) )
++            {   /*
++                    Successful calibration.
++                    Normalize the scale factors so all axis return the same range of values for the bias field.
++                    Factor of 2 is from summation of total of n_samples from both positive and negative bias.
++                */
++                x_scale=(counts_per_milligauss[gain]*(HMC58X3_X_SELF_TEST_GAUSS*2))/(xyz_total[0]/n_samples);
++                y_scale=(counts_per_milligauss[gain]*(HMC58X3_Y_SELF_TEST_GAUSS*2))/(xyz_total[1]/n_samples);
++                z_scale=(counts_per_milligauss[gain]*(HMC58X3_Z_SELF_TEST_GAUSS*2))/(xyz_total[2]/n_samples);
++            }else
++            {
++                DEBUG_PRINT("HMC58x3 Self test out of range.");
++                bret=false;
++            }
++            writeReg(HMC58X3_R_CONFA, 0x010); // set RegA/DOR back to default.
++        }else
++        {
++            #if defined(ISHMC5843)
++                DEBUG_PRINT("HMC5843 failed id check.");
++            #else
++                DEBUG_PRINT("HMC5883L failed id check.");
++            #endif
++            bret=false;
++        }
++    }else
++    {   /*
++            Bad input parameters.
++        */
++        DEBUG_PRINT("HMC58x3 Bad parameters.");
++        bret=false;
++    }
++    return(bret);
++}   //  calibrate().
+ 
+ // set data output rate
+ // 0-6, 4 default, normal operation assumed
+@@ -165,3 +329,31 @@
+   getValues(&xyz[0], &xyz[1], &xyz[2]);
+ }
+ 
++/*! 
++    \brief Retrieve the value of the three ID registers.    
++
++    Note:  Both the HMC5843 and HMC5883L have the same 'H43' identification register values. (Looks like someone at Honeywell screwed up.)
++
++    \param id [out] Returns the three id register values.
++*/
++void HMC58X3::getID(char id[3]) 
++{
++  Wire.beginTransmission(HMC58X3_ADDR);
++  Wire.send(HMC58X3_R_IDA);             // Will start reading registers starting from Identification Register A.
++  Wire.endTransmission();
++  
++  Wire.beginTransmission(HMC58X3_ADDR);
++  Wire.requestFrom(HMC58X3_ADDR, 3);
++  if(3 == Wire.available()) 
++  {
++    id[0] = Wire.receive();
++    id[1] = Wire.receive();
++    id[2] = Wire.receive();
++  }else
++  {
++      id[0]=0;  
++      id[1]=0;
++      id[2]=0;
++  }
++  Wire.endTransmission();
++}   // getID().
+\ No newline at end of file
+
+=== modified file 'HMC58X3.h'
+--- HMC58X3.h	2011-04-26 22:01:36 +0000
++++ HMC58X3.h	2011-11-28 14:21:25 +0000
+@@ -1,18 +1,19 @@
+-/*
+-HMC58X3.cpp - Interface a Honeywell HMC58X3 magnetometer to an Arduino via i2c
++/**
++@file HMC58X3.h - Interface a Honeywell HMC58X3 magnetometer to an Arduino via i2c.
++
++@author Fabio Varesano <fvaresano@yahoo.it>
+ Copyright (C) 2011 Fabio Varesano <fvaresano@yahoo.it>
+ 
+ Based on:
+ http://www.arduino.cc/cgi-bin/yabb2/YaBB.pl?num=1274748346
+- Modification/extension of the following by E.J.Muller
++  Modification/extension of the following by E.J.Muller
+ http://eclecti.cc/hardware/hmc5843-magnetometer-library-for-arduino
+- Copyright (c) 2009 Nirav Patel, 
++  Copyright (c) 2009 Nirav Patel, 
+ 
+ The above were based on:
+ http://www.sparkfun.com/datasheets/Sensors/Magneto/HMC58X3-v11.c
+ http://www.atmel.com/dyn/resources/prod_documents/doc2545.pdf
+ 
+-
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the version 3 GNU General Public License as
+ published by the Free Software Foundation.
+@@ -22,13 +23,10 @@
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+-You should have received a copy of the GNU General Public License
+-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-
++You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+ 
+-//uncomment the following line if you are using this library with the HMC5843
+-//#define ISHMC5843
++//#define ISHMC5843 (1) // Uncomment this following line if you are using this library with the HMC5843.
+ 
+ #include "WProgram.h"
+ #include <Wire.h>
+@@ -48,15 +46,32 @@
+ #define HMC58X3_R_XL 4
+ 
+ #ifdef ISHMC5843
+-  #define HMC58X3_R_YM 5
+-  #define HMC58X3_R_YL 6
+-  #define HMC58X3_R_ZM 7
+-  #define HMC58X3_R_ZL 8
++    #define HMC58X3_R_YM (5)    //!< Register address for YM.
++    #define HMC58X3_R_YL (6)    //!< Register address for YL.
++    #define HMC58X3_R_ZM (7)    //!< Register address for ZM.
++    #define HMC58X3_R_ZL (8)    //!< Register address for ZL.
++
++    #define HMC58X3_X_SELF_TEST_GAUSS (+0.55)                       //!< X axis level when bias current is applied.
++    #define HMC58X3_Y_SELF_TEST_GAUSS (HMC58X3_X_SELF_TEST_GAUSS)   //!< Y axis level when bias current is applied.
++    #define HMC58X3_Z_SELF_TEST_GAUSS (HMC58X3_X_SELF_TEST_GAUSS)   //!< Y axis level when bias current is applied.
++
++    /*
++        This is my best guess at the LOW, HIGH limit.  The data sheet does not have these values.
++    */
++    #define SELF_TEST_LOW_LIMIT  (HMC58X3_X_SELF_TEST_GAUSS*0.53)   //!< Low limit 53% of expected value.
++    #define SELF_TEST_HIGH_LIMIT (HMC58X3_X_SELF_TEST_GAUSS*1.36)   //!< High limit 136% of expected values.
+ #else // HMC5883L
+-  #define HMC58X3_R_YM 7
+-  #define HMC58X3_R_YL 8
+-  #define HMC58X3_R_ZM 5
+-  #define HMC58X3_R_ZL 6
++    #define HMC58X3_R_YM (7)  //!< Register address for YM.
++    #define HMC58X3_R_YL (8)  //!< Register address for YL.
++    #define HMC58X3_R_ZM (5)  //!< Register address for ZM.
++    #define HMC58X3_R_ZL (6)  //!< Register address for ZL.
++
++    #define HMC58X3_X_SELF_TEST_GAUSS (+1.16)                       //!< X axis level when bias current is applied.
++    #define HMC58X3_Y_SELF_TEST_GAUSS (HMC58X3_X_SELF_TEST_GAUSS)   //!< Y axis level when bias current is applied.
++    #define HMC58X3_Z_SELF_TEST_GAUSS (+1.08)                       //!< Y axis level when bias current is applied.
++
++    #define SELF_TEST_LOW_LIMIT  (243.0/390.0)   //!< Low limit when gain is 5.
++    #define SELF_TEST_HIGH_LIMIT (575.0/390.0)   //!< High limit when gain is 5.
+ #endif
+ 
+ #define HMC58X3_R_STATUS 9
+@@ -64,7 +79,6 @@
+ #define HMC58X3_R_IDB 11
+ #define HMC58X3_R_IDC 12
+ 
+-
+ class HMC58X3
+ {
+   public:
+@@ -75,13 +89,17 @@
+     void getValues(float *x,float *y,float *z);
+     void getValues(float *xyz);
+     void getRaw(int *x,int *y,int *z);
+-    void calibrate(unsigned char gain);
++    void getRaw(int *xyz);
++    void calibrate(unsigned char gain);     // Original calibrate with a few weaknesses.
++    bool calibrate(unsigned char gain,unsigned int n_samples);
+     void setMode(unsigned char mode);
+     void setDOR(unsigned char DOR);
+     void setGain(unsigned char gain);
++    void getID(char id[3]);
+   private:
+     void writeReg(unsigned char reg, unsigned char val);
+     float x_scale,y_scale,z_scale,x_max,y_max,z_max;
+ };
+ 
+ #endif // HMC58X3_h
++
+
+=== modified file 'examples/HMC58X3_basic/HMC58X3_basic.pde'
+--- examples/HMC58X3_basic/HMC58X3_basic.pde	2011-04-27 13:58:34 +0000
++++ examples/HMC58X3_basic/HMC58X3_basic.pde	2011-11-28 14:33:42 +0000
+@@ -18,6 +18,7 @@
+ */
+ 
+ #include <Wire.h>
++//#include <DebugUtils.h>
+ #include <HMC58X3.h>
+ 
+ HMC58X3 magn;
+@@ -29,7 +30,7 @@
+   // no delay needed as we have already a delay(5) in HMC5843::init()
+   magn.init(false); // Dont set mode yet, we'll do that later on.
+   // Calibrate HMC using self test, not recommended to change the gain after calibration.
+-  magn.calibrate(1); // Use gain 1=default, valid 0-7, 7 not recommended.
++  magn.calibrate(1, 32); // Use gain 1=default, valid 0-7, 7 not recommended.
+   // Single mode conversion was used in calibration, now set continuous mode
+   magn.setMode(0);
+ }
+

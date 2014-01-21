@@ -1,0 +1,173 @@
+\hypertarget{FreeIMU_8h}{\section{Free\-I\-M\-U.\-h File Reference}
+\label{FreeIMU_8h}\index{Free\-I\-M\-U.\-h@{Free\-I\-M\-U.\-h}}
+}
+{\ttfamily \#include $<$Wire.\-h$>$}\\*
+{\ttfamily \#include \char`\"{}Arduino.\-h\char`\"{}}\\*
+{\ttfamily \#include $<$A\-D\-X\-L345.\-h$>$}\\*
+{\ttfamily \#include $<$M\-S561101\-B\-A.\-h$>$}\\*
+{\ttfamily \#include $<$I\-T\-G3200.\-h$>$}\\*
+{\ttfamily \#include $<$H\-M\-C58\-X3.\-h$>$}\\*
+\subsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+class \hyperlink{classFreeIMU}{Free\-I\-M\-U}
+\end{DoxyCompactItemize}
+\subsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \hyperlink{FreeIMU_8h_a9ebab22a3abe6b50facca587a9a01471}{F\-R\-E\-E\-I\-M\-U\-\_\-v04}
+\item 
+\#define \hyperlink{FreeIMU_8h_a8721f083fbfe14a2ee9d3cc6a0570944}{H\-A\-S\-\_\-\-I\-T\-G3200}()~(defined(F\-R\-E\-E\-I\-M\-U\-\_\-v01) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v02) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v03) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035\-\_\-\-M\-S) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035\-\_\-\-B\-M\-P) $|$$|$ defined(S\-E\-N\-\_\-10121) $|$$|$ defined(S\-E\-N\-\_\-10736) $|$$|$ defined(S\-E\-N\-\_\-10724) $|$$|$ defined(S\-E\-N\-\_\-10183))
+\item 
+\#define \hyperlink{FreeIMU_8h_a4602a35c717bf8d5e5cebfe8eb455cdc}{H\-A\-S\-\_\-\-A\-D\-X\-L345}()~(defined(F\-R\-E\-E\-I\-M\-U\-\_\-v01) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v02) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v03) $|$$|$ defined(S\-E\-N\-\_\-10121) $|$$|$ defined(S\-E\-N\-\_\-10736) $|$$|$ defined(S\-E\-N\-\_\-10724) $|$$|$ defined(S\-E\-N\-\_\-10183))
+\item 
+\#define \hyperlink{FreeIMU_8h_a61ca52deec40bb14906e36ab58112517}{H\-A\-S\-\_\-\-B\-M\-A180}()~(defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035\-\_\-\-M\-S) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035\-\_\-\-B\-M\-P))
+\item 
+\#define \hyperlink{FreeIMU_8h_a1850ff26e359c75d0569629eb1fa3466}{H\-A\-S\-\_\-\-M\-P\-U6050}()~(defined(\hyperlink{FreeIMU_8h_a9ebab22a3abe6b50facca587a9a01471}{F\-R\-E\-E\-I\-M\-U\-\_\-v04}))
+\item 
+\#define \hyperlink{FreeIMU_8h_a396474faaa476425c2639aaacd974d70}{H\-A\-S\-\_\-\-M\-S5611}()~(defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035\-\_\-\-M\-S) $|$$|$ defined(\hyperlink{FreeIMU_8h_a9ebab22a3abe6b50facca587a9a01471}{F\-R\-E\-E\-I\-M\-U\-\_\-v04}))
+\item 
+\#define \hyperlink{FreeIMU_8h_a66b9d7daabfc80f90de551525a701539}{H\-A\-S\-\_\-\-H\-M\-C5883\-L}()~(defined(F\-R\-E\-E\-I\-M\-U\-\_\-v01) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v02) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v03) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035\-\_\-\-M\-S) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035\-\_\-\-B\-M\-P) $|$$|$ defined(\hyperlink{FreeIMU_8h_a9ebab22a3abe6b50facca587a9a01471}{F\-R\-E\-E\-I\-M\-U\-\_\-v04}) $|$$|$ defined(S\-E\-N\-\_\-10736) $|$$|$ defined(S\-E\-N\-\_\-10724) $|$$|$ defined(S\-E\-N\-\_\-10183))
+\item 
+\#define \hyperlink{FreeIMU_8h_a095538a7cfef8adf44dbe94c29868a1c}{I\-S\-\_\-6\-D\-O\-M}()~(defined(S\-E\-N\-\_\-10121))
+\item 
+\#define \hyperlink{FreeIMU_8h_a487f99a8f9cc3374374f499d18869cf8}{I\-S\-\_\-9\-D\-O\-M}()~(defined(F\-R\-E\-E\-I\-M\-U\-\_\-v01) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v02) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v03) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035\-\_\-\-M\-S) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035\-\_\-\-B\-M\-P) $|$$|$ defined(\hyperlink{FreeIMU_8h_a9ebab22a3abe6b50facca587a9a01471}{F\-R\-E\-E\-I\-M\-U\-\_\-v04}) $|$$|$ defined(S\-E\-N\-\_\-10736) $|$$|$ defined(S\-E\-N\-\_\-10724) $|$$|$ defined(S\-E\-N\-\_\-10183))
+\item 
+\#define \hyperlink{FreeIMU_8h_ada7234e5623d0512411a6939f3c0349a}{H\-A\-S\-\_\-\-A\-X\-I\-S\-\_\-\-A\-L\-I\-G\-N\-E\-D}()~(defined(F\-R\-E\-E\-I\-M\-U\-\_\-v01) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v02) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v03) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035\-\_\-\-M\-S) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035\-\_\-\-B\-M\-P) $|$$|$ defined(\hyperlink{FreeIMU_8h_a9ebab22a3abe6b50facca587a9a01471}{F\-R\-E\-E\-I\-M\-U\-\_\-v04}) $|$$|$ defined(S\-E\-N\-\_\-10121) $|$$|$ defined(S\-E\-N\-\_\-10736))
+\item 
+\#define \hyperlink{FreeIMU_8h_aa529db26a520cecfd1b1becf5e13b713}{F\-I\-M\-U\-\_\-\-A\-C\-C\-\_\-\-A\-D\-D\-R}~A\-D\-X\-L345\-\_\-\-A\-D\-D\-R\-\_\-\-A\-L\-T\-\_\-\-L\-O\-W
+\item 
+\#define \hyperlink{FreeIMU_8h_a4a4d9e6755a7ccb9faaf197d681e915e}{F\-I\-M\-U\-\_\-\-B\-A\-R\-O\-\_\-\-A\-D\-D\-R}~M\-S561101\-B\-A\-\_\-\-A\-D\-D\-R\-\_\-\-C\-S\-B\-\_\-\-L\-O\-W
+\item 
+\#define \hyperlink{FreeIMU_8h_a4f34cea639b3e654e741705ac06d21b6}{F\-I\-M\-U\-\_\-\-B\-M\-A180\-\_\-\-D\-E\-F\-\_\-\-A\-D\-D\-R}~B\-M\-A180\-\_\-\-A\-D\-D\-R\-E\-S\-S\-\_\-\-S\-D\-O\-\_\-\-L\-O\-W
+\item 
+\#define \hyperlink{FreeIMU_8h_a5ed7a1e5b097595abe9e64b2a7b6332f}{F\-I\-M\-U\-\_\-\-I\-T\-G3200\-\_\-\-D\-E\-F\-\_\-\-A\-D\-D\-R}~I\-T\-G3200\-\_\-\-A\-D\-D\-R\-\_\-\-A\-D0\-\_\-\-L\-O\-W
+\item 
+\#define \hyperlink{FreeIMU_8h_ada29b0bd3e62d46e44776cb20f9a46df}{two\-Kp\-Def}~(2.\-0f $\ast$ 0.\-5f)
+\item 
+\#define \hyperlink{FreeIMU_8h_a0a61e034822b9a9851cdf6ac026053cd}{two\-Ki\-Def}~(2.\-0f $\ast$ 0.\-1f)
+\item 
+\#define \hyperlink{FreeIMU_8h_ae70baf5399951da1e7ad45a0ed890832}{cbi}(sfr, bit)~(\-\_\-\-S\-F\-R\-\_\-\-B\-Y\-T\-E(sfr) \&= $\sim$\-\_\-\-B\-V(bit))
+\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+float \hyperlink{FreeIMU_8h_ae275609337974b29c58aae13d82bf3a9}{inv\-Sqrt} (float number)
+\item 
+void \hyperlink{FreeIMU_8h_a08bed004143f76faac1926ab769bb190}{arr3\-\_\-rad\-\_\-to\-\_\-deg} (float $\ast$arr)
+\end{DoxyCompactItemize}
+
+
+\subsection{Macro Definition Documentation}
+\hypertarget{FreeIMU_8h_ae70baf5399951da1e7ad45a0ed890832}{\index{Free\-I\-M\-U.\-h@{Free\-I\-M\-U.\-h}!cbi@{cbi}}
+\index{cbi@{cbi}!FreeIMU.h@{Free\-I\-M\-U.\-h}}
+\subsubsection[{cbi}]{\setlength{\rightskip}{0pt plus 5cm}\#define cbi(
+\begin{DoxyParamCaption}
+\item[{}]{sfr, }
+\item[{}]{bit}
+\end{DoxyParamCaption}
+)~(\-\_\-\-S\-F\-R\-\_\-\-B\-Y\-T\-E(sfr) \&= $\sim$\-\_\-\-B\-V(bit))}}\label{FreeIMU_8h_ae70baf5399951da1e7ad45a0ed890832}
+\hypertarget{FreeIMU_8h_aa529db26a520cecfd1b1becf5e13b713}{\index{Free\-I\-M\-U.\-h@{Free\-I\-M\-U.\-h}!F\-I\-M\-U\-\_\-\-A\-C\-C\-\_\-\-A\-D\-D\-R@{F\-I\-M\-U\-\_\-\-A\-C\-C\-\_\-\-A\-D\-D\-R}}
+\index{F\-I\-M\-U\-\_\-\-A\-C\-C\-\_\-\-A\-D\-D\-R@{F\-I\-M\-U\-\_\-\-A\-C\-C\-\_\-\-A\-D\-D\-R}!FreeIMU.h@{Free\-I\-M\-U.\-h}}
+\subsubsection[{F\-I\-M\-U\-\_\-\-A\-C\-C\-\_\-\-A\-D\-D\-R}]{\setlength{\rightskip}{0pt plus 5cm}\#define F\-I\-M\-U\-\_\-\-A\-C\-C\-\_\-\-A\-D\-D\-R~A\-D\-X\-L345\-\_\-\-A\-D\-D\-R\-\_\-\-A\-L\-T\-\_\-\-L\-O\-W}}\label{FreeIMU_8h_aa529db26a520cecfd1b1becf5e13b713}
+\hypertarget{FreeIMU_8h_a4a4d9e6755a7ccb9faaf197d681e915e}{\index{Free\-I\-M\-U.\-h@{Free\-I\-M\-U.\-h}!F\-I\-M\-U\-\_\-\-B\-A\-R\-O\-\_\-\-A\-D\-D\-R@{F\-I\-M\-U\-\_\-\-B\-A\-R\-O\-\_\-\-A\-D\-D\-R}}
+\index{F\-I\-M\-U\-\_\-\-B\-A\-R\-O\-\_\-\-A\-D\-D\-R@{F\-I\-M\-U\-\_\-\-B\-A\-R\-O\-\_\-\-A\-D\-D\-R}!FreeIMU.h@{Free\-I\-M\-U.\-h}}
+\subsubsection[{F\-I\-M\-U\-\_\-\-B\-A\-R\-O\-\_\-\-A\-D\-D\-R}]{\setlength{\rightskip}{0pt plus 5cm}\#define F\-I\-M\-U\-\_\-\-B\-A\-R\-O\-\_\-\-A\-D\-D\-R~M\-S561101\-B\-A\-\_\-\-A\-D\-D\-R\-\_\-\-C\-S\-B\-\_\-\-L\-O\-W}}\label{FreeIMU_8h_a4a4d9e6755a7ccb9faaf197d681e915e}
+\hypertarget{FreeIMU_8h_a4f34cea639b3e654e741705ac06d21b6}{\index{Free\-I\-M\-U.\-h@{Free\-I\-M\-U.\-h}!F\-I\-M\-U\-\_\-\-B\-M\-A180\-\_\-\-D\-E\-F\-\_\-\-A\-D\-D\-R@{F\-I\-M\-U\-\_\-\-B\-M\-A180\-\_\-\-D\-E\-F\-\_\-\-A\-D\-D\-R}}
+\index{F\-I\-M\-U\-\_\-\-B\-M\-A180\-\_\-\-D\-E\-F\-\_\-\-A\-D\-D\-R@{F\-I\-M\-U\-\_\-\-B\-M\-A180\-\_\-\-D\-E\-F\-\_\-\-A\-D\-D\-R}!FreeIMU.h@{Free\-I\-M\-U.\-h}}
+\subsubsection[{F\-I\-M\-U\-\_\-\-B\-M\-A180\-\_\-\-D\-E\-F\-\_\-\-A\-D\-D\-R}]{\setlength{\rightskip}{0pt plus 5cm}\#define F\-I\-M\-U\-\_\-\-B\-M\-A180\-\_\-\-D\-E\-F\-\_\-\-A\-D\-D\-R~B\-M\-A180\-\_\-\-A\-D\-D\-R\-E\-S\-S\-\_\-\-S\-D\-O\-\_\-\-L\-O\-W}}\label{FreeIMU_8h_a4f34cea639b3e654e741705ac06d21b6}
+\hypertarget{FreeIMU_8h_a5ed7a1e5b097595abe9e64b2a7b6332f}{\index{Free\-I\-M\-U.\-h@{Free\-I\-M\-U.\-h}!F\-I\-M\-U\-\_\-\-I\-T\-G3200\-\_\-\-D\-E\-F\-\_\-\-A\-D\-D\-R@{F\-I\-M\-U\-\_\-\-I\-T\-G3200\-\_\-\-D\-E\-F\-\_\-\-A\-D\-D\-R}}
+\index{F\-I\-M\-U\-\_\-\-I\-T\-G3200\-\_\-\-D\-E\-F\-\_\-\-A\-D\-D\-R@{F\-I\-M\-U\-\_\-\-I\-T\-G3200\-\_\-\-D\-E\-F\-\_\-\-A\-D\-D\-R}!FreeIMU.h@{Free\-I\-M\-U.\-h}}
+\subsubsection[{F\-I\-M\-U\-\_\-\-I\-T\-G3200\-\_\-\-D\-E\-F\-\_\-\-A\-D\-D\-R}]{\setlength{\rightskip}{0pt plus 5cm}\#define F\-I\-M\-U\-\_\-\-I\-T\-G3200\-\_\-\-D\-E\-F\-\_\-\-A\-D\-D\-R~I\-T\-G3200\-\_\-\-A\-D\-D\-R\-\_\-\-A\-D0\-\_\-\-L\-O\-W}}\label{FreeIMU_8h_a5ed7a1e5b097595abe9e64b2a7b6332f}
+\hypertarget{FreeIMU_8h_a9ebab22a3abe6b50facca587a9a01471}{\index{Free\-I\-M\-U.\-h@{Free\-I\-M\-U.\-h}!F\-R\-E\-E\-I\-M\-U\-\_\-v04@{F\-R\-E\-E\-I\-M\-U\-\_\-v04}}
+\index{F\-R\-E\-E\-I\-M\-U\-\_\-v04@{F\-R\-E\-E\-I\-M\-U\-\_\-v04}!FreeIMU.h@{Free\-I\-M\-U.\-h}}
+\subsubsection[{F\-R\-E\-E\-I\-M\-U\-\_\-v04}]{\setlength{\rightskip}{0pt plus 5cm}\#define F\-R\-E\-E\-I\-M\-U\-\_\-v04}}\label{FreeIMU_8h_a9ebab22a3abe6b50facca587a9a01471}
+\hypertarget{FreeIMU_8h_a4602a35c717bf8d5e5cebfe8eb455cdc}{\index{Free\-I\-M\-U.\-h@{Free\-I\-M\-U.\-h}!H\-A\-S\-\_\-\-A\-D\-X\-L345@{H\-A\-S\-\_\-\-A\-D\-X\-L345}}
+\index{H\-A\-S\-\_\-\-A\-D\-X\-L345@{H\-A\-S\-\_\-\-A\-D\-X\-L345}!FreeIMU.h@{Free\-I\-M\-U.\-h}}
+\subsubsection[{H\-A\-S\-\_\-\-A\-D\-X\-L345}]{\setlength{\rightskip}{0pt plus 5cm}\#define H\-A\-S\-\_\-\-A\-D\-X\-L345(
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)~(defined(F\-R\-E\-E\-I\-M\-U\-\_\-v01) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v02) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v03) $|$$|$ defined(S\-E\-N\-\_\-10121) $|$$|$ defined(S\-E\-N\-\_\-10736) $|$$|$ defined(S\-E\-N\-\_\-10724) $|$$|$ defined(S\-E\-N\-\_\-10183))}}\label{FreeIMU_8h_a4602a35c717bf8d5e5cebfe8eb455cdc}
+\hypertarget{FreeIMU_8h_ada7234e5623d0512411a6939f3c0349a}{\index{Free\-I\-M\-U.\-h@{Free\-I\-M\-U.\-h}!H\-A\-S\-\_\-\-A\-X\-I\-S\-\_\-\-A\-L\-I\-G\-N\-E\-D@{H\-A\-S\-\_\-\-A\-X\-I\-S\-\_\-\-A\-L\-I\-G\-N\-E\-D}}
+\index{H\-A\-S\-\_\-\-A\-X\-I\-S\-\_\-\-A\-L\-I\-G\-N\-E\-D@{H\-A\-S\-\_\-\-A\-X\-I\-S\-\_\-\-A\-L\-I\-G\-N\-E\-D}!FreeIMU.h@{Free\-I\-M\-U.\-h}}
+\subsubsection[{H\-A\-S\-\_\-\-A\-X\-I\-S\-\_\-\-A\-L\-I\-G\-N\-E\-D}]{\setlength{\rightskip}{0pt plus 5cm}\#define H\-A\-S\-\_\-\-A\-X\-I\-S\-\_\-\-A\-L\-I\-G\-N\-E\-D(
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)~(defined(F\-R\-E\-E\-I\-M\-U\-\_\-v01) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v02) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v03) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035\-\_\-\-M\-S) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035\-\_\-\-B\-M\-P) $|$$|$ defined({\bf F\-R\-E\-E\-I\-M\-U\-\_\-v04}) $|$$|$ defined(S\-E\-N\-\_\-10121) $|$$|$ defined(S\-E\-N\-\_\-10736))}}\label{FreeIMU_8h_ada7234e5623d0512411a6939f3c0349a}
+\hypertarget{FreeIMU_8h_a61ca52deec40bb14906e36ab58112517}{\index{Free\-I\-M\-U.\-h@{Free\-I\-M\-U.\-h}!H\-A\-S\-\_\-\-B\-M\-A180@{H\-A\-S\-\_\-\-B\-M\-A180}}
+\index{H\-A\-S\-\_\-\-B\-M\-A180@{H\-A\-S\-\_\-\-B\-M\-A180}!FreeIMU.h@{Free\-I\-M\-U.\-h}}
+\subsubsection[{H\-A\-S\-\_\-\-B\-M\-A180}]{\setlength{\rightskip}{0pt plus 5cm}\#define H\-A\-S\-\_\-\-B\-M\-A180(
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)~(defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035\-\_\-\-M\-S) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035\-\_\-\-B\-M\-P))}}\label{FreeIMU_8h_a61ca52deec40bb14906e36ab58112517}
+\hypertarget{FreeIMU_8h_a66b9d7daabfc80f90de551525a701539}{\index{Free\-I\-M\-U.\-h@{Free\-I\-M\-U.\-h}!H\-A\-S\-\_\-\-H\-M\-C5883\-L@{H\-A\-S\-\_\-\-H\-M\-C5883\-L}}
+\index{H\-A\-S\-\_\-\-H\-M\-C5883\-L@{H\-A\-S\-\_\-\-H\-M\-C5883\-L}!FreeIMU.h@{Free\-I\-M\-U.\-h}}
+\subsubsection[{H\-A\-S\-\_\-\-H\-M\-C5883\-L}]{\setlength{\rightskip}{0pt plus 5cm}\#define H\-A\-S\-\_\-\-H\-M\-C5883\-L(
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)~(defined(F\-R\-E\-E\-I\-M\-U\-\_\-v01) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v02) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v03) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035\-\_\-\-M\-S) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035\-\_\-\-B\-M\-P) $|$$|$ defined({\bf F\-R\-E\-E\-I\-M\-U\-\_\-v04}) $|$$|$ defined(S\-E\-N\-\_\-10736) $|$$|$ defined(S\-E\-N\-\_\-10724) $|$$|$ defined(S\-E\-N\-\_\-10183))}}\label{FreeIMU_8h_a66b9d7daabfc80f90de551525a701539}
+\hypertarget{FreeIMU_8h_a8721f083fbfe14a2ee9d3cc6a0570944}{\index{Free\-I\-M\-U.\-h@{Free\-I\-M\-U.\-h}!H\-A\-S\-\_\-\-I\-T\-G3200@{H\-A\-S\-\_\-\-I\-T\-G3200}}
+\index{H\-A\-S\-\_\-\-I\-T\-G3200@{H\-A\-S\-\_\-\-I\-T\-G3200}!FreeIMU.h@{Free\-I\-M\-U.\-h}}
+\subsubsection[{H\-A\-S\-\_\-\-I\-T\-G3200}]{\setlength{\rightskip}{0pt plus 5cm}\#define H\-A\-S\-\_\-\-I\-T\-G3200(
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)~(defined(F\-R\-E\-E\-I\-M\-U\-\_\-v01) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v02) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v03) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035\-\_\-\-M\-S) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035\-\_\-\-B\-M\-P) $|$$|$ defined(S\-E\-N\-\_\-10121) $|$$|$ defined(S\-E\-N\-\_\-10736) $|$$|$ defined(S\-E\-N\-\_\-10724) $|$$|$ defined(S\-E\-N\-\_\-10183))}}\label{FreeIMU_8h_a8721f083fbfe14a2ee9d3cc6a0570944}
+\hypertarget{FreeIMU_8h_a1850ff26e359c75d0569629eb1fa3466}{\index{Free\-I\-M\-U.\-h@{Free\-I\-M\-U.\-h}!H\-A\-S\-\_\-\-M\-P\-U6050@{H\-A\-S\-\_\-\-M\-P\-U6050}}
+\index{H\-A\-S\-\_\-\-M\-P\-U6050@{H\-A\-S\-\_\-\-M\-P\-U6050}!FreeIMU.h@{Free\-I\-M\-U.\-h}}
+\subsubsection[{H\-A\-S\-\_\-\-M\-P\-U6050}]{\setlength{\rightskip}{0pt plus 5cm}\#define H\-A\-S\-\_\-\-M\-P\-U6050(
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)~(defined({\bf F\-R\-E\-E\-I\-M\-U\-\_\-v04}))}}\label{FreeIMU_8h_a1850ff26e359c75d0569629eb1fa3466}
+\hypertarget{FreeIMU_8h_a396474faaa476425c2639aaacd974d70}{\index{Free\-I\-M\-U.\-h@{Free\-I\-M\-U.\-h}!H\-A\-S\-\_\-\-M\-S5611@{H\-A\-S\-\_\-\-M\-S5611}}
+\index{H\-A\-S\-\_\-\-M\-S5611@{H\-A\-S\-\_\-\-M\-S5611}!FreeIMU.h@{Free\-I\-M\-U.\-h}}
+\subsubsection[{H\-A\-S\-\_\-\-M\-S5611}]{\setlength{\rightskip}{0pt plus 5cm}\#define H\-A\-S\-\_\-\-M\-S5611(
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)~(defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035\-\_\-\-M\-S) $|$$|$ defined({\bf F\-R\-E\-E\-I\-M\-U\-\_\-v04}))}}\label{FreeIMU_8h_a396474faaa476425c2639aaacd974d70}
+\hypertarget{FreeIMU_8h_a095538a7cfef8adf44dbe94c29868a1c}{\index{Free\-I\-M\-U.\-h@{Free\-I\-M\-U.\-h}!I\-S\-\_\-6\-D\-O\-M@{I\-S\-\_\-6\-D\-O\-M}}
+\index{I\-S\-\_\-6\-D\-O\-M@{I\-S\-\_\-6\-D\-O\-M}!FreeIMU.h@{Free\-I\-M\-U.\-h}}
+\subsubsection[{I\-S\-\_\-6\-D\-O\-M}]{\setlength{\rightskip}{0pt plus 5cm}\#define I\-S\-\_\-6\-D\-O\-M(
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)~(defined(S\-E\-N\-\_\-10121))}}\label{FreeIMU_8h_a095538a7cfef8adf44dbe94c29868a1c}
+\hypertarget{FreeIMU_8h_a487f99a8f9cc3374374f499d18869cf8}{\index{Free\-I\-M\-U.\-h@{Free\-I\-M\-U.\-h}!I\-S\-\_\-9\-D\-O\-M@{I\-S\-\_\-9\-D\-O\-M}}
+\index{I\-S\-\_\-9\-D\-O\-M@{I\-S\-\_\-9\-D\-O\-M}!FreeIMU.h@{Free\-I\-M\-U.\-h}}
+\subsubsection[{I\-S\-\_\-9\-D\-O\-M}]{\setlength{\rightskip}{0pt plus 5cm}\#define I\-S\-\_\-9\-D\-O\-M(
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)~(defined(F\-R\-E\-E\-I\-M\-U\-\_\-v01) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v02) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v03) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035\-\_\-\-M\-S) $|$$|$ defined(F\-R\-E\-E\-I\-M\-U\-\_\-v035\-\_\-\-B\-M\-P) $|$$|$ defined({\bf F\-R\-E\-E\-I\-M\-U\-\_\-v04}) $|$$|$ defined(S\-E\-N\-\_\-10736) $|$$|$ defined(S\-E\-N\-\_\-10724) $|$$|$ defined(S\-E\-N\-\_\-10183))}}\label{FreeIMU_8h_a487f99a8f9cc3374374f499d18869cf8}
+\hypertarget{FreeIMU_8h_a0a61e034822b9a9851cdf6ac026053cd}{\index{Free\-I\-M\-U.\-h@{Free\-I\-M\-U.\-h}!two\-Ki\-Def@{two\-Ki\-Def}}
+\index{two\-Ki\-Def@{two\-Ki\-Def}!FreeIMU.h@{Free\-I\-M\-U.\-h}}
+\subsubsection[{two\-Ki\-Def}]{\setlength{\rightskip}{0pt plus 5cm}\#define two\-Ki\-Def~(2.\-0f $\ast$ 0.\-1f)}}\label{FreeIMU_8h_a0a61e034822b9a9851cdf6ac026053cd}
+\hypertarget{FreeIMU_8h_ada29b0bd3e62d46e44776cb20f9a46df}{\index{Free\-I\-M\-U.\-h@{Free\-I\-M\-U.\-h}!two\-Kp\-Def@{two\-Kp\-Def}}
+\index{two\-Kp\-Def@{two\-Kp\-Def}!FreeIMU.h@{Free\-I\-M\-U.\-h}}
+\subsubsection[{two\-Kp\-Def}]{\setlength{\rightskip}{0pt plus 5cm}\#define two\-Kp\-Def~(2.\-0f $\ast$ 0.\-5f)}}\label{FreeIMU_8h_ada29b0bd3e62d46e44776cb20f9a46df}
+
+
+\subsection{Function Documentation}
+\hypertarget{FreeIMU_8h_a08bed004143f76faac1926ab769bb190}{\index{Free\-I\-M\-U.\-h@{Free\-I\-M\-U.\-h}!arr3\-\_\-rad\-\_\-to\-\_\-deg@{arr3\-\_\-rad\-\_\-to\-\_\-deg}}
+\index{arr3\-\_\-rad\-\_\-to\-\_\-deg@{arr3\-\_\-rad\-\_\-to\-\_\-deg}!FreeIMU.h@{Free\-I\-M\-U.\-h}}
+\subsubsection[{arr3\-\_\-rad\-\_\-to\-\_\-deg}]{\setlength{\rightskip}{0pt plus 5cm}void arr3\-\_\-rad\-\_\-to\-\_\-deg (
+\begin{DoxyParamCaption}
+\item[{float $\ast$}]{arr}
+\end{DoxyParamCaption}
+)}}\label{FreeIMU_8h_a08bed004143f76faac1926ab769bb190}
+Converts a 3 elements array arr of angles expressed in radians into degrees \hypertarget{FreeIMU_8h_ae275609337974b29c58aae13d82bf3a9}{\index{Free\-I\-M\-U.\-h@{Free\-I\-M\-U.\-h}!inv\-Sqrt@{inv\-Sqrt}}
+\index{inv\-Sqrt@{inv\-Sqrt}!FreeIMU.h@{Free\-I\-M\-U.\-h}}
+\subsubsection[{inv\-Sqrt}]{\setlength{\rightskip}{0pt plus 5cm}float inv\-Sqrt (
+\begin{DoxyParamCaption}
+\item[{float}]{number}
+\end{DoxyParamCaption}
+)}}\label{FreeIMU_8h_ae275609337974b29c58aae13d82bf3a9}
+Fast inverse square root implementation \begin{DoxySeeAlso}{See Also}
+\href{http://en.wikipedia.org/wiki/Fast_inverse_square_root}{\tt http\-://en.\-wikipedia.\-org/wiki/\-Fast\-\_\-inverse\-\_\-square\-\_\-root} 
+\end{DoxySeeAlso}
