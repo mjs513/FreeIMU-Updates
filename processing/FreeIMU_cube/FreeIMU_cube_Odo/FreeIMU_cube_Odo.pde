@@ -216,6 +216,15 @@ void serialEvent(Serial p) {
     }
     count = count + 1;
     if(burst == count) { // ask more data when burst completed
+      if(key == '2') {
+         myPort.write("2");
+         println("pressed 2");
+         key = '0';
+      } else if(key == '1') {
+            myPort.write("1");
+            println("pressed 1");
+            key = '0';
+      }
       myDelay(100);
       p.write("z" + char(burst));
       count = 0;
@@ -363,16 +372,6 @@ void keyPressed() {
     println("pressed n");
     hq = null;
   }
-  else if(key == '1') {
-    myPort.clear();
-    myPort.write("1");
-    println("pressed 1");
-  }
-  else if(key == '2') {
-    myPort.clear();
-    myPort.write("2");
-    println("pressed 2");
-  }  
   else if(key == 's') {
     println("pressed s"); 
     sw.start();
