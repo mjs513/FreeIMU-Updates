@@ -98,11 +98,6 @@ float c0[9] = {      -45.61 ,	     -45.18,       -305.58,  6.699801e+00,  8.3412
 
 //float r_corr[9] = {0., 0., 0.,0.,0.,0.,0.,0.,0.};
 
-int nsamples = 75;
-//original temp_break = -4300;
-int temp_break = -1000;
-int temp_corr_on = 1;
-
 FreeIMU::FreeIMU() {
   #if HAS_ADXL345()
     acc = ADXL345();
@@ -140,6 +135,13 @@ FreeIMU::FreeIMU() {
   lastUpdate = 0;
   now = 0;
 
+  nsamples = 75;
+  //original temp_break = -4300;
+  temp_break = -1000;
+  temp_corr_on = 1;
+  nsamples = 75;
+  instability_fix = 1;
+  
   #ifndef CALIBRATION_H
   // initialize scale factors to neutral values
   acc_scale_x = 1;
@@ -316,7 +318,7 @@ void FreeIMU::init(int accgyro_addr, bool fastmode) {
   #endif
     
   // zero gyro
-   zeroGyro(nsamples);
+   zeroGyro();
   
   #ifndef CALIBRATION_H
   // load calibration from eeprom
@@ -506,7 +508,7 @@ void FreeIMU::getValues(float * values) {
 /**
  * Computes gyro offsets
 */
-void FreeIMU::zeroGyro(int nsamples) {
+void FreeIMU::zeroGyro() {
   const int totSamples = nsamples;
   int raw[10];
   float tmpOffsets[] = {0,0,0};
@@ -812,6 +814,14 @@ void FreeIMU::getYawPitchRoll(float * ypr) {
   arr3_rad_to_deg(ypr);
 }
 
+/**
+ * Sets thermal calibration on (1) or off (0) for the accelerometer and gyro calibration from the
+ * main sketch
+*/
+void FreeIMU::setTempCalib(int opt_temp_cal) {
+   temp_corr_on = opt_temp_cal;
+}
+
 
 /**
  * Converts a 3 elements array arr of angles expressed in radians into degrees
@@ -833,9 +843,9 @@ measurements are applied.
 Posted by Tobias Simon on November 2, 2012 
 */
 
-int instability_fix = 1;
+//int instability_fix = 1;
 
-float invSqrt(float x) {
+float FreeIMU::invSqrt(float x) {
         if (instability_fix == 0)
         {
              union {

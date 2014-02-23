@@ -240,6 +240,7 @@ class FreeIMU
     int16_t acc_off_x, acc_off_y, acc_off_z, magn_off_x, magn_off_y, magn_off_z;
     float acc_scale_x, acc_scale_y, acc_scale_z, magn_scale_x, magn_scale_y, magn_scale_z;
 	int nsamples, temp_break, temp_corr_on, instability_fix;
+	float sampleFreq; // half the sample period expressed in seconds
 	
   private:
     #if IS_9DOM()
@@ -255,7 +256,7 @@ class FreeIMU
     volatile float q0, q1, q2, q3; // quaternion of sensor frame relative to auxiliary frame
     volatile float integralFBx,  integralFBy, integralFBz;
     unsigned long lastUpdate, now; // sample period expressed in milliseconds
-    float sampleFreq; // half the sample period expressed in seconds
+    //float sampleFreq; // half the sample period expressed in seconds
     
 };
 

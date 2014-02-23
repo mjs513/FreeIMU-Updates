@@ -189,7 +189,7 @@ class FreeIMU
     #ifndef CALIBRATION_H
     void calLoad();
     #endif
-    void zeroGyro(int nsamples);
+    void zeroGyro();
     void getRawValues(int * raw_values);
     void getValues(float * values);
     void getQ(float * q);
@@ -197,6 +197,9 @@ class FreeIMU
     void getYawPitchRoll(float * ypr);
     void getEulerRad(float * angles);
     void getYawPitchRollRad(float * ypr);
+	float invSqrt(float x);
+	void setTempCalib(int opt_temp_cal);
+	
     #if HAS_MS5611()
       float getBaroAlt();
       float getBaroAlt(float sea_press);
@@ -236,7 +239,9 @@ class FreeIMU
     int16_t gyro_off_x, gyro_off_y, gyro_off_z;
     int16_t acc_off_x, acc_off_y, acc_off_z, magn_off_x, magn_off_y, magn_off_z;
     float acc_scale_x, acc_scale_y, acc_scale_z, magn_scale_x, magn_scale_y, magn_scale_z;
-    
+	int nsamples, temp_break, temp_corr_on, instability_fix;
+	float sampleFreq; // half the sample period expressed in seconds
+	
   private:
     #if IS_9DOM()
     void AHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz);
@@ -251,7 +256,7 @@ class FreeIMU
     volatile float q0, q1, q2, q3; // quaternion of sensor frame relative to auxiliary frame
     volatile float integralFBx,  integralFBy, integralFBz;
     unsigned long lastUpdate, now; // sample period expressed in milliseconds
-    float sampleFreq; // half the sample period expressed in seconds
+    //float sampleFreq; // half the sample period expressed in seconds
     
 };
 

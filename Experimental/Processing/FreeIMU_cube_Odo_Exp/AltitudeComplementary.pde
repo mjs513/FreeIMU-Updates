@@ -1,3 +1,36 @@
+//============================================================
+void EstimatedAltitude() {
+  
+  gravityCompensateDynAcc();
+  dyn_acc_q.x = dyn_acc[0];
+  dyn_acc_q.y = dyn_acc[1];  
+  dyn_acc_q.z = dyn_acc[2];
+  dyn_acc_q.w = 0;
+  q1.x = q[1]; q1.y = q[2]; q1.z = q[3]; q1.w = q[0];
+  multQ = Quaternion.multiply(q1, dyn_acc_q);
+  //conQ = Quaternion.conjugate(q1);
+  conQ.x = -q1.x; conQ.y = -q1.y; conQ.z = -q1.z; conQ.w = q1.w;
+  dyn_acc_q_earth = Quaternion.multiply(multQ, conQ);
+  fused_alt = altitudeFilter.update(dyn_acc_q_earth.z, altitude, dt);
+  
+}
+
+//=============================================================
+void gravityCompensateDynAcc() {
+  float[] g = new float[3];
+  
+  // get expected direction of gravity in the sensor frame
+  g[0] = 2 * (q[1] * q[3] - q[0] * q[2]);
+  g[1] = 2 * (q[0] * q[1] + q[2] * q[3]);
+  g[2] = q[0] * q[0] - q[1] * q[1] - q[2] * q[2] + q[3] * q[3];
+  
+  // compensate accelerometer readings with the expected direction of gravity
+  dyn_acc[0] = acc[0] - g[0];
+  dyn_acc[1] = acc[1] - g[1];
+  dyn_acc[2] = acc[2] - g[2];
+}
+ 
+////////////////////////////////////////////////////////////
 // complementary filter from Palla Software
 // 
 final float Kp1 = 0.55f;                // PI observer velocity gain 
@@ -40,7 +73,7 @@ public class AltitudeComplementary {
       InstAcc = 0;
     }
     
-    float dt1 = dt/1000.;
+    float dt1 = dt;
 
     // Integrators
     Delta = InstAcc * dt1 + (Kp1 * dt1) * AltError;

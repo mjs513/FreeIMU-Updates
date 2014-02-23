@@ -1,6 +1,25 @@
 
 import java.util.LinkedList;
 import java.util.Queue;
+
+//==============================================================
+//SMA filter
+// Use the next value and calculate the 
+// moving average 
+public void AddNewValue(float value){
+  total -= data[p];
+  data[p] = value;
+  total += value;
+  p = ++p % data.length;
+  if(n < data.length) n++;
+  average = total / n;
+} 
+
+//==============================================================
+// Moving Average class from Rosetta Code
+// 
+// 
+
 public class MovingAverage {
     private final Queue<Float> window = new LinkedList<Float>();
     private final int period;

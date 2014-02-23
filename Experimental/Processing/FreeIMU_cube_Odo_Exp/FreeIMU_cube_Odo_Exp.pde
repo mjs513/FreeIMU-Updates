@@ -25,12 +25,23 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+2-7-14 Program severely modified by Michael J Smorto, same license and warranty
+applies.
+
 */
 
 import processing.serial.*;
 import processing.opengl.*;
+import java.awt.Frame;
+import java.awt.BorderLayout;
+import java.awt.event.*;
+
 import controlP5.*;
 ControlP5 cp5;
+ControlFrame cf;
+int def;
+
+PrintWriter output;
 
 Serial myPort;  // Create object from Serial class
 
@@ -59,7 +70,8 @@ MovingAverage HeadingAvg = new MovingAverage(windSize);
 
 //set motiondetect types
 float accnorm,accnorm_var_test;
-int accnorm_test, omegax, omegay, omegaz, omega_test, motionDetect;
+int accnorm_test, omegax, omegay, omegaz, omega_test;
+float motionDetect;
 
 //Movingaverage filters for motion detection
 MovingAverage accnorm_test_avg = new MovingAverage(5);
@@ -112,18 +124,24 @@ float angx, angy, angz, angyLevelControl;
 float S;
 float A;
 
-float sea_press = 1013.25;            //Input local sea level pressure
+float sea_press = 1013.25;           //Input local sea level pressure
 float declinationAngle = -13.1603;   //Flushing, NY magnetic declination in degrees
+float STATIONALTFT = 36.0;           //LaGuardia AP measurement height
 float SEA_PRESS  = 1013.25;          //default sea level pressure level in mb
-float KNOWNALT   = 65.0;            //default known altitude, 
+float KNOWNALT   = 65.0;             //default known altitude, 
 float INHG       = 0.02952998751;    //convert mb to in/Hg constant
 float MB         = 33.8638815;       //convert in/Hg to mb constant
 float FTMETERS   = 0.3048;
 float METERS2FT  = 3.2808399;
 float PI         = 3.14159;
 float deg2rads   = PI/180;
-int calib = 1;
-int ArtHorFlg = 0;
+
+//flags
+int calib = 1;             // Turn calibration on or off
+int ArtHorFlg = 0;         // Make artificial horizion visible or not
+int PrintOutput = 0;       // Output raw data to standard file name
+// Switch for ODO
+int cube_odo = 0;          // Execute ODO routine
 
 //FreeIMY setup
 float [] hq = null;
@@ -143,17 +161,20 @@ short countx; short county ;
 
 float [] accelerationx = new float [2];
 float [] accelerationy = new float [2];
+float [] accelerationz = new float [3];
 float [] velocityx = new float [2];
 float [] velocityy = new float [2];
-float [] positionX= new float [2]; 
+float [] velocityz = new float [2];
+float [] positionX = new float [2]; 
 float [] positionY = new float [2]; 
 float [] positionZ = new float [2]; 
-long direction; 
-float sstatex; float sstatey;
-
-// Switch for ODO
-int cube_odo = 0;
-
+float dts;
+float statex,statey, statez;
+float statex_avg, statey_avg,statez_avg;
+float motionDetect_transition, motionDetect_old;
+int state_cnt;
+float tempxxx = 0;
+  
 //-------------------------------------
 //
 PFont font, font8, font9, font12, font15, letters, lcd;
@@ -171,10 +192,15 @@ void myDelay(int time) {
   } catch (InterruptedException e) { }
 }
 
+
+//////////////////////////////////////////////////////////////
 void setup() 
 {
   size(VIEW_SIZE_X, VIEW_SIZE_Y, OPENGL);
   //frameRate(120);
+  
+  // Create a new file in the sketch directory
+  output = createWriter("IMUData.txt"); 
   
   // The font must be located in the sketch's "data" directory to load successfully
   font = loadFont("CourierNew36.vlw"); 
@@ -192,11 +218,19 @@ void setup()
   conQ = new Quaternion();
 
   cp5 = new ControlP5(this);
-  cp5.setControlFont(font,18);
+
+  //sets up value fields for startup options
+  cp5.setControlFont(font,14);
   cp5.setColorValue(color(255, 255, 0));
   cp5.setColorLabel(color(255, 255, 0));
-  
   setValues();
+
+  //add button to open rolling trace in gwoptics
+  cp5.addButton("graphwin")
+     .setPosition(50,420)
+     .setSize(240,30)
+     .setCaptionLabel("Open Rolling Trace Frame")
+     ;
 
   //setup attitdude indicator
   noStroke();
@@ -206,7 +240,7 @@ void setup()
   texmap = loadImage("sphere_bckgrnd.png");
   Aimage = loadImage("AttInd.PNG");
   setupSphere(R, xDetail, yDetail);
-  
+ 
   //serial port set up
   myPort = new Serial(this, serialPort, 38400);
 
@@ -224,160 +258,11 @@ void setup()
   myPort.write("z" + char(burst));
   myPort.bufferUntil('\n');
   
+  cp5.setAutoDraw(false);
+  
 }
 
-float decodeFloat(String inString) {
-  byte [] inData = new byte[4];
-  
-  if(inString.length() == 8) {
-    inData[0] = (byte) unhex(inString.substring(0, 2));
-    inData[1] = (byte) unhex(inString.substring(2, 4));
-    inData[2] = (byte) unhex(inString.substring(4, 6));
-    inData[3] = (byte) unhex(inString.substring(6, 8));
-  }
-      
-  int intbits = (inData[3] << 24) | ((inData[2] & 0xff) << 16) | ((inData[1] & 0xff) << 8) | (inData[0] & 0xff);
-  return Float.intBitsToFloat(intbits);
-}
-
-void serialEvent(Serial p) {
-  if(p.available() >= 17) {
-    String inputString = p.readStringUntil('\n');
-    //print(inputString);
-    if (inputString != null && inputString.length() > 0) {
-      String [] inputStringArr = split(inputString, ",");
-      if(inputStringArr.length >= 17) { // q1,q2,q3,q4,\r\n so we have 5 elements
-        q[0] = decodeFloat(inputStringArr[0]);
-        q[1] = decodeFloat(inputStringArr[1]);
-        q[2] = decodeFloat(inputStringArr[2]);
-        q[3] = decodeFloat(inputStringArr[3]);
-	acc[0] = decodeFloat(inputStringArr[4]);
-	acc[1] = decodeFloat(inputStringArr[5]);
-	acc[2] = decodeFloat(inputStringArr[6]);
-	gyro[0] = decodeFloat(inputStringArr[7]);
-	gyro[1] = decodeFloat(inputStringArr[8]);
-	gyro[2] = decodeFloat(inputStringArr[9]);
-	magn[0] = decodeFloat(inputStringArr[10]);
-	magn[1] = decodeFloat(inputStringArr[11]);		
-	magn[2] = decodeFloat(inputStringArr[12]);
-	temp = decodeFloat(inputStringArr[13]);
-	press = decodeFloat(inputStringArr[14]);
-        tnew = decodeFloat(inputStringArr[15]);
-        heading = decodeFloat(inputStringArr[16]);
-        dt = tnew - told;
-        told = tnew;
-        //getYawPitchRollRad();
-      }
-    }
-    count = count + 1;
-    if(burst == count) { // ask more data when burst completed
-      //1 = RESET MPU-6050, 2 = RESET Q Matrix
-      if(key == '2') {
-         myPort.clear();
-         myPort.write("2");
-         sw.start();
-         println("pressed 2");
-         key = '0';
-      } else if(key == '1') {
-            myPort.clear();
-            myPort.write("1");
-            sw.start();
-            println("pressed 1");
-            key = '0';
-      } else if(key == 'r') {
-            myPort.clear();
-            ArtHorFlg = 0;
-            calib = 1;
-            sea_press = 1013.25;
-            setup();
-  }
-      if(calib == 0) {
-         myPort.clear();
-         myPort.write("f");
-         sw.start();
-         calib = 99;
-      }
-      if(calib == 1) {
-         myPort.clear();
-         myPort.write("t");
-         sw.start();
-         calib = 99;
-      }      
-      myDelay(100);
-      p.write("z" + char(burst));
-      count = 0;
-    }
-  }
-}
-
-
-void buildBoxShape() {
-  //box(60, 10, 40);
-  noStroke();
-  beginShape(QUADS);
-
-  //Z+ (to the drawing area)
-  fill(#00ff00);
-  vertex(-30, -5, 20);
-  vertex(30, -5, 20);
-  vertex(30, 5, 20);
-  vertex(-30, 5, 20);
-  
-  //Z-
-  fill(#0000ff);
-  vertex(-30, -5, -20);
-  vertex(30, -5, -20);
-  vertex(30, 5, -20);
-  vertex(-30, 5, -20);
-  
-  //X-
-  fill(#ff0000);
-  vertex(-30, -5, -20);
-  vertex(-30, -5, 20);
-  vertex(-30, 5, 20);
-  vertex(-30, 5, -20);
-  
-  //X+
-  fill(#ffff00);
-  vertex(30, -5, -20);
-  vertex(30, -5, 20);
-  vertex(30, 5, 20);
-  vertex(30, 5, -20);
-  
-  //Y-
-  fill(#ff00ff);
-  vertex(-30, -5, -20);
-  vertex(30, -5, -20);
-  vertex(30, -5, 20);
-  vertex(-30, -5, 20);
-  
-  //Y+
-  fill(#00ffff);
-  vertex(-30, 5, -20);
-  vertex(30, 5, -20);
-  vertex(30, 5, 20);
-  vertex(-30, 5, 20);
-  
-  endShape();
-}
-
-
-void drawCube() {  
-    pushMatrix();
-    translate(VIEW_SIZE_X/2, VIEW_SIZE_Y/2 + 150, +80);
-    scale(2,2,2);
-    // a demonstration of the following is at 
-    // http://www.varesano.net/blog/fabio/ahrs-sensor-fusion-orientation-filter-3d-graphical-rotating-cube
-    rotateZ(-Euler[2]);
-    rotateX(-Euler[1]+radians(17));
-    rotateY(-Euler[0]);
-    
-    buildBoxShape();
-    
-  popMatrix();
-}
-
-
+///////////////////////////////////////////////////////////////////
 void draw() {
   //background(#585858);
   background(#000000);
@@ -385,6 +270,9 @@ void draw() {
   textAlign(LEFT, TOP);
   strokeWeight(3);
   fill(#ffffff);
+  
+  cp5.draw();
+  
   if(hq != null) { // use home quaternion
     quaternionToEuler(quatProd(hq, q), Euler);
     text("Disable home position by pressing \"n\"", 20, VIEW_SIZE_Y - 30);
@@ -397,7 +285,7 @@ void draw() {
   fill(#FFFF00);
   float press1 = pressK.update(press);
   altitude = ((pow((sea_press / press1), 1/5.257) - 1.0) * (temp + 273.15)) / 0.0065;
-  altitude = altitude + 36/METERS2FT;
+  altitude = altitude + STATIONALTFT/METERS2FT;
   EstimatedAltitude();
   text("Temp: " + temp + "\n" + "Press: " + press + "\n" , 20, VIEW_SIZE_Y - 110);
   textFont(font,24);
@@ -457,30 +345,34 @@ void draw() {
   noFill();
   stroke(204, 102, 0);
   rect(10, 125, 145, 85, 7);  
-  text("Acc:\n" + nfp(acc[0],1,6) + "\n" + nfp(acc[1],1,6) + "\n" + nfp(acc[2],1,6) + "\n", 20, 130);
+  //text("Acc:\n" + nfp(acc[0],1,6) + "\n" + nfp(acc[1],1,6) + "\n" + nfp(acc[2],1,6) + "\n", 20, 130);
+  text("Dyn Acc:\n" + nfp(dyn_acc[0],1,6) + "\n" + nfp(dyn_acc[1],1,6) + "\n" + nfp(dyn_acc[2],1,6) + "\n", 20, 130);
+  
   //rect(10, 210, 145, 85, 7); 
   //text("Gyro:\n" + nfp(gyro[0],1,6) + "\n" + nfp(gyro[1],1,6) + "\n" + nfp(gyro[2],1,6) + "\n", 20, 220);
   rect(170, 20, 145, 85, 7);
   text("Gyro:\n" + nfp(gyro[0],1,6) + "\n" + nfp(gyro[1],1,6) + "\n" + nfp(gyro[2],1,6) + "\n", 180, 25);
+  
   //rect(10, 295, 145, 90, 7); 
   //text("Magn:\n" + nfp(magn[0],1,6) + "\n" + nfp(magn[1],1,6) + "\n" + nfp(magn[2],1,6) + "\n", 20, 310);
   rect(170, 125, 145, 85, 7); 
   text("Magn:\n" + nfp(magn[0],1,6) + "\n" + nfp(magn[1],1,6) + "\n" + nfp(magn[2],1,6) + "\n", 180, 130);
   
   //text(MotionDetect(),VIEW_SIZE_X-75,VIEW_SIZE_Y-75) ;
-  if(MotionDetect() > 0 ){
+  motionDetect = MotionDetect();
+  if(motionDetect > 0 ){
     fill(#FF0000);
   } else {
     fill(#FFFFFF)
   ; }
   rect(VIEW_SIZE_X-75,VIEW_SIZE_Y-55,35,35);
 
-  if(cube_odo == 0) { 
-	drawCube(); }
-    else {
-	position();
-        text("px:  " + positionX[0] + "\n" + "py:  " + positionY[0], 200, 200);
-   }
+  if(cube_odo == 1) { 
+     position();
+     text("px:  " + positionX[0] + "\n" + "py:  " + positionY[0] + "\n" + "pz:  " + positionZ[0], 20, 235);
+  }
+  
+  drawCube();
   
   textFont(font,20);
   fill(#ffff00);
@@ -490,12 +382,177 @@ void draw() {
   text(sw.hour() + ":" + sw.minute() + ":" + sw.second(), 823, 40);
   
   if(ArtHorFlg == 1) {
-      NewHorizon();
+     NewHorizon();
   }
+  
+  //position();
+  //text("px:  " + positionX[0] + "\n" + "py:  " +positionY[0] + "\n" + "pz:  " + positionZ[0],(width/2) - 150, (height/2)-100);
 
+  if(PrintOutput == 1){
+      output.println(acc[0]+","+acc[1]+","+acc[2]+","+gyro[0]+","+gyro[1]+","+gyro[2]+","+
+         magn[0]+","+magn[1]+","+magn[2]+","+
+         dyn_acc[0]+","+dyn_acc[1]+","+dyn_acc[2]+","+dyn_acc_q_earth.x+","+dyn_acc_q_earth.y+","+dyn_acc_q_earth.z+","+
+         dt+","+corr_heading+","+ypr[0]+","+ypr[1]+","+ypr[2]+","+Euler[0]+","+Euler[1]+","+Euler[2]+","+
+         motionDetect+","+motionDetect_transition+","+fused_alt+","+q[0]+","+q[1]+","+q[2]+","+q[3]+","+
+         positionX[0]+","+positionY[0]+","+positionZ[0]);
+  }
+  
 }
 
+////////////////////////////////////////////////////////////////////
+float decodeFloat(String inString) {
+  byte [] inData = new byte[4];
+  
+  if(inString.length() == 8) {
+    inData[0] = (byte) unhex(inString.substring(0, 2));
+    inData[1] = (byte) unhex(inString.substring(2, 4));
+    inData[2] = (byte) unhex(inString.substring(4, 6));
+    inData[3] = (byte) unhex(inString.substring(6, 8));
+  }
+      
+  int intbits = (inData[3] << 24) | ((inData[2] & 0xff) << 16) | ((inData[1] & 0xff) << 8) | (inData[0] & 0xff);
+  return Float.intBitsToFloat(intbits);
+}
 
+////////////////////////////////////////////////////////////////////////
+void serialEvent(Serial p) {
+  if(p.available() >= 17) {
+    String inputString = p.readStringUntil('\n');
+    //print(inputString);
+    if (inputString != null && inputString.length() > 0) {
+      String [] inputStringArr = split(inputString, ",");
+      if(inputStringArr.length >= 17) { // q1,q2,q3,q4,\r\n so we have 5 elements
+        q[0] = decodeFloat(inputStringArr[0]);
+        q[1] = decodeFloat(inputStringArr[1]);
+        q[2] = decodeFloat(inputStringArr[2]);
+        q[3] = decodeFloat(inputStringArr[3]);
+	acc[0] = decodeFloat(inputStringArr[4]);
+	acc[1] = decodeFloat(inputStringArr[5]);
+	acc[2] = decodeFloat(inputStringArr[6]);
+	gyro[0] = decodeFloat(inputStringArr[7]);
+	gyro[1] = decodeFloat(inputStringArr[8]);
+	gyro[2] = decodeFloat(inputStringArr[9]);
+	magn[0] = decodeFloat(inputStringArr[10]);
+	magn[1] = decodeFloat(inputStringArr[11]);		
+	magn[2] = decodeFloat(inputStringArr[12]);
+	temp = decodeFloat(inputStringArr[13]);
+	press = decodeFloat(inputStringArr[14]);
+        dt = 1./decodeFloat(inputStringArr[15]);
+        heading = decodeFloat(inputStringArr[16]);
+        //dt = tnew - told;
+        //told = tnew;
+        //getYawPitchRollRad();
+      }
+    }
+    count = count + 1;
+    if(burst == count) { // ask more data when burst completed
+      //1 = RESET MPU-6050, 2 = RESET Q Matrix
+      if(key == '2') {
+         myPort.clear();
+         myPort.write("2");
+         sw.start();
+         println("pressed 2");
+         key = '0';
+      } else if(key == '1') {
+            myPort.clear();
+            myPort.write("1");
+            sw.start();
+            println("pressed 1");
+            key = '0';
+      } else if(key == 'r') {
+            myPort.clear();
+            ArtHorFlg = 0;
+            calib = 1;
+            sea_press = 1013.25;
+            setup();
+  }
+      if(calib == 0) {
+         myPort.clear();
+         myPort.write("f");
+         sw.start();
+         calib = 99;
+      }
+      if(calib == 1) {
+         myPort.clear();
+         myPort.write("t");
+         sw.start();
+         calib = 99;
+      }      
+      myDelay(100);
+      p.write("z" + char(burst));
+      count = 0;
+    }
+  }
+}
+
+//////////////////////////////////////////////////////////////////////////
+void buildBoxShape() {
+  //box(60, 10, 40);
+  noStroke();
+  beginShape(QUADS);
+
+  //Z+ (to the drawing area)
+  fill(#00ff00);
+  vertex(-30, -5, 20);
+  vertex(30, -5, 20);
+  vertex(30, 5, 20);
+  vertex(-30, 5, 20);
+  
+  //Z-
+  fill(#0000ff);
+  vertex(-30, -5, -20);
+  vertex(30, -5, -20);
+  vertex(30, 5, -20);
+  vertex(-30, 5, -20);
+  
+  //X-
+  fill(#ff0000);
+  vertex(-30, -5, -20);
+  vertex(-30, -5, 20);
+  vertex(-30, 5, 20);
+  vertex(-30, 5, -20);
+  
+  //X+
+  fill(#ffff00);
+  vertex(30, -5, -20);
+  vertex(30, -5, 20);
+  vertex(30, 5, 20);
+  vertex(30, 5, -20);
+  
+  //Y-
+  fill(#ff00ff);
+  vertex(-30, -5, -20);
+  vertex(30, -5, -20);
+  vertex(30, -5, 20);
+  vertex(-30, -5, 20);
+  
+  //Y+
+  fill(#00ffff);
+  vertex(-30, 5, -20);
+  vertex(30, 5, -20);
+  vertex(30, 5, 20);
+  vertex(-30, 5, 20);
+  
+  endShape();
+}
+
+//////////////////////////////////////////////////////////////////////////
+void drawCube() {  
+    pushMatrix();
+    translate(VIEW_SIZE_X/2, VIEW_SIZE_Y/2 + 150, +80);
+    scale(2,2,2);
+    // a demonstration of the following is at 
+    // http://www.varesano.net/blog/fabio/ahrs-sensor-fusion-orientation-filter-3d-graphical-rotating-cube
+    rotateZ(-Euler[2]);
+    rotateX(-Euler[1]+radians(17));
+    rotateY(-Euler[0]);
+    
+    buildBoxShape();
+    
+  popMatrix();
+}
+
+///////////////////////////////////////////////////////////////////////////////
 void keyPressed() {
   if(key == 'h') {
     println("pressed h");
@@ -511,20 +568,37 @@ void keyPressed() {
     println("pressed s"); 
     sw.start();
   }
+  else if(key == 'p') {
+    println("pressed p"); 
+    positionX[0]=0;
+    positionY[0]=0;
+    positionZ[0]=0;    
+  }
+  else if(key == 'v') {
+    println("pressed v"); 
+    //you will need to change this path
+    String path = sketchPath("") + "/Applications/WebcamViewer.exe";
+    //open("C:/Users/CyberMerln/Documents/Processing/FreeIMU_cube_Odo_Exp/Applications/WebcamViewer.exe");   
+    open(path);
+  }
+  
   else if(key == 'q') {
+    output.flush(); // Writes the remaining data to the file
+    output.close(); // Finishes the file
     exit();
   }
 }
 
+/////////////////////////////////////////////////////////////////////////////
 // See Sebastian O.H. Madwick report 
 // "An efficient orientation filter for inertial and intertial/magnetic sensor arrays" Chapter 2 Quaternion representation
-
 void quaternionToEuler(float [] q, float [] euler) {
   euler[0] = atan2(2 * q[1] * q[2] - 2 * q[0] * q[3], 2 * q[0]*q[0] + 2 * q[1] * q[1] - 1); // psi
   euler[1] = -asin(2 * q[1] * q[3] + 2 * q[0] * q[2]); // theta
   euler[2] = atan2(2 * q[2] * q[3] - 2 * q[0] * q[1], 2 * q[0] * q[0] + 2 * q[3] * q[3] - 1); // phi
 }
 
+////////////////////////////////////////////////////////////////
 float [] quatProd(float [] a, float [] b) {
   float [] q = new float[4];
   
@@ -562,6 +636,7 @@ float [] quatConjugate(float [] quat) {
   return conj;
 }
 
+/////////////////////////////////////////////////////////////////////////
 void getYawPitchRollRad() {
   //float q[4]; // quaternion
   float gx, gy, gz; // estimated gravity direction
@@ -575,21 +650,6 @@ void getYawPitchRollRad() {
   ypr[2] = atan(gy / sqrt(gx*gx + gz*gz));
 }
 
-//=============================================================
-void gravityCompensateDynAcc() {
-  float[] g = new float[3];
-  
-  // get expected direction of gravity in the sensor frame
-  g[0] = 2 * (q[1] * q[3] - q[0] * q[2]);
-  g[1] = 2 * (q[0] * q[1] + q[2] * q[3]);
-  g[2] = q[0] * q[0] - q[1] * q[1] - q[2] * q[2] + q[3] * q[3];
-  
-  // compensate accelerometer readings with the expected direction of gravity
-  dyn_acc[0] = acc[0] - g[0];
-  dyn_acc[1] = acc[1] - g[1];
-  dyn_acc[2] = acc[2] - g[2];
-}
- 
 
 //=============================================================
 // converted from Michael Shimniok Data Bus code
@@ -601,8 +661,6 @@ float clamp360(float x) {
     return x;
 }
 
-
-
 //==============================================================
 //
 float HeadingAvgCorr(float newx, float oldx) {
@@ -612,34 +670,6 @@ float HeadingAvgCorr(float newx, float oldx) {
     return newx;
 }
 
-//============================================================
-void EstimatedAltitude() {
-  
-  gravityCompensateDynAcc();
-  dyn_acc_q.x = dyn_acc[0];
-  dyn_acc_q.y = dyn_acc[1];  
-  dyn_acc_q.z = dyn_acc[2];
-  dyn_acc_q.w = 0;
-  q1.x = q[1]; q1.y = q[2]; q1.z = q[3]; q1.w = q[0];
-  multQ = Quaternion.multiply(q1, dyn_acc_q);
-  //conQ = Quaternion.conjugate(q1);
-  conQ.x = -q1.x; conQ.y = -q1.y; conQ.z = -q1.z; conQ.w = q1.w;
-  dyn_acc_q_earth = Quaternion.multiply(multQ, conQ);
-  fused_alt = altitudeFilter.update(dyn_acc_q_earth.z, altitude, dt);
-  
-}
-//==============================================================
-//SMA filter
-// Use the next value and calculate the 
-// moving average 
-public void AddNewValue(float value){
-  total -= data[p];
-  data[p] = value;
-  total += value;
-  p = ++p % data.length;
-  if(n < data.length) n++;
-  average = total / n;
-} 
 
 //=======================================
 public float iround(float number, float decimal) {
@@ -648,4 +678,5 @@ public float iround(float number, float decimal) {
   return float(ix)/pow(10, decimal);
 }
 
+//=======================================
 
