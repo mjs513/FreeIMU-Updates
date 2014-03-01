@@ -145,6 +145,11 @@ void loop() {
         #if IS_9DOM()
           my3IMU.magn.getValues(&raw_values[0], &raw_values[1], &raw_values[2]);
           writeArr(raw_values, 3, sizeof(int));
+         #else
+          raw_values[0] = 0;
+          raw_values[1] = 0;
+          raw_values[2] = 0;
+          writeArr(raw_values, 3, sizeof(int));
         #endif
         Serial.println();
       }
