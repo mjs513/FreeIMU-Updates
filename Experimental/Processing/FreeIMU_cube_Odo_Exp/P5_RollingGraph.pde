@@ -46,17 +46,17 @@ public class ControlFrame extends PApplet {
 
   class eq implements ILine2DEquation{
     public double computePoint(double x,int pos) {
-      return (double)dyn_acc[0];
+      return (double)acc[0];
     }    
   }
   class eq2 implements ILine2DEquation{
     public double computePoint(double x,int pos) {
-      return (double)dyn_acc[1];
+      return (double)acc[1];
     }    
   }
   class eq3 implements ILine2DEquation{
     public double computePoint(double x,int pos) {
-       return (double)dyn_acc[2];
+       return (double)acc[2];
     }
   }
   class eq4 implements ILine2DEquation{
@@ -120,12 +120,12 @@ public class ControlFrame extends PApplet {
     cp5.addSlider("Max")
        .setSize(100,20)
        .setRange(0.05, 16)
-       .setNumberOfTickMarks(10)
+       .setNumberOfTickMarks(32)
        .setPosition(140,10);
     cp5.addSlider("Min")
        .setSize(100,20)
        .setRange(-16, -0.05)
-       .setNumberOfTickMarks(10)
+       .setNumberOfTickMarks(32)
        .setPosition(290,10);
     //cp5.addSlider("def").plugTo(parent,"def").setRange(0, 255).setPosition(10,30);
     
@@ -137,12 +137,12 @@ public class ControlFrame extends PApplet {
     cp5.addSlider("Max Ang")
        .setSize(100,20)
        .setRange(90, 180)
-       .setNumberOfTickMarks(8)
+       .setNumberOfTickMarks(32)
        .setPosition(140,40);
     cp5.addSlider("Min Ang")
        .setSize(100,20)
        .setRange(-180, -90)
-       .setNumberOfTickMarks(8)
+       .setNumberOfTickMarks(32)
        .setPosition(310,40);
          
     cp5.addBang("Set Rngs")

@@ -58,6 +58,12 @@ Below changes were made by Michael J Smorto
 			2. add Yaw Drift correction - noticed that if the temp is above the temp cut-off
 			   can get what I would consider unacceptable drift. Will also check temp calibration
 			   above cut-off (high temp range)
+			   
+02/27/14	Fixed code issues with generic MPU6050 output for raw values.
+03/02/14	1. Default to temp correction off.
+			2. Updating code as temp correction only applicable to MPU-6050 or 9150 at this point.
+			3. Clarified GenMPU6050 and DFROBOT defines
+			4. Added code for BMP085 altimeter
 */
 
 #include <inttypes.h>
@@ -95,8 +101,10 @@ float c2[9] = {4.798083e-07 ,-7.104300e-08 , -1.899410e-05, -4.387634e-08, -1.77
 float c1[9] = {1.801522e-02 ,-5.200081e-03 , -1.462879e-01, -5.878346e-04,  1.172002e-03, -6.897733e-05, 0., 0., 0. };
 float c0[9] = {      -45.61 ,	     -45.18,       -305.58,  6.699801e+00,  8.341212e+00,	-2.171155e+01, 0., 0., 0. };
 
-
 //float r_corr[9] = {0., 0., 0.,0.,0.,0.,0.,0.,0.};
+
+float rt;
+long Temperature = 0, Pressure = 0, Altitude = 0;
 
 FreeIMU::FreeIMU() {
   #if HAS_ADXL345()
@@ -121,6 +129,10 @@ FreeIMU::FreeIMU() {
     baro = MS561101BA();
   #endif
   
+  #if HAS_BMP085()
+    baro085 = BMP085();
+  #endif  
+  
   // initialize quaternion
   q0 = 1.0f;
   q1 = 0.0f;
@@ -138,7 +150,7 @@ FreeIMU::FreeIMU() {
   nsamples = 75;
   //original temp_break = -4300;
   temp_break = -1000;
-  temp_corr_on = 1;
+  temp_corr_on = 0;
   nsamples = 75;
   instability_fix = 1;
   
@@ -184,7 +196,11 @@ void FreeIMU::init(bool fastmode) {
 }
 
 void FreeIMU::RESET() {
-	accgyro.reset();
+	
+	#if HAS_MPU6050()
+		accgyro.reset();
+	#endif
+	
 	delay(50);
 	//reset matrix
 	q0 = 1.0f;
@@ -260,6 +276,7 @@ void FreeIMU::init(int accgyro_addr, bool fastmode) {
   #if HAS_ADXL345()
     // init ADXL345
     acc.init(acc_addr);
+	acc.set_bw(ADXL345_BW_100);
   #elif HAS_BMA180()
     // init BMA180
     acc.setAddress(acc_addr);
@@ -275,6 +292,8 @@ void FreeIMU::init(int accgyro_addr, bool fastmode) {
   #if HAS_ITG3200()
   // init ITG3200
   gyro.init(gyro_addr);
+  delay(1000);
+  gyro.setFilterBW(BW020_SR1);
   delay(1000);
   // calibrate the ITG3200
   gyro.zeroCalibrate(128,5);
@@ -316,7 +335,14 @@ void FreeIMU::init(int accgyro_addr, bool fastmode) {
   #if HAS_MS5611()
     baro.init(FIMU_BARO_ADDR);
   #endif
-    
+
+  #if HAS_BMP085()
+	// 19.8 meters for my location, true = using meter units
+    // this initialization is useful if current altitude is known,
+    // pressure will be calculated based on TruePressure and known altitude.	
+	baro085.init(3, 1981.6469, true);  
+  #endif
+  
   // zero gyro
    zeroGyro();
   
@@ -380,7 +406,7 @@ void FreeIMU::calLoad() {
 */
 void FreeIMU::getRawValues(int * raw_values) {
     //Set raw values for Magnetometer, Press, Temp to 0 in case you are only using
-	//an accelerometer
+	//an accelerometer and gyro
 	//raw_values[9] will be set to MPU-6050 temp, see zeroGyro to change raw_values dimension
     raw_values[6] = 0;
     raw_values[7] = 0;
@@ -391,11 +417,11 @@ void FreeIMU::getRawValues(int * raw_values) {
     acc.readAccel(&raw_values[0], &raw_values[1], &raw_values[2]);
     gyro.readGyroRaw(&raw_values[3], &raw_values[4], &raw_values[5]);
   #else
-    #ifdef __AVR_ATmega128__
+    #ifdef __AVR__
      accgyro.getMotion6(&raw_values[0], &raw_values[1], &raw_values[2], &raw_values[3], &raw_values[4], &raw_values[5]);  	  
      rt = accgyro.getTemperature();	  
      raw_values[9] = rt;	 
-	 #elserese
+	 #else
       int16_t ax, ay, az, gx, gy, gz, rt;
       accgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
       raw_values[0] = ax;
@@ -408,18 +434,27 @@ void FreeIMU::getRawValues(int * raw_values) {
       raw_values[9] = rt;
     #endif
   #endif
+   
   #if HAS_HMC5883L()
     magn.getValues(&raw_values[6], &raw_values[7], &raw_values[8]);
   #endif
   
   #if HAS_MS5611()
     int temp, press;
-    
     //TODO: possible loss of precision
     temp = baro.rawTemperature(MS561101BA_OSR_4096);
     press = baro.rawPressure(MS561101BA_OSR_4096);
-  # endif
+  #endif
+  
+  #if HAS_BMP085()
+    long temp, press;
+	baro085.getPressure(&Pressure);
+	baro085.getTemperature(&Temperature); 
+	temp = Temperature * 0.1;
+	press = Pressure * 0.01;
+  #endif
 }
+
 
 /**
  * Populates values with calibrated readings from the sensors
@@ -429,17 +464,21 @@ void FreeIMU::getValues(float * values) {
   float acgyro_corr[9] = {0.,0.,0.,0.,0.,0.,0.,0.,0.};
   int16_t DTemp;
   
-  if(temp_corr_on == 1) {
-	DTemp = accgyro.getTemperature();
-	if(DTemp < temp_break){    
-		for(int i = 0; i < 9; i++) { 
-			acgyro_corr[i] = c3[i]*(DTemp*DTemp*DTemp) + c2[i]*(DTemp*DTemp) + c1[i]*DTemp + c0[i];
+  #if HAS_MPU6050()
+	if(temp_corr_on == 1) {
+		DTemp = accgyro.getTemperature();
+		if(DTemp < temp_break){    
+			for(int i = 0; i < 9; i++) { 
+				acgyro_corr[i] = c3[i]*(DTemp*DTemp*DTemp) + c2[i]*(DTemp*DTemp) + c1[i]*DTemp + c0[i];
+			}
 		}
-	}
-	else {
-		float acgyro_corr[9] = {0.,0.,0.,0.,0.,0.,0.,0.,0.};
-	}
-  }
+		else {
+			for(int i = 0; i < 9; i++) { 
+				acgyro_corr[i] = 0.0;
+			}
+		}
+    }
+  #endif
   
   #if HAS_ITG3200()
     int accval[3];
@@ -490,7 +529,7 @@ void FreeIMU::getValues(float * values) {
   #if HAS_HMC5883L()
     magn.getValues(&values[6]);
     // calibration
-	if(DTemp < temp_break) {
+	if(temp_corr_on == 1) {
 		values[6] = (values[6] - acgyro_corr[6] - magn_off_x) / magn_scale_x;
 		values[7] = (values[7] - acgyro_corr[7] - magn_off_y) / magn_scale_y;
 		values[8] = (values[8] - acgyro_corr[8] - magn_off_z) / magn_scale_z;
@@ -696,33 +735,60 @@ void FreeIMU::getQ(float * q) {
 
 const float def_sea_press = 1013.25;
 
-/**
- * Returns an altitude estimate from baromether readings only using sea_press as current sea level pressure
-*/
-float FreeIMU::getBaroAlt(float sea_press) {
-  float temp = baro.getTemperature(MS561101BA_OSR_4096);
-  float press = baro.getPressure(MS561101BA_OSR_4096);
-  return ((pow((sea_press / press), 1/5.257) - 1.0) * (temp + 273.15)) / 0.0065;
-}
+  #if HAS_MS5611()
+	/**
+	* Returns an altitude estimate from baromether readings only using sea_press as current sea level pressure
+	*/
+	float FreeIMU::getBaroAlt(float sea_press) {
+		float temp = baro.getTemperature(MS561101BA_OSR_4096);
+		float press = baro.getPressure(MS561101BA_OSR_4096);
+		return ((pow((sea_press / press), 1/5.257) - 1.0) * (temp + 273.15)) / 0.0065;
+	}
 
-// Returns temperature from MS5611 - added by MJS
-float FreeIMU::getBaroTemperature() {
-  float temp1 = baro.getTemperature(MS561101BA_OSR_4096);
-  return(temp1);
-}
+	// Returns temperature from MS5611 - added by MJS
+	float FreeIMU::getBaroTemperature() {
+		float temp1 = baro.getTemperature(MS561101BA_OSR_4096);
+		return(temp1);
+	}
 
-float FreeIMU::getBaroPressure() {
-  float temp2 = baro.getPressure(MS561101BA_OSR_4096);
-  return(temp2);
-}
+	float FreeIMU::getBaroPressure() {
+		float temp2 = baro.getPressure(MS561101BA_OSR_4096);
+		return(temp2);
+	}
 
-/**
- * Returns an altitude estimate from baromether readings only using a default sea level pressure
-*/
-float FreeIMU::getBaroAlt() {
-  return getBaroAlt(def_sea_press);
-}
+	/**
+	* Returns an altitude estimate from baromether readings only using a default sea level pressure
+	*/
+	float FreeIMU::getBaroAlt() {
+		return getBaroAlt(def_sea_press);
+	}
 
+  #endif
+
+  #if HAS_BMP085()
+
+	// Returns temperature from MS5611 - added by MJS
+	float FreeIMU::getBaroTemperature() {
+		baro085.getTemperature(&Temperature);
+		float temp1 = Temperature * 0.1;		
+		return(temp1);
+	}
+
+	float FreeIMU::getBaroPressure() {
+		baro085.getPressure(&Pressure);
+		float temp2 = Pressure * 0.01;
+		return(temp2);
+	}
+
+	/**
+	* Returns an altitude estimate from baromether readings only using a default sea level pressure
+	*/
+	float FreeIMU::getBaroAlt() {
+		baro085.getAltitude(&Altitude);
+		return Altitude * 0.01;
+	}
+	
+  #endif
 
 /**
  * Compensates the accelerometer readings in the 3D vector acc expressed in the sensor frame for gravity

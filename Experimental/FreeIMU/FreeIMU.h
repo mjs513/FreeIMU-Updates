@@ -40,7 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define SEN_10183 //9 Degrees of Freedom - Sensor Stick  SEN-10183 http://www.sparkfun.com/products/10183
 //#define ARDUIMU_v3 //  DIYDrones ArduIMU+ V3 http://store.diydrones.com/ArduIMU_V3_p/kt-arduimu-30.htm or https://www.sparkfun.com/products/11055
 //#define GEN_MPU6050 // Generic MPU6050 breakout board. Compatible with GY-521, SEN-11028 and other MPU6050 wich have the MPU6050 AD0 pin connected to GND.
-//#define SEN_1040 //DFROBOT 10 DOF IMU
+//#define DFROBOT  //DFROBOT 10DOF SEN-1040 IMU
 
 #define DISABLE_MAGN // Uncomment this line to disable the magnetometer in the sensor fusion algorithm
 
@@ -83,24 +83,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #define FREEIMU_ID "SparkFun 10183"
 #elif defined(ARDUIMU_v3)
   #define FREEIMU_ID "DIY Drones ArduIMU+ V3"
-#elif defined(SEN_1040)
-  #define FREEIMU_ID "DFROBOT 1040"
+#elif defined(DFROBOT)
+  #define FREEIMU_ID "DFROBOT"
+#elif defined(GEN_MPU6050)
+  #define FREEIMU_ID "GEN MPU6050"
 #endif
 
 
-
-#define HAS_ITG3200() (defined(SEN_1040) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) || defined(SEN_10121) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183))
-#define HAS_ADXL345() (defined(SEN_1040) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(SEN_10121) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183))
+#define HAS_ITG3200() (defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) || defined(SEN_10121) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183))
+#define HAS_ADXL345() (defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(SEN_10121) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183))
 #define HAS_BMA180() (defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP))
 #define HAS_MPU6050() (defined(FREEIMU_v04) || defined(GEN_MPU6050))
 #define HAS_MS5611() (defined(FREEIMU_v035_MS) || defined(FREEIMU_v04) || defined(SEN_10724))
-#define HAS_HMC5883L() (defined(SEN_1040) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183)  || defined(ARDUIMU_v3))
+#define HAS_BMP085() (defined(DFROBOT))
+#define HAS_HMC5883L() (defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183)  || defined(ARDUIMU_v3))
 #define HAS_MPU6000() (defined(ARDUIMU_v3))
 
-#define IS_6DOM() (defined(SEN_10121) || defined(GEN_MPU6050))
-#define IS_9DOM() (defined(SEN_1040) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183) || defined(ARDUIMU_v3))
-#define HAS_AXIS_ALIGNED() (defined(SEN_1040) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10121) || defined(SEN_10736))
 
+#define IS_6DOM() (defined(SEN_10121) || defined(GEN_MPU6050))
+#define IS_9DOM() (defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183) || defined(ARDUIMU_v3))
+#define HAS_AXIS_ALIGNED() (defined(GEN_MPU6050) || defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10121) || defined(SEN_10736))
 
 
 #include <Wire.h>
@@ -137,6 +139,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #define FIMU_ACCGYRO_ADDR MPU60X0_DEFAULT_SS_PIN
 #endif
 
+#if HAS_BMP085()
+  #include <BMP085.h>
+#endif
 
 #if HAS_MS5611()
   #include <MS561101BA.h>
@@ -159,14 +164,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define FIMU_ITG3200_DEF_ADDR ITG3200_ADDR_AD0_LOW // AD0 connected to GND
 // HMC5843 address is fixed so don't bother to define it
 
+// proportional gain governs rate of convergence to accelerometer/magnetometer
 //twoKpDef changed to xx from 0.5 based on trial and error using new
 //temperature correction method
-#define twoKpDef  (2.0f * 0.75f) // 2 * proportional gain
+#define twoKpDef  (2.0f * 0.75f) // 2 * proportional gain 
+
+// integral gain governs rate of convergence of gyroscope biases
 //twoKiDef changed from 0.1 to 0f to match the values in Sebastian Madgwicks
 //twoKiDef changed from 0f to 0.0025f based on article in DIYDrones
 //twoKiDef changed to .1625 as a result of corrected temp - 1/4/14
 //updated code
-#define twoKiDef  (2.0f * 0.1625f) // 2 * integral gain
+#define twoKiDef  (2.0f * 0.1625f) // 2 * proportional gain
 
 
 #ifndef cbi
@@ -206,6 +214,14 @@ class FreeIMU
 	  float getBaroTemperature();
 	  float getBaroPressure();
     #endif
+	
+    #if HAS_BMP085()
+      float getBaroAlt();
+	  float getBaroTemperature();
+	  float getBaroPressure();
+    #endif	
+	
+	
     void gravityCompensateAcc(float * acc, float * q);
     
     // we make them public so that users can interact directly with device classes
@@ -232,8 +248,11 @@ class FreeIMU
     #if HAS_MS5611()
       MS561101BA baro;
     #endif
-    
-    
+	
+	#if HAS_BMP085()
+      BMP085 baro085;
+    #endif	
+      
     int* raw_acc, raw_gyro, raw_magn;
     // calibration parameters
     int16_t gyro_off_x, gyro_off_y, gyro_off_z;

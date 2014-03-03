@@ -312,8 +312,8 @@ void draw() {
   //text(nfp(degrees(Euler[1]),3,2), xLevelObj-40, yLevelObj + 75);
   //text(nfp(degrees(Euler[2]),3,2), xLevelObj-40, yLevelObj + 135);
   //text(nfp(degrees(Euler[0]),3,2), xLevelObj-40, yLevelObj + 195);
-  text(nfp(degrees(ypr[1]),3,2), xLevelObj-40, yLevelObj + 75);
-  text(nfp(degrees(ypr[2]),3,2), xLevelObj-40, yLevelObj + 135);
+  text(nfp(degrees(Euler[1]),3,2), xLevelObj-40, yLevelObj + 75);
+  text(nfp(degrees(Euler[2]),3,2), xLevelObj-40, yLevelObj + 135);
   text(nfp(degrees(Euler[0]),3,2), xLevelObj-40, yLevelObj + 195);
   
   textFont(font, 18);
@@ -321,10 +321,10 @@ void draw() {
   noFill();
   stroke(204, 102, 0);
   rect(10, 17, 145, 95, 7);
-  //angx = Euler[2];
-  //angy = Euler[1];
-  angx = ypr[2];
-  angy = ypr[1];
+  angx = Euler[2];
+  angy = Euler[1];
+  //angx = ypr[2];
+  //angy = ypr[1];
   
   float head1 = iround(heading,1);
   corr_heading = clamp360(head1+declinationAngle);

@@ -7,9 +7,10 @@
 #include <HMC58X3.h>
 #include <ITG3200.h>
 #include <MS561101BA.h>
+#include <BMP085.h>
 #include <I2Cdev.h>
 #include <MPU60X0.h>
-#include <LSM303.h>
+
 #include <EEPROM.h>
 #include <Wire.h>
 #include <SPI.h>
@@ -19,7 +20,7 @@
 #include "CommunicationUtils.h"
 #include "FreeIMU.h"
 
-#define Has_LSM303 1
+#define Has_LSM303 0
 
 #include "FilteringScheme.h"
 
@@ -37,6 +38,7 @@ float val_array[17];
 FreeIMU my3IMU = FreeIMU();
 
 #if Has_LSM303
+  #include <LSM303.h>
   //Set up tilt corrected LSM303D
   LSM303 compass;
   float declinationAngle = 0.229622;
@@ -44,7 +46,7 @@ FreeIMU my3IMU = FreeIMU();
 #endif
 
 //The command from the PC
-char cmd;
+char cmd, tempCorr;
 
 void setup() {
   Serial.begin(38400);
@@ -83,14 +85,11 @@ void setup() {
      //compass.m_max = (LSM303::vector<int16_t>){+3370, +2903, +3074};
      compass.m_min = (LSM303::vector<int16_t>){-2815, -3090, -2958};
      compass.m_max = (LSM303::vector<int16_t>){+2946, +2654, +2734};
-
-
   #endif
   
   // LED
   pinMode(13, OUTPUT);
 }
-
 
 void loop() {
   if(Serial.available()) {
@@ -108,6 +107,14 @@ void loop() {
     }
     else if(cmd=='2'){
       my3IMU.RESET_Q();           
+    }
+    else if(cmd=='t'){
+      //available opttions temp_corr_on, instability_fix
+      my3IMU.setTempCalib(1);   
+    }
+    else if(cmd=='f'){
+      //available opttions temp_corr_on, instability_fix
+      my3IMU.setTempCalib(0);
     }    
     else if(cmd=='r') {
       uint8_t count = serial_busy_wait();
@@ -115,7 +122,7 @@ void loop() {
         my3IMU.getRawValues(raw_values);
         sprintf(str, "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,", raw_values[0], raw_values[1], raw_values[2], raw_values[3], raw_values[4], raw_values[5], raw_values[6], raw_values[7], raw_values[8], raw_values[9]);
         Serial.print(str);
-        #if HAS_MS5611()
+        #if (HAS_MS5611() || HAS_BMP085())
           Serial.print(my3IMU.getBaroTemperature()); Serial.print(",");
           Serial.print(my3IMU.getBaroPressure()); Serial.print(",");
         #endif
@@ -140,6 +147,11 @@ void loop() {
         #if IS_9DOM()
           my3IMU.magn.getValues(&raw_values[0], &raw_values[1], &raw_values[2]);
           writeArr(raw_values, 3, sizeof(int));
+         #else
+          raw_values[0] = 0;
+          raw_values[1] = 0;
+          raw_values[2] = 0;
+          writeArr(raw_values, 3, sizeof(int));
         #endif
         Serial.println();
       }
@@ -157,6 +169,7 @@ void loop() {
       uint8_t count = serial_busy_wait();
       for(uint8_t i=0; i<count; i++) {
         my3IMU.getQ(q);
+	val_array[15] = my3IMU.sampleFreq;        
         my3IMU.getValues(val);
         val_array[7] = (val[3] * M_PI/180);
         val_array[8] = (val[4] * M_PI/180);
@@ -171,14 +184,14 @@ void loop() {
         val_array[1] = (q[1]);
         val_array[2] = (q[2]);
         val_array[3] = (q[3]);
-        val_array[15] = millis();
-		
+        //val_array[15] = millis();
+
         #if Has_LSM303
            compass.read();
            val_array[16] = compass.heading();
         #endif
 		
-        #if HAS_MS5611() 
+        #if (HAS_MS5611() || HAS_BMP085())
            // with baro
            val_array[13] = (my3IMU.getBaroTemperature());
            val_array[14] = (my3IMU.getBaroPressure());
@@ -193,6 +206,7 @@ void loop() {
       uint8_t count = serial_busy_wait();
       for(uint8_t i=0; i<count; i++) {
         my3IMU.getQ(q);
+        val_array[15] = my3IMU.sampleFreq;
         my3IMU.getValues(val);        
 	val_array[7] = (val[3] * M_PI/180);
 	val_array[8] = (val[4] * M_PI/180);
@@ -207,14 +221,14 @@ void loop() {
 	val_array[1] = kFilters[1].measureRSSI(q[1]);
 	val_array[2] = kFilters[2].measureRSSI(q[2]);
 	val_array[3] = kFilters[3].measureRSSI(q[3]);
-	val_array[15] = millis();
+	//val_array[15] = millis();
 		
         #if Has_LSM303
 	   compass.read();
            val_array[16] = compass.heading();
         #endif
 
-	#if HAS_MS5611() 
+	#if (HAS_MS5611() || HAS_BMP085())
 	// with baro
 	   val_array[13] = (my3IMU.getBaroTemperature());
 	   val_array[14] = (my3IMU.getBaroPressure());
