@@ -31,12 +31,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define FREEIMU_v035
 //#define FREEIMU_v035_MS
 //#define FREEIMU_v035_BMP
-#define FREEIMU_v04
+//#define FREEIMU_v04
 
 // 3rd party boards. Please consider donating or buying a FreeIMU board to support this library development.
 //#define SEN_10121 //IMU Digital Combo Board - 6 Degrees of Freedom ITG3200/ADXL345 SEN-10121 http://www.sparkfun.com/products/10121
 //#define SEN_10736 //9 Degrees of Freedom - Razor IMU SEN-10736 http://www.sparkfun.com/products/10736/
-//#define SEN_10724 //9 Degrees of Freedom - Sensor Stick SEN-10724 http://www.sparkfun.com/products/10724
+#define SEN_10724 //9 Degrees of Freedom - Sensor Stick SEN-10724 http://www.sparkfun.com/products/10724
 //#define SEN_10183 //9 Degrees of Freedom - Sensor Stick  SEN-10183 http://www.sparkfun.com/products/10183
 //#define ARDUIMU_v3 //  DIYDrones ArduIMU+ V3 http://store.diydrones.com/ArduIMU_V3_p/kt-arduimu-30.htm or https://www.sparkfun.com/products/11055
 //#define GEN_MPU6050 // Generic MPU6050 breakout board. Compatible with GY-521, SEN-11028 and other MPU6050 wich have the MPU6050 AD0 pin connected to GND.
@@ -94,7 +94,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define HAS_ADXL345() (defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(SEN_10121) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183))
 #define HAS_BMA180() (defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP))
 #define HAS_MPU6050() (defined(FREEIMU_v04) || defined(GEN_MPU6050))
-#define HAS_MS5611() (defined(FREEIMU_v035_MS) || defined(FREEIMU_v04) || defined(SEN_10724))
+#define HAS_MS5611() (defined(FREEIMU_v035_MS) || defined(FREEIMU_v04))
 #define HAS_BMP085() (defined(DFROBOT))
 #define HAS_HMC5883L() (defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183)  || defined(ARDUIMU_v3))
 #define HAS_MPU6000() (defined(ARDUIMU_v3))

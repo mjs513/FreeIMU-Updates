@@ -5,6 +5,7 @@
 #include <ADXL345.h>
 #include <bma180.h>
 #include <HMC58X3.h>
+#include <LSM303.h>
 #include <ITG3200.h>
 #include <MS561101BA.h>
 #include <BMP085.h>
@@ -38,7 +39,7 @@ float val_array[17];
 FreeIMU my3IMU = FreeIMU();
 
 #if Has_LSM303
-  #include <LSM303.h>
+
   //Set up tilt corrected LSM303D
   LSM303 compass;
   float declinationAngle = 0.229622;

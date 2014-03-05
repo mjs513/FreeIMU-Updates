@@ -579,8 +579,10 @@ void  FreeIMU::AHRSupdate(float gx, float gy, float gz, float ax, float ay, floa
 void  FreeIMU::AHRSupdate(float gx, float gy, float gz, float ax, float ay, float az) {
 #endif
   float recipNorm;
-  float q0q0, q0q1, q0q2, q0q3, q1q1, q1q2, q1q3, q2q2, q2q3, q3q3;
-  float halfex = 0.0f, halfey = 0.0f, halfez = 0.0f;
+  float q0q0, q0q1, q0q2, q0q3, q1q1, q1q2, q1q3, q2q2, q2q3, q3q3;  
+  float hx, hy, bx, bz;
+  float halfvx, halfvy, halfvz, halfwx, halfwy, halfwz;
+  float halfex, halfey, halfez;
   float qa, qb, qc;
 
   // Auxiliary variables to avoid repeated arithmetic
@@ -611,17 +613,22 @@ void  FreeIMU::AHRSupdate(float gx, float gy, float gz, float ax, float ay, floa
     hx = 2.0f * (mx * (0.5f - q2q2 - q3q3) + my * (q1q2 - q0q3) + mz * (q1q3 + q0q2));
     hy = 2.0f * (mx * (q1q2 + q0q3) + my * (0.5f - q1q1 - q3q3) + mz * (q2q3 - q0q1));
     bx = sqrt(hx * hx + hy * hy);
-    bz = 2.0f * (mx * (q1q3 - q0q2) + my * (q2q3 + q0q1) + mz * (0.5f - q1q1 - q2q2));
-    
-    // Estimated direction of magnetic field
+    bz = 2.0f * (mx * (q1q3 - q0q2) + my * (q2q3 + q0q1) + mz * (0.5f - q1q1 - q2q2));   
+
+	// Estimated direction of gravity and magnetic field
+	halfvx = q1q3 - q0q2;
+	halfvy = q0q1 + q2q3;
+	halfvz = q0q0 - 0.5f + q3q3;
     halfwx = bx * (0.5f - q2q2 - q3q3) + bz * (q1q3 - q0q2);
     halfwy = bx * (q1q2 - q0q3) + bz * (q0q1 + q2q3);
-    halfwz = bx * (q0q2 + q1q3) + bz * (0.5f - q1q1 - q2q2);
+    halfwz = bx * (q0q2 + q1q3) + bz * (0.5f - q1q1 - q2q2);  
+	
     
-    // Error is sum of cross product between estimated direction and measured direction of field vectors
-    halfex = (my * halfwz - mz * halfwy);
-    halfey = (mz * halfwx - mx * halfwz);
-    halfez = (mx * halfwy - my * halfwx);
+	// Error is sum of cross product between estimated direction and measured direction of field vectors
+	halfex = (ay * halfvz - az * halfvy) + (my * halfwz - mz * halfwy);
+	halfey = (az * halfvx - ax * halfvz) + (mz * halfwx - mx * halfwz);
+	halfez = (ax * halfvy - ay * halfvx) + (mx * halfwy - my * halfwx);
+
   }
   #endif
 
@@ -641,9 +648,13 @@ void  FreeIMU::AHRSupdate(float gx, float gy, float gz, float ax, float ay, floa
     halfvz = q0q0 - 0.5f + q3q3;
   
     // Error is sum of cross product between estimated direction and measured direction of field vectors
-    halfex += (ay * halfvz - az * halfvy);
-    halfey += (az * halfvx - ax * halfvz);
-    halfez += (ax * halfvy - ay * halfvx);
+    //halfex += (ay * halfvz - az * halfvy);
+    //halfey += (az * halfvx - ax * halfvz);
+    //halfez += (ax * halfvy - ay * halfvx);
+	halfex = (ay * halfvz - az * halfvy);
+	halfey = (az * halfvx - ax * halfvz);
+	halfez = (ax * halfvy - ay * halfvx);
+	
   }
 
   // Apply feedback only when valid data has been gathered from the accelerometer or magnetometer
