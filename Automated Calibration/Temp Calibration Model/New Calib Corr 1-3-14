@@ -1,0 +1,156 @@
+require(TTR)
+require(pracma)
+setwd("C:/Users/CyberMerln/Desktop/Arduino=Processing Development/MPU-6050 Temp Profiles")
+data <- read.csv("Tempdata-lowtemp-w-magn2.csv")
+Press = data$Press
+Temp = data$Temp
+Rtemp = data$dTemp
+Ax = data$Ax
+Ay = data$Ay
+Az = data$Az
+Gx = data$Gx
+Gy = data$Gy
+Gz = data$Gz
+Ix = data$Ix
+Iy = data$Iy
+Iz = data$Iz
+Time = data$Time
+DieTemp = Rtemp /340 + 36.53
+require(TTR)
+require(pracma)
+setwd("C:/Users/CyberMerln/Desktop/Arduino=Processing Development")
+data <- read.csv("Tempdata01-02-14.csv")
+Press = data$Press
+Temp = data$Temp
+Rtemp = data$dTemp
+Ax = data$Ax
+Ay = data$Ay
+Az = data$Az
+Gx = data$Gx
+Gy = data$Gy
+Gz = data$Gz
+Ix = data$Ix
+Iy = data$Iy
+Iz = data$Iz
+Time = data$Time
+DieTemp = Rtemp /340 + 36.53
+plot(Rtemp, Az)
+grid()
+abline(h=16518, col="red")
+abline(h=-16518, col="red")
+abline(h=-16518, col="blue")
+abline(h=15872, col="blue")
+abline(h=15881, col="blue")
+azfit = -1.618180e-09*Rtemp^3 -1.899410e-05*Rtemp^2 -1.462879e-01*Rtemp + 1.558942e+04-15881
+plot(Rtemp, azfit)
+plot(Rtemp, az-azfit)
+plot(Rtemp, Az-azfit)
+grid()
+ablint(v=15881,col="red")
+abline(v=15881,col="red")
+mean(Az-azfit)
+plot(Rtemp, Az-azfit+622)
+grid()
+mean(Az-azfit+622)
+azfit = -1.618180e-09*Rtemp^3 -1.899410e-05*Rtemp^2 -1.462879e-01*Rtemp + 1.558942e+04-15865
+plot(Rtemp, Az-azfit+622)
+grid()
+mean(Az-azfit+622)
+azfit = -1.618180e-09*Rtemp^3 -1.899410e-05*Rtemp^2 -1.462879e-01*Rtemp + 1.558942e+04-15895
+grid()
+mean(Az-azfit+622)
+ayfit =  -7.104300e-08*Rtemp^2 -5.200081e-03*Rtemp+  7.382063e+01-87.5
+plot(Rtemp, Ay-ayfit-119)
+mean(Ay-ayfit-119)
+ayfit =  -7.104300e-08*Rtemp^2 -5.200081e-03*Rtemp+  7.382063e+01-119
+mean(Ay-ayfit-119)
+axfit = 4.798083e-07*Rtemp^2+ 1.801522e-02*Rtemp+ 1.173944e+02-71.8
+plot(Rtemp, Ax-axfit-163
+)
+grid()
+mean(Ax-axfit-163)
+axfit = 4.798083e-07*Rtemp^2+ 1.801522e-02*Rtemp+ 1.173944e+02-163
+plot(Rtemp, Ax-axfit-163)
+mean(Ax-axfit-163)
+gxfit = Gx - 8.14845
+plot(Rtemp, gxfit)
+grid()
+gxfit = Gx - 7.97
+plot(Rtemp, gxfit)
+gxfit = Gx - 8.5
+plot(Rtemp, gxfit)
+gxfit = -4.387634e-08*Rtemp**2 -5.878346e-04*Rtemp+  6.699801e+00
+plot(Rtemp, Gx-gxfit)
+grid()
+plot(Rtemp, Ix)
+plot(Rtemp, Ix-27)
+grid()
+plot(Rtemp, Ix)
+plot(Rtemp, Iz)
+plot(Rtemp, Ax-axfit-163)
+grid()
+mean(Ax-axfit-163)
+plot(Rtemp, Ax-axfit)
+grid()
+mean(Ax-axfit)
+plot(Rtemp, Ix)
+abline(h=-93,col="red")
+p <- polyfit(Rtemp, Ix, 2)
+yf <- polyval(p,Rtemp)
+lines(Rtemp, yf, col="green")
+p
+lines(Rtemp, yf, col="blue")
+x11()
+plot(Rtemp, DieTemp)
+grid()
+ixfit = 6.166144e-09*Rtemp^2+  8.186348e-04*Rtemp -9.083109e+01
+plot(Rtemp, Ix-ixfit+93.004
+)
+abline(h=-93,col="red")
+plot(Rtemp, Ix-ixfit)
+plot(Rtemp, Ix-ixfit-93.004)
+plot(Rtemp, Ix)
+abline(h=-93,col="red")
+p <- polyfit(Rtemp, Ix, 3)
+yf <- polyval(p,Rtemp)
+lines(Rtemp, yf, col="green")
+p
+plot(Rtemp, Iy)
+abline(h=-253.64, col="red")
+p <- polyfit(Rtemp, Ix, 2)
+yf <- polyval(p,Rtemp)
+lines(Rtemp, yf, col="green")
+p
+p <- polyfit(Rtemp, Iy, 2)
+yf <- polyval(p,Rtemp)
+lines(Rtemp, yf, col="green")
+p
+p <- polyfit(Rtemp, Iy, 3)
+yf <- polyval(p,Rtemp)
+lines(Rtemp, yf, col="blue")
+p
+grid()
+abline(h=-253.458, col="red")
+abline(h=-253.266, col="red")
+iyfit = 4.833303e-08*Rtemp^2+  3.763355e-03*Rtemp -2.437029e+02
+plot(Rtemp, Iy-iyfit-253.266)
+abline(h=-253.266, col="red")
+plot(Rtemp, Iz)
+abline(h=-562.668,col="red")
+p <- polyfit(Rtemp, Iz, 2)
+yf <- polyval(p,Rtemp)
+lines(Rtemp, yf, col="blue")
+p
+p <- polyfit(Rtemp, Iz, 3)
+yf <- polyval(p,Rtemp)
+lines(Rtemp, yf, col="red")
+p
+izfit = 7.820395e-11*Rtemp^3  1.240244e-06*Rtemp^2+  1.190119e-02*Rtemp -5.383430e+02
+izfit = 7.820395e-11*Rtemp^3 + 1.240244e-06*Rtemp^2+  1.190119e-02*Rtemp -5.383430e+02
+plot(Rtemp, Iz-izfit-562.668)
+abline(h=-562.668, col="red")
+plot(Rtemp, Iz-izfit-562.668)
+plot(Rtemp, Iz-izfit-562.529)
+abline(h=-562.529, col="red")
+plot(Rtemp, Iz-izfit-563.073)
+abline(h=-563.073, col="red")

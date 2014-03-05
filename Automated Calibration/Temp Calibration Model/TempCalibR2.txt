@@ -1,0 +1,26 @@
+require(TTR)
+require(pracma)
+
+setwd("C:/Users/CyberMerln/Desktop/Arduino=Processing Development/MPU-6050 Temp Profiles/Cal Files 1-3-14")
+
+data <- read.csv("Tempdata01-02-14.csv")
+
+Press = data$Press
+Temp = data$Temp
+Rtemp = data$dTemp
+Ax = data$Ax
+Ay = data$Ay
+Az = data$Az
+Gx = data$Gx
+Gy = data$Gy
+Gz = data$Gz
+Ix = data$Ix
+Iy = data$Iy
+Iz = data$Iz
+Time = data$Time
+
+DieTemp = Rtemp /340 + 36.53
+
+par(mfcol=c(3,1), mar=c(4,4,0.5,0.5), oma=c(1.5,2,1,1))
+
+

@@ -1,0 +1,114 @@
+require(TTR)
+require(pracma)
+
+setwd("C:/Users/CyberMerln/Desktop/Arduino=Processing Development/MPU-6050 Temp Profiles")
+
+data <- read.csv("Tempdata-hightemp-w-magn2.csv")
+
+Press = data$Press
+Temp = data$Temp
+Rtemp = data$dTemp
+Ax = data$Ax
+Ay = data$Ay
+Az = data$Az
+Gx = data$Gx
+Gy = data$Gy
+Gz = data$Gz
+Ix = data$Ix
+Iy = data$Iy
+Iz = data$Iz
+Time = data$Time
+
+DieTemp = Rtemp /340 + 36.53
+
+par(mfcol=c(3,1), mar=c(4,4,0.5,0.5), oma=c(1.5,2,1,1))
+
+#plot(SMA(data$Temp,100),SMA(data$Ax,100), pch="+")
+plot(Rtemp,Ax, pch="+", xlim=c(-3000, +3000))
+grid()
+lines(lowess(Rtemp, Ax), col="blue", lwd=2) 
+p <- polyfit(Rtemp, Ax, 2)
+yf <- polyval(p, Rtemp)
+lines(Rtemp, yf, col="green")
+p
+
+
+#x11()
+#plot(SMA(data$Temp,100),SMA(data$Ay,100), pch="+")
+plot(Rtemp,Ay, pch="+", xlim=c(-3000, +3000))
+grid()
+lines(lowess(Rtemp, Ay), col="blue", lwd =2) 
+p <- polyfit(Rtemp, Ay, 2)
+yf <- polyval(p, Rtemp)
+lines(Rtemp, yf, col="green")
+p
+
+
+#x11()
+#plot(SMA(data$Temp,100),SMA(data$Az,100), pch="+")
+plot(Rtemp,Az, pch="+", xlim=c(-3000, +3000))
+grid()
+lines(lowess(Rtemp, Az), col="blue", lwd =2) 
+p <- polyfit(Rtemp, Az, 2)
+yf <- polyval(p, Rtemp)
+lines(Rtemp, yf, col="green")
+p
+
+
+x11()
+
+par(mfcol=c(3,1), mar=c(4,4,0.5,0.5), oma=c(1.5,2,1,1))
+
+plot(Rtemp,Gx, pch="+", xlim=c(-3000, +3000))
+grid()
+lines(lowess(Rtemp, Gx), col="blue", lwd=2) 
+p <- polyfit(Rtemp, Gx, 2)
+yf <- polyval(p, Rtemp)
+lines(Rtemp, yf, col="green")
+p
+
+plot(Rtemp,Gy, pch="+", xlim=c(-3000, +3000))
+grid()
+lines(lowess(Rtemp, Gy), col="blue", lwd =2) 
+p <- polyfit(Rtemp, Gy, 2)
+yf <- polyval(p, Rtemp)
+lines(Rtemp, yf, col="green")
+p
+
+plot(Rtemp,Gz, pch="+", xlim=c(-3000, +3000))
+grid()
+lines(lowess(Rtemp, Gz), col="blue", lwd =2) 
+p <- polyfit(Rtemp, Gz, 2)
+yf <- polyval(p, Rtemp)
+lines(Rtemp, yf, col="green")
+p
+
+
+x11()
+
+par(mfcol=c(3,1), mar=c(4,4,0.5,0.5), oma=c(1.5,2,1,1))
+
+plot(Rtemp,Ix, pch="+", xlim=c(-3000, +3000))
+grid()
+lines(lowess(Rtemp, Ix), col="blue", lwd=2) 
+p <- polyfit(Rtemp, Ix, 2)
+yf <- polyval(p,Rtemp)
+lines(Rtemp, yf, col="green")
+p
+
+plot(Rtemp,Iy, pch="+", xlim=c(-3000, +3000))
+grid()
+lines(lowess(Rtemp, Iy), col="blue", lwd =2) 
+p <- polyfit(Rtemp, Iy, 2)
+yf <- polyval(p, Rtemp)
+lines(Rtemp, yf, col="green")
+p
+
+plot(Rtemp,Iz, pch="+", xlim=c(-3000, +3000))
+grid()
+lines(lowess(Rtemp, Iz), col="blue", lwd =2) 
+p <- polyfit(Rtemp, Iz, 2)
+yf <- polyval(p, Rtemp)
+lines(Rtemp, yf, col="green")
+p
+
