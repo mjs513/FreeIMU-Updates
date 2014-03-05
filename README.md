@@ -2,10 +2,24 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Monday, January 20, 2014
+Wednesday, March 5, 2014
 6:28 PM
+
+03-05-15
+Uploaded automated calibration code and methodology using Seb Madgwick calibration rig. His
+original paper is also posted on construction.
+
+03-04-14
+Fixed issue with increased drift when magnetometer enabled by updating Fabio's code to the Madgwick
+code posted on his X-IO website.
+
+03-02-14
+1. Default to temp correction off.
+2. Updating code as temp correction only applicable to MPU-6050 or 9150 at this point.
+3. Clarified GenMPU6050 and DFROBOT defines
+4. Added code for BMP085 altimeter
  
- 
+02-27-14	Fixed code issues with generic MPU6050 output for raw values. 
  
 10-27-2013	1. Modified incorporate temperature correction for gyro and accelerometer
 2. Corrected __AVR__ to __AVR_ATmega128__
@@ -44,7 +58,7 @@ http://www.diydrones.com/forum/topics/madgwick-imu-ahrs-and-fast-inverse-square-
  	   
 01-09-14	1. Added a Reset Quaternion matrix only - option 2 in the sketch - to allow reset of matrix after rapid movement.
  	   
- 1-20-14	Summary of Processing sketch 
+1-20-14	Summary of Processing sketch 
 1.	updated to incorporate Altitude-Accelerometer complimentary filter
 2.	motion detection indicator based on Zara-Zupt
 3.	read additional fields from Arduino sketch
