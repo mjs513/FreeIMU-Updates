@@ -59,11 +59,15 @@ Below changes were made by Michael J Smorto
 			   can get what I would consider unacceptable drift. Will also check temp calibration
 			   above cut-off (high temp range)
 			   
-02/27/14	Fixed code issues with generic MPU6050 output for raw values.
-03/02/14	1. Default to temp correction off.
+02-27-14	Fixed code issues with generic MPU6050 output for raw values.
+03-02-14	1. Default to temp correction off.
 			2. Updating code as temp correction only applicable to MPU-6050 or 9150 at this point.
 			3. Clarified GenMPU6050 and DFROBOT defines
 			4. Added code for BMP085 altimeter
+03-04-14	Fixed issue with increased drift when magnetometer enabled by updating Fabio's code to the Madgwick
+			code posted on his X-IO website.
+03-09-14	1. With the magnetometer active Kp is better at 0.5 instead of 0.75. Will adjust as appropriate.
+
 */
 
 #include <inttypes.h>
@@ -99,7 +103,7 @@ Below changes were made by Michael J Smorto
 float c3[9] = {            0.,           0., -1.618180e-09,            0.,          0.,          0.,     0., 0.,  0.};
 float c2[9] = {4.798083e-07 ,-7.104300e-08 , -1.899410e-05, -4.387634e-08, -1.779335e-08,  4.216745e-09, 0., 0., 0. };
 float c1[9] = {1.801522e-02 ,-5.200081e-03 , -1.462879e-01, -5.878346e-04,  1.172002e-03, -6.897733e-05, 0., 0., 0. };
-float c0[9] = {      -45.61 ,	     -45.18,       -305.58,  6.699801e+00,  8.341212e+00,	-2.171155e+01, 0., 0., 0. };
+float c0[9] = {      -45.61 ,	     -45.24,       -305.58,  6.699801e+00,  8.341212e+00,	-2.171155e+01, 0., 0., 0. };
 
 //float r_corr[9] = {0., 0., 0.,0.,0.,0.,0.,0.,0.};
 

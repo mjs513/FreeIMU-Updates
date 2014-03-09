@@ -21,7 +21,7 @@
 #include "CommunicationUtils.h"
 #include "FreeIMU.h"
 
-#define Has_LSM303 0
+#define Has_LSM303 1
 
 #include "FilteringScheme.h"
 
