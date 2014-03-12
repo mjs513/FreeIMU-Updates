@@ -79,7 +79,7 @@ MovingAverage accnorm_var = new MovingAverage(7);
 MovingAverage motion_detect_ma = new MovingAverage(7);
 MovingAverage accnorm_avg = new MovingAverage(5);
 
-final String serialPort = "COM14"; // replace this with your serial port. On windows you will need something like "COM1".
+final String serialPort = "COM4"; // replace this with your serial port. On windows you will need something like "COM1".
 
 float [] q = new float [4];
 float [] acc = new float [3];
@@ -186,6 +186,8 @@ int xLevelObj   = 723;        int yLevelObj   = 90+0;
 final int burst = 32;
 int count = 0;
 
+String skpath;
+
 void myDelay(int time) {
   try {
     Thread.sleep(time);
@@ -198,6 +200,8 @@ void setup()
 {
   size(VIEW_SIZE_X, VIEW_SIZE_Y, OPENGL);
   //frameRate(120);
+  
+  skpath = sketchPath("") + "/";
   
   // Create a new file in the sketch directory
   output = createWriter("IMUData.txt"); 
@@ -299,10 +303,10 @@ void draw() {
   
   text("Q:\n" + q[0] + "\n" + q[1] + "\n" + q[2] + "\n" + q[3], 20, 20);
 
-  textFont(font, 24);
+  textFont(font, 20);
   text("Pitch:\n", xLevelObj-50, yLevelObj + 45);
-  text("Roll:\n", xLevelObj-50, yLevelObj + 105);
-  text("Yaw:\n", xLevelObj-50, yLevelObj + 165);
+  text("Roll:\n", xLevelObj-50, yLevelObj + 95);
+  text("Yaw:\n", xLevelObj-50, yLevelObj + 145);
   text("Heading:\n",850,255);
   
   //text(nfp(degrees(Euler[1]),3,2) + "  " + nfp(degrees(Euler[2]),3,2), xLevelObj + 85, yLevelObj + 125);
@@ -312,9 +316,9 @@ void draw() {
   //text(nfp(degrees(Euler[1]),3,2), xLevelObj-40, yLevelObj + 75);
   //text(nfp(degrees(Euler[2]),3,2), xLevelObj-40, yLevelObj + 135);
   //text(nfp(degrees(Euler[0]),3,2), xLevelObj-40, yLevelObj + 195);
-  text(nfp(degrees(Euler[1]),3,2), xLevelObj-40, yLevelObj + 75);
-  text(nfp(degrees(Euler[2]),3,2), xLevelObj-40, yLevelObj + 135);
-  text(nfp(degrees(Euler[0]),3,2), xLevelObj-40, yLevelObj + 195);
+  text(nfp(degrees(Euler[1]),3,2), xLevelObj-40, yLevelObj + 70);
+  text(nfp(degrees(Euler[2]),3,2), xLevelObj-40, yLevelObj + 120);
+  text(nfp(degrees(Euler[0]),3,2), xLevelObj-40, yLevelObj + 170);
   
   textFont(font, 18);
   fill(#FFFF00);

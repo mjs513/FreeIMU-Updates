@@ -167,8 +167,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // proportional gain governs rate of convergence to accelerometer/magnetometer
 //twoKpDef changed to xx from 0.5 based on trial and error using new
 //temperature correction method
-//#define twoKpDef  (2.0f * 0.75f) // 2 * proportional gain 
-#define twoKpDef  (2.0f * 0.5f)
+#define twoKpDef  (2.0f * 0.75f) // 2 * proportional gain 
+
 
 // integral gain governs rate of convergence of gyroscope biases
 //twoKiDef changed from 0.1 to 0f to match the values in Sebastian Madgwicks
