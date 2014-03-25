@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define FREEIMU_v035
 //#define FREEIMU_v035_MS
 //#define FREEIMU_v035_BMP
-#define FREEIMU_v04
+//#define FREEIMU_v04
 
 // 3rd party boards. Please consider donating or buying a FreeIMU board to support this library development.
 //#define SEN_10121 //IMU Digital Combo Board - 6 Degrees of Freedom ITG3200/ADXL345 SEN-10121 http://www.sparkfun.com/products/10121
@@ -40,7 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define SEN_10183 //9 Degrees of Freedom - Sensor Stick  SEN-10183 http://www.sparkfun.com/products/10183
 //#define ARDUIMU_v3 //  DIYDrones ArduIMU+ V3 http://store.diydrones.com/ArduIMU_V3_p/kt-arduimu-30.htm or https://www.sparkfun.com/products/11055
 //#define GEN_MPU6050 // Generic MPU6050 breakout board. Compatible with GY-521, SEN-11028 and other MPU6050 wich have the MPU6050 AD0 pin connected to GND.
-//#define DFROBOT  //DFROBOT 10DOF SEN-1040 IMU
+#define DFROBOT  //DFROBOT 10DOF SEN-1040 IMU
 
 //#define DISABLE_MAGN // Uncomment this line to disable the magnetometer in the sensor fusion algorithm
 
@@ -108,6 +108,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wire.h>
 #include "Arduino.h"
 #include "calibration.h"
+#include "AP_Math_freeimu.h"
+#include <Filter.h>             // Filter library
+#include <ModeFilter.h>         // ModeFilter class (inherits from Filter class)
 
 #ifndef CALIBRATION_H
 #include <EEPROM.h>
@@ -165,18 +168,28 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // HMC5843 address is fixed so don't bother to define it
 
 // proportional gain governs rate of convergence to accelerometer/magnetometer
-//twoKpDef changed to xx from 0.5 based on trial and error using new
+//twoKpDef changed to 0.75 from 0.5 based on trial and error using new
 //temperature correction method
-#define twoKpDef  (2.0f * 0.75f) // 2 * proportional gain 
-
-
+// for dfrobot board use kp = 0.15, and ki = 0.000002
+//#define twoKpDef  (2.0f * 0.15f) // 2 * proportional gain 
 // integral gain governs rate of convergence of gyroscope biases
 //twoKiDef changed from 0.1 to 0f to match the values in Sebastian Madgwicks
 //twoKiDef changed from 0f to 0.0025f based on article in DIYDrones
 //twoKiDef changed to .1625 as a result of corrected temp - 1/4/14
 //updated code
-#define twoKiDef  (2.0f * 0.1625f) // 2 * proportional gain
-
+//#define twoKiDef  (2.0f * 0.000002f) // 2 * proportional gain
+#if defined(DFROBOT) 
+	#define twoKpDef  (2.0f * 0.05f)
+	#define twoKiDef  (2.0f * 0.000002f)
+	//#define twoKpDef  (2.0f * 0.75f)
+	//#define twoKiDef  (2.0f * 0.1625f)	
+#elif defined(FREEIMU_v04)
+	#define twoKpDef  (2.0f * 0.75f)
+	#define twoKiDef  (2.0f * 0.1625f)
+#else
+	#define twoKpDef  (2.0f * 0.75f)
+	#define twoKiDef  (2.0f * 0.1625f)
+#endif 
 
 #ifndef cbi
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
@@ -199,6 +212,7 @@ class FreeIMU
     void calLoad();
     #endif
     void zeroGyro();
+	void initGyros();
     void getRawValues(int * raw_values);
     void getValues(float * values);
     void getQ(float * q);

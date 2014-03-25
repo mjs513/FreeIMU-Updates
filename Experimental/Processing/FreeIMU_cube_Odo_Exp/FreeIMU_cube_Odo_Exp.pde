@@ -66,7 +66,7 @@ float heading_avg;
 float heading = 0;
 float oldHeading = 0.0;
 int windSize = 96;
-MovingAverage HeadingAvg = new MovingAverage(windSize);
+//MovingAverage HeadingAvg = new MovingAverage(windSize);
 
 //set motiondetect types
 float accnorm,accnorm_var_test;
@@ -79,7 +79,7 @@ MovingAverage accnorm_var = new MovingAverage(7);
 MovingAverage motion_detect_ma = new MovingAverage(7);
 MovingAverage accnorm_avg = new MovingAverage(5);
 
-final String serialPort = "COM4"; // replace this with your serial port. On windows you will need something like "COM1".
+final String serialPort = "COM14"; // replace this with your serial port. On windows you will need something like "COM1".
 
 float [] q = new float [4];
 float [] acc = new float [3];
@@ -126,6 +126,7 @@ float A;
 
 float sea_press = 1013.25;           //Input local sea level pressure
 float declinationAngle = -13.1603;   //Flushing, NY magnetic declination in degrees
+//float declinationAngle = 0;
 float STATIONALTFT = 36.0;           //LaGuardia AP measurement height
 float SEA_PRESS  = 1013.25;          //default sea level pressure level in mb
 float KNOWNALT   = 65.0;             //default known altitude, 
@@ -135,6 +136,7 @@ float FTMETERS   = 0.3048;
 float METERS2FT  = 3.2808399;
 float PI         = 3.14159;
 float deg2rads   = PI/180;
+float rad2degs    = 180/PI;
 
 //flags
 int calib = 1;             // Turn calibration on or off
@@ -255,7 +257,7 @@ void setup()
 
   while (myPort.available() > 0) {
     myPort.write("v");
-    myPort.write("1");
+    //myPort.write("1");
     myDelay(1000);
   }
   //println(myPort.readStringUntil('\n'));
@@ -332,12 +334,14 @@ void draw() {
   
   float head1 = iround(heading,1);
   corr_heading = clamp360(head1+declinationAngle);
-  HeadingAvg.newNum(corr_heading);
+  
+  //HeadingAvg.newNum(corr_heading);
   //HeadingAvg.newNum(HeadingAvgCorr(corr_heading, oldHeading));
   //oldHeading = corr_heading;
-  corr_heading = HeadingAvg.getAvg();
+  //corr_heading = HeadingAvg.getAvg();
   //text("Heading " + nfp(((corr_heading)),4,1),400,20);
   //buildCompass();
+  
   rotComp();
   
   textFont(font, 24);
@@ -445,7 +449,10 @@ void serialEvent(Serial p) {
         heading = decodeFloat(inputStringArr[16]);
         //dt = tnew - told;
         //told = tnew;
-        //getYawPitchRollRad();
+        if(heading < -9990) {
+            getYawPitchRollRad();
+            heading = rad2degs*calcMagHeading();
+        }
       }
     }
     count = count + 1;
@@ -463,13 +470,20 @@ void serialEvent(Serial p) {
             sw.start();
             println("pressed 1");
             key = '0';
+      } else if(key == 'g') {
+            myPort.clear();
+            myPort.write("g");
+            sw.start();
+            println("pressed g");
+            key = '0';            
       } else if(key == 'r') {
             myPort.clear();
             ArtHorFlg = 0;
             calib = 1;
             sea_press = 1013.25;
             setup();
-  }
+      }
+      
       if(calib == 0) {
          myPort.clear();
          myPort.write("f");
@@ -654,6 +668,38 @@ void getYawPitchRollRad() {
   ypr[2] = atan(gy / sqrt(gx*gx + gz*gz));
 }
 
+//=============================================================
+// Get heading from magnetometer if LSM303 not available
+// code extracted from rob42/FreeIMU-20121106_1323 Github library
+// (https://github.com/rob42/FreeIMU-20121106_1323.git)
+// which is based on 
+//
+//=========================================================
+float calcMagHeading(){
+  float Head_X;
+  float Head_Y;
+  float cos_roll;
+  float sin_roll;
+  float cos_pitch;
+  float sin_pitch;
+  
+  cos_roll = cos(-ypr[2]);
+  sin_roll = sin(-ypr[2]);
+  cos_pitch = cos(ypr[1]);
+  sin_pitch = sin(ypr[1]);
+  
+  //Example calc
+  //Xh = bx * cos(theta) + by * sin(phi) * sin(theta) + bz * cos(phi) * sin(theta)
+  //Yh = by * cos(phi) - bz * sin(phi)
+  //return wrap((atan2(-Yh, Xh) + variation))
+    
+  // Tilt compensated Magnetic field X component:
+  Head_X = magn[0]*cos_pitch+magn[1]*sin_roll*sin_pitch+magn[2]*cos_roll*sin_pitch;
+  // Tilt compensated Magnetic field Y component:
+  Head_Y = magn[1]*cos_roll-magn[2]*sin_roll;
+  // Magnetic Heading
+  return(atan2(-Head_Y,-Head_X)); 
+}
 
 //=============================================================
 // converted from Michael Shimniok Data Bus code

@@ -228,12 +228,12 @@ public class ControlFrame extends PApplet {
        .setFont(createFont("Arial bold", 14));   
     cp5.addSlider("Max Ang")
        .setSize(100,20)
-       .setRange(90, 180)
+       .setRange(0, 180)
        .setNumberOfTickMarks(32)
        .setPosition(140,40);
     cp5.addSlider("Min Ang")
        .setSize(100,20)
-       .setRange(-180, -90)
+       .setRange(-180, 0)
        .setNumberOfTickMarks(32)
        .setPosition(310,40);
          
@@ -261,8 +261,8 @@ public class ControlFrame extends PApplet {
                 .addItem("Mx", 21)
                 .addItem("My", 22)
                 .addItem("Mz", 23)
-                .addItem("Alt", 23)
                 .addItem("Ta", 23)
+                .addItem("Alt", 23)
                 ;       
    
   }
@@ -331,7 +331,7 @@ public class ControlFrame extends PApplet {
               break;
             case 10:
               g.addTrace(A1);
-              break;            
+              break;          
             default: 
               g.addTrace(r);
               g.addTrace(r2);

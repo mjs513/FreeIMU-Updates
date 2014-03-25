@@ -7,8 +7,7 @@ public float MotionDetect() {
     ################################################################### */
     accnorm = (acc[0]*acc[0]+acc[1]*acc[1]+acc[2]*acc[2]);
     //if((accnorm >=0.96) && (accnorm <= 0.99)){
-    // 0.995
-    if((accnorm >=0.94) && (accnorm <= 1.03)){  
+    if((accnorm >=0.96) && (accnorm <= 0.995)){  
         accnorm_test = 0;
     } else {
         accnorm_test = 1; }
@@ -22,7 +21,7 @@ public float MotionDetect() {
     #
     ##################################################################### */
     accnorm_var.newNum(sq(accnorm-accnorm_avg.getAvg()));
-    if(accnorm_var.getAvg() < 0.0005) {
+    if(accnorm_var.getAvg() < 0.00025) {
         accnorm_var_test = 0;
     }else {
         accnorm_var_test = 1; }
@@ -32,18 +31,17 @@ public float MotionDetect() {
     #   angular rate analysis in order to disregard linear acceleration
     #
     ################################################################### */
-    //0, 0.00215, 0.00215
-    if ((gyro[0] >=-0.005) && (gyro[0] <= 0.005)) {
+    if ((gyro[0] >=-0.0024) && (gyro[0] <= 0.0)) {
         omegax = 0;
     } else {
         omegax = 1; }
         
-    if((gyro[1] >= -0.005) && (gyro[1] <= 0.005)) {
+    if((gyro[1] >= -0.0012) && (gyro[1] <= 0.00215)) {
         omegay = 0;
     } else {
         omegay = 1; }
         
-    if((gyro[2] >= -0.005) && (gyro[2] <= 0.005)) {
+    if((gyro[2] >= -0.0012) && (gyro[2] <= 0.00215)) {
         omegaz = 0;
     } else {
         omegaz = 1; }
