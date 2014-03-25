@@ -67,9 +67,21 @@ Below changes were made by Michael J Smorto
 03-04-14	Fixed issue with increased drift when magnetometer enabled by updating Fabio's code to the Madgwick
 			code posted on his X-IO website.
 03-09-14	1. With the magnetometer active Kp is better at 0.5 instead of 0.75. Will adjust as appropriate.
-
+03-15-14	Tested code with magnetometer enabled for both Freeimu and DFROBOT. For the DFRobot which had the
+			ADXL345 and ITG3200 Kp and Ki had to be adjusted to 0.15 and 0.000002 respectfully. This stabilized
+			the drift but still more than the Freeimu. Code added to auto-adjust Kp and Ki depending on the board.
+03-16-14	Added LPF to accelerometer and gyro
+03-22-14	1. Added ArduPilot Gyro calibration code and modified AP_Math library calling the modifications
+			AP_Math_freeimu to identify that changes were made
+			2. Added initGyros option "g" to zero gyros from arduino code and processing sketches
+			3. Changes resulted in allowing me to put back Kp and Ki to 0.75 and 0.1625 respectfully.
+03-24-13	1. Added ArduPilot Filter library so I could implement a median filter on both the accelerometer
+			and the gyroscope when using a ADXL345 and ITG3200. Using a 10 point median filter.
+			2. Retuned Kp and Ki to 0.05 and 0.000002f, still have a bit of yaw drift. 
+			3. Added a LPF filter per guidance at http://philstech.blogspot.com/2012/04/quadcopter-accelerometer-data-filtering.html.
 */
 
+#include "Arduino.h"
 #include <inttypes.h>
 #include <stdint.h>
 //#define DEBUG
@@ -82,23 +94,7 @@ Below changes were made by Michael J Smorto
 //initialize temperature calibrations, mjs, 10/24/13
 //calibration for MPU-6050 at default scales of freeIMU
 //need to change if you use different MPU-6050 or change scales.
-
-//Temperature correction coefficients for temp limited gyro and accel
-//Ax, Ay, Az, Gx, Gy, Gz, Mx, My, Mz
-//First calibration about 4 degrees to 75 degrees C. break at -4300
-//float c3[9] = {            0., 3.468376e-10,             0.,            0.,          0.,          0.,           0.,           0.,           0.};
-//float c2[9] = {-1.043559e-06 , 9.286350e-06 , 3.079771e-06 ,-5.3689969e-08,-4.13619e-08,1.438296e-08,-4.952247e-09,-9.256070e-08,-6.978099e-08};
-//float c1[9] = {-3.251887e-03 , 7.210134e-02 , -4.360955e-02, -3.457362e-04,1.298893e-03,1.618065e-04, 2.058041e-03,-6.310647e-04, 2.753109e-03};
-//float c0[9] = {        4.6913,     -515.5508,       -222.72,     -0.779093,     6.23222,   0.06697  ,      8.33635,     -205.564,    12.241466};
-
-//Ax, Ay, Az, Gx, Gy, Gz, Mx, My, Mz
-//Reduced range of calibraion (-8500 to -3700 temp counts), break at -4000 still had some drift so
-//changed break to -2000
-//Mag cal not applied seems to make it worse
-//float c3[9] = {            0.,            0.,             0.,            0.,          0.,          0.,           0.,           0.,           0.};
-//float c2[9] = {-1.737912e-06 , 3.964816e-06 , 3.396598e-06 ,-8.600708e-08 , -5.563686e-08, 2.151368e-08, 3.720450e-08 , -1.383074e-07, -5.441653e-08 };
-//float c1[9] = {-1.069253e-02 , 4.571826e-02 , -4.080359e-02, -7.143506e-04,  1.135774e-03, 2.350448e-04, 2.508297e-03, -1.136099e-03, 2.917745e-03};
-//float c0[9] = {-15.51573     ,	     88.2226,	    -210.92,	 -1.496778,	   5.250218,	     0.5857, 9.0499511, -2.830876295, 11.8373645};
+//Mag cal not used - TBD
 
 float c3[9] = {            0.,           0., -1.618180e-09,            0.,          0.,          0.,     0., 0.,  0.};
 float c2[9] = {4.798083e-07 ,-7.104300e-08 , -1.899410e-05, -4.387634e-08, -1.779335e-08,  4.216745e-09, 0., 0., 0. };
@@ -110,7 +106,28 @@ float c0[9] = {      -45.61 ,	     -45.24,       -305.58,  6.699801e+00,  8.3412
 float rt;
 long Temperature = 0, Pressure = 0, Altitude = 0;
 
+//Set up Low Pass Filter - complimentary
+#define acclfpFactor 0.6
+#define gyrolfpFactor 0.6
+static int16_t accLPF[3] = {0, 0, 0};
+static int16_t gyroLPF[3] = {0, 0, 0};
+
+ModeFilterInt16_Size10 mfilter_accx(2);  // buffer of 10 values, result will be from buffer element 2 
+                                         // (ie. the 3rd element which is the middle)
+ModeFilterInt16_Size10 mfilter_accy(2);
+ModeFilterInt16_Size10 mfilter_accz(2);
+ModeFilterInt16_Size10 mfilter_gyrox(2);
+ModeFilterInt16_Size10 mfilter_gyroy(2);
+ModeFilterInt16_Size10 mfilter_gyroz(2);
+
+//Set-up constants for gyro calibration
+uint8_t num_gyros = 1;
+uint8_t INS_MAX_INSTANCES = 2;
+
 FreeIMU::FreeIMU() {
+
+  pinMode(12,OUTPUT);
+  
   #if HAS_ADXL345()
     acc = ADXL345();
   #elif HAS_BMA180()
@@ -348,8 +365,9 @@ void FreeIMU::init(int accgyro_addr, bool fastmode) {
   #endif
   
   // zero gyro
-   zeroGyro();
-  
+  //zeroGyro();
+  initGyros();
+
   #ifndef CALIBRATION_H
   // load calibration from eeprom
   calLoad();
@@ -420,6 +438,25 @@ void FreeIMU::getRawValues(int * raw_values) {
   #if HAS_ITG3200()
     acc.readAccel(&raw_values[0], &raw_values[1], &raw_values[2]);
     gyro.readGyroRaw(&raw_values[3], &raw_values[4], &raw_values[5]);
+
+	raw_values[0] = mfilter_accx.apply(raw_values[0]);
+	raw_values[1] = mfilter_accy.apply(raw_values[1]);
+	raw_values[2] = mfilter_accz.apply(raw_values[2]);
+	raw_values[3] = mfilter_gyrox.apply(raw_values[3]);
+	raw_values[4] = mfilter_gyroy.apply(raw_values[4]);
+	raw_values[5] = mfilter_gyroz.apply(raw_values[5]);	
+	
+	//LPF
+	for(int axis = 0; axis < 3; axis++){
+		accLPF[axis] = accLPF[axis] * (1.0f - acclfpFactor) + raw_values[axis] * acclfpFactor;
+		gyroLPF[axis] = gyroLPF[axis] * (1.0f - gyrolfpFactor) + raw_values[axis+3] * gyrolfpFactor;
+	}
+	
+	for(int axis = 0; axis < 3; axis++){
+		raw_values[axis] = accLPF[axis];
+		raw_values[axis+3] = gyroLPF[axis];
+	}		
+	
   #else
     #ifdef __AVR__
      accgyro.getMotion6(&raw_values[0], &raw_values[1], &raw_values[2], &raw_values[3], &raw_values[4], &raw_values[5]);  	  
@@ -566,8 +603,94 @@ void FreeIMU::zeroGyro() {
   gyro_off_x = tmpOffsets[0] / totSamples;
   gyro_off_y = tmpOffsets[1] / totSamples;
   gyro_off_z = tmpOffsets[2] / totSamples;
+  
+  delay(5);
 }
 
+void FreeIMU::initGyros() {
+	//uint8_t num_gyros = 1;
+	//uint8_t INS_MAX_INSTANCES = 2;
+    Vector3f last_average[INS_MAX_INSTANCES], best_avg[INS_MAX_INSTANCES], gyro_offset[INS_MAX_INSTANCES];
+    float best_diff[INS_MAX_INSTANCES];
+    bool converged[INS_MAX_INSTANCES];
+	
+	digitalWrite(12,HIGH);
+	
+    // remove existing gyro offsets
+    for (uint8_t k=0; k<num_gyros; k++) {
+        gyro_offset[k] = Vector3f(0,0,0);
+        best_diff[k] = 0;
+        last_average[k].zero();
+        converged[k] = false;
+    }
+    // the strategy is to average 50 points over 0.5 seconds, then do it
+    // again and see if the 2nd average is within a small margin of
+    // the first
+
+    uint8_t num_converged = 0;	
+	
+    // we try to get a good calibration estimate for up to 10 seconds
+    // if the gyros are stable, we should get it in 1 second
+	for (int16_t j = 0; j <= 10 && num_converged < num_gyros; j++) {
+		Vector3f gyro_sum[INS_MAX_INSTANCES], gyro_avg[INS_MAX_INSTANCES], gyro_diff[INS_MAX_INSTANCES];
+		float diff_norm[INS_MAX_INSTANCES];
+		
+		//For FreeIMU and most boards we are using only one gyro
+		//if you have more change code to match Arduimu
+		zeroGyro();
+		gyro_avg[0] = Vector3f(gyro_off_x, gyro_off_y,gyro_off_z) ;
+		
+		for (uint8_t k=0; k<num_gyros; k++) {
+            gyro_diff[k] = last_average[k] - gyro_avg[k];
+            diff_norm[k] = gyro_diff[k].length();
+        }
+		
+		for (uint8_t k=0; k<num_gyros; k++) {
+            if (converged[k]) continue;
+            if (j == 0) {
+                best_diff[k] = diff_norm[k];
+                best_avg[k] = gyro_avg[k];
+            } else if (gyro_diff[k].length() < ToRad(0.07f)) {
+                // we want the average to be within 0.1 bit, which is 0.04 degrees/s
+                last_average[k] = (gyro_avg[k] * 0.5f) + (last_average[k] * 0.5f);
+                gyro_offset[k] = last_average[k];            
+                converged[k] = true;
+                num_converged++;
+            } else if (diff_norm[k] < best_diff[k]) {
+                best_diff[k] = diff_norm[k];
+                best_avg[k] = (gyro_avg[k] * 0.5f) + (last_average[k] * 0.5f);
+            }
+            last_average[k] = gyro_avg[k];
+        }
+    }
+	
+	delay(5);
+	
+	if (num_converged == num_gyros) {
+        // all OK
+		digitalWrite(12,LOW);
+		return;
+	}
+
+    // we've kept the user waiting long enough - use the best pair we
+    // found so far
+    for (uint8_t k=0; k<num_gyros; k++) {
+        if (!converged[k]) {
+            //hal.console->printf_P(PSTR("gyro[%u] did not converge: diff=%f dps\n"), 
+            //                      (unsigned)k, ToDeg(best_diff[k]));
+            gyro_offset[k] = best_avg[k];
+        }
+    }
+	
+	gyro_off_x = gyro_offset[0].x;
+	gyro_off_y = gyro_offset[0].y;
+	gyro_off_z = gyro_offset[0].z;
+	
+	digitalWrite(12,LOW);
+
+}
+	
+		
 
 /**
  * Quaternion implementation of the 'DCM filter' [Mayhony et al].  Incorporates the magnetic distortion
@@ -782,7 +905,7 @@ const float def_sea_press = 1013.25;
 
   #if HAS_BMP085()
 
-	// Returns temperature from MS5611 - added by MJS
+	// Returns temperature from BMP085 - added by MJS
 	float FreeIMU::getBaroTemperature() {
 		baro085.getTemperature(&Temperature);
 		float temp1 = Temperature * 0.1;		
