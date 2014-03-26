@@ -79,6 +79,9 @@ Below changes were made by Michael J Smorto
 			and the gyroscope when using a ADXL345 and ITG3200. Using a 10 point median filter.
 			2. Retuned Kp and Ki to 0.05 and 0.000002f, still have a bit of yaw drift. 
 			3. Added a LPF filter per guidance at http://philstech.blogspot.com/2012/04/quadcopter-accelerometer-data-filtering.html.
+03-25-13	Further tweaked filter factors and Kp/Ki
+				Median Filter = 7 point
+				LPF factor = 0.6
 */
 
 #include "Arduino.h"
@@ -112,13 +115,13 @@ long Temperature = 0, Pressure = 0, Altitude = 0;
 static int16_t accLPF[3] = {0, 0, 0};
 static int16_t gyroLPF[3] = {0, 0, 0};
 
-ModeFilterInt16_Size10 mfilter_accx(2);  // buffer of 10 values, result will be from buffer element 2 
+ModeFilterInt16_Size7 mfilter_accx(2);  // buffer of 10 values, result will be from buffer element 2 
                                          // (ie. the 3rd element which is the middle)
-ModeFilterInt16_Size10 mfilter_accy(2);
-ModeFilterInt16_Size10 mfilter_accz(2);
-ModeFilterInt16_Size10 mfilter_gyrox(2);
-ModeFilterInt16_Size10 mfilter_gyroy(2);
-ModeFilterInt16_Size10 mfilter_gyroz(2);
+ModeFilterInt16_Size7 mfilter_accy(2);
+ModeFilterInt16_Size7 mfilter_accz(2);
+ModeFilterInt16_Size7 mfilter_gyrox(2);
+ModeFilterInt16_Size7 mfilter_gyroy(2);
+ModeFilterInt16_Size7 mfilter_gyroz(2);
 
 //Set-up constants for gyro calibration
 uint8_t num_gyros = 1;

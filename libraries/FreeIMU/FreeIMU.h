@@ -172,17 +172,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //temperature correction method
 // for dfrobot board use kp = 0.15, and ki = 0.000002
 //#define twoKpDef  (2.0f * 0.15f) // 2 * proportional gain 
-// integral gain governs rate of convergence of gyroscope biases
+//integral gain governs rate of convergence of gyroscope biases
 //twoKiDef changed from 0.1 to 0f to match the values in Sebastian Madgwicks
 //twoKiDef changed from 0f to 0.0025f based on article in DIYDrones
 //twoKiDef changed to .1625 as a result of corrected temp - 1/4/14
 //updated code
 //#define twoKiDef  (2.0f * 0.000002f) // 2 * proportional gain
 #if defined(DFROBOT) 
+	//#define twoKpDef  (2.0f * 0.05f)
+	//#define twoKiDef  (2.0f * 0.000002f)
 	#define twoKpDef  (2.0f * 0.05f)
-	#define twoKiDef  (2.0f * 0.000002f)
-	//#define twoKpDef  (2.0f * 0.75f)
-	//#define twoKiDef  (2.0f * 0.1625f)	
+	#define twoKiDef  (2.0f * 0.000002f)		
 #elif defined(FREEIMU_v04)
 	#define twoKpDef  (2.0f * 0.75f)
 	#define twoKiDef  (2.0f * 0.1625f)
