@@ -75,13 +75,18 @@ Below changes were made by Michael J Smorto
 			AP_Math_freeimu to identify that changes were made
 			2. Added initGyros option "g" to zero gyros from arduino code and processing sketches
 			3. Changes resulted in allowing me to put back Kp and Ki to 0.75 and 0.1625 respectfully.
-03-24-13	1. Added ArduPilot Filter library so I could implement a median filter on both the accelerometer
+03-24-14	1. Added ArduPilot Filter library so I could implement a median filter on both the accelerometer
 			and the gyroscope when using a ADXL345 and ITG3200. Using a 10 point median filter.
 			2. Retuned Kp and Ki to 0.05 and 0.000002f, still have a bit of yaw drift. 
 			3. Added a LPF filter per guidance at http://philstech.blogspot.com/2012/04/quadcopter-accelerometer-data-filtering.html.
-03-25-13	Further tweaked filter factors and Kp/Ki
+03-25-14	Further tweaked filter factors and Kp/Ki for DFROBOT
 				Median Filter = 7 point
 				LPF factor = 0.6
+03-31-14	Deleted all filtering and adjusted filters for DFROBOT and GENERAL MPU06050 (no mag) - had.
+			little impact. Can not get the ADXL345/ITG3200 combo to stabilize as much as the MPU-6050.
+04-03-14	Fixed cal curves - don't need gyro temp cal for ITG3200 since internal cal is used - seems to
+			to work fine. Need to add back in filter for accelerometer when using ITG3200 as well as
+			adding the ypr drift correction.
 */
 
 #include "Arduino.h"
@@ -91,6 +96,8 @@ Below changes were made by Michael J Smorto
 #include "FreeIMU.h"
 // #include "WireUtils.h"
 #include "DebugUtils.h"
+#include <Filter.h>             // Filter library
+#include <ModeFilter.h>         // ModeFilter class (inherits from Filter class)
 
 //#include "vector_math.h"
 
@@ -98,30 +105,32 @@ Below changes were made by Michael J Smorto
 //calibration for MPU-6050 at default scales of freeIMU
 //need to change if you use different MPU-6050 or change scales.
 //Mag cal not used - TBD
+//MPU-6050 Cal
+//float c3[9] = {            0.,           0., -1.618180e-09,            0.,          0.,          0.,     0., 0.,  0.};
+//float c2[9] = {4.798083e-07 ,-7.104300e-08 , -1.899410e-05, -4.387634e-08, -1.779335e-08,  4.216745e-09, 0., 0., 0. };
+//float c1[9] = {1.801522e-02 ,-5.200081e-03 , -1.462879e-01, -5.878346e-04,  1.172002e-03, -6.897733e-05, 0., 0., 0. };
+//float c0[9] = {      -45.61 ,	     -45.24,       -305.58,  6.699801e+00,  8.341212e+00,	-2.171155e+01, 0., 0., 0. };
 
-float c3[9] = {            0.,           0., -1.618180e-09,            0.,          0.,          0.,     0., 0.,  0.};
-float c2[9] = {4.798083e-07 ,-7.104300e-08 , -1.899410e-05, -4.387634e-08, -1.779335e-08,  4.216745e-09, 0., 0., 0. };
-float c1[9] = {1.801522e-02 ,-5.200081e-03 , -1.462879e-01, -5.878346e-04,  1.172002e-03, -6.897733e-05, 0., 0., 0. };
-float c0[9] = {      -45.61 ,	     -45.24,       -305.58,  6.699801e+00,  8.341212e+00,	-2.171155e+01, 0., 0., 0. };
+// DFROBOT
+float c3[9] = {          0.,             0.,           0.,          0.,            0.,           0., 0., 0., 0.};
+float c2[9] = {0.007829365 , -0.0009776705 ,   0.01271437,  -0.01214285,   0.00615132,  0.002638248, 0., 0., 0.};
+float c1[9] = {-0.330832467, -0.0945206152 ,  -0.59609025,  -2.14580824,  -4.68951187, -2.832623092, 0., 0., 0. };
+float c0[9] = {   +5.648888, +9.784001     ,     2.775708,  60.71009177, 109.32876618, 85.639595449, 0., 0., 0. };
 
-//float r_corr[9] = {0., 0., 0.,0.,0.,0.,0.,0.,0.};
+//float c3[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
+//float c2[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
+//float c1[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
+//float c0[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
 
-float rt;
+
+//float rt, senTemp, senTemp_break;
 long Temperature = 0, Pressure = 0, Altitude = 0;
 
-//Set up Low Pass Filter - complimentary
-#define acclfpFactor 0.6
-#define gyrolfpFactor 0.6
-static int16_t accLPF[3] = {0, 0, 0};
-static int16_t gyroLPF[3] = {0, 0, 0};
-
-ModeFilterInt16_Size7 mfilter_accx(2);  // buffer of 10 values, result will be from buffer element 2 
+//Set up MOde Filter - complimentary
+ModeFilterInt16_Size5 mfilter_accx(2);   // buffer of 7 values, result will be from buffer element 2 
                                          // (ie. the 3rd element which is the middle)
-ModeFilterInt16_Size7 mfilter_accy(2);
-ModeFilterInt16_Size7 mfilter_accz(2);
-ModeFilterInt16_Size7 mfilter_gyrox(2);
-ModeFilterInt16_Size7 mfilter_gyroy(2);
-ModeFilterInt16_Size7 mfilter_gyroz(2);
+ModeFilterInt16_Size5 mfilter_accy(2);
+ModeFilterInt16_Size5 mfilter_accz(2);
 
 //Set-up constants for gyro calibration
 uint8_t num_gyros = 1;
@@ -174,32 +183,38 @@ FreeIMU::FreeIMU() {
   nsamples = 75;
   //original temp_break = -4300;
   temp_break = -1000;
+  senTemp_break = 32.;
   temp_corr_on = 0;
   nsamples = 75;
   instability_fix = 1;
   
+  //initialize gyro offsets
+  gyro_off_x = 0.;
+  gyro_off_y = 0.;  
+  gyro_off_z = 0.;
+  
   #ifndef CALIBRATION_H
   // initialize scale factors to neutral values
-  acc_scale_x = 1;
-  acc_scale_y = 1;
-  acc_scale_z = 1;
-  magn_scale_x = 1;
-  magn_scale_y = 1;
-  magn_scale_z = 1;
+	acc_scale_x = 1;
+	acc_scale_y = 1;
+	acc_scale_z = 1;
+	magn_scale_x = 1;
+	magn_scale_y = 1;
+	magn_scale_z = 1;
   #else
-  // get values from global variables of same name defined in calibration.h
-  acc_off_x = ::acc_off_x;
-  acc_off_y = ::acc_off_y;
-  acc_off_z = ::acc_off_z;
-  acc_scale_x = ::acc_scale_x;
-  acc_scale_y = ::acc_scale_y;
-  acc_scale_z = ::acc_scale_z;
-  magn_off_x = ::magn_off_x;
-  magn_off_y = ::magn_off_y;
-  magn_off_z = ::magn_off_z;
-  magn_scale_x = ::magn_scale_x;
-  magn_scale_y = ::magn_scale_y;
-  magn_scale_z = ::magn_scale_z;
+	// get values from global variables of same name defined in calibration.h
+	acc_off_x = ::acc_off_x;
+	acc_off_y = ::acc_off_y;
+	acc_off_z = ::acc_off_z;
+	acc_scale_x = ::acc_scale_x;
+	acc_scale_y = ::acc_scale_y;
+	acc_scale_z = ::acc_scale_z;
+	magn_off_x = ::magn_off_x;
+	magn_off_y = ::magn_off_y;
+	magn_off_z = ::magn_off_z;
+	magn_scale_x = ::magn_scale_x;
+	magn_scale_y = ::magn_scale_y;
+	magn_scale_z = ::magn_scale_z;
   #endif
 }
 
@@ -314,45 +329,43 @@ void FreeIMU::init(int accgyro_addr, bool fastmode) {
   #endif
 
   #if HAS_ITG3200()
-  // init ITG3200
-  gyro.init(gyro_addr);
-  delay(1000);
-  gyro.setFilterBW(BW020_SR1);
-  delay(1000);
-  // calibrate the ITG3200
-  gyro.zeroCalibrate(128,5);
+	// init ITG3200
+	gyro.init(gyro_addr);
+	delay(1000);
+	gyro.setFilterBW(BW020_SR1);
+	delay(1000);
+	// calibrate the ITG3200
+	gyro.zeroCalibrate(128,5);
   #endif
   
   
   #if HAS_MPU6050()
-  accgyro = MPU60X0(false, accgyro_addr);
-  accgyro.initialize();
-  accgyro.setDLPFMode(MPU60X0_DLPF_BW_20); 
-  accgyro.setI2CMasterModeEnabled(0);
-  accgyro.setI2CBypassEnabled(1);
-  accgyro.setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);
-  delay(5);
-
-  delay(30);
+	accgyro = MPU60X0(false, accgyro_addr);
+	accgyro.initialize();
+	accgyro.setDLPFMode(MPU60X0_DLPF_BW_20); 
+	accgyro.setI2CMasterModeEnabled(0);
+	accgyro.setI2CBypassEnabled(1);
+	accgyro.setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);
+	delay(5);
+	delay(30);
   #endif
-  
+
   #if HAS_MPU6000()
-  accgyro = MPU60X0(true, accgyro_addr);
-  accgyro.initialize();
-  accgyro.setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);
-  delay(5);
+	accgyro = MPU60X0(true, accgyro_addr);
+	accgyro.initialize();
+	accgyro.setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);
+	delay(5);
   #endif 
   
-  
   #if HAS_HMC5883L()
-  // init HMC5843
-  magn.init(false); // Don't set mode yet, we'll do that later on.
-  // Calibrate HMC using self test, not recommended to change the gain after calibration.
-  magn.calibrate(1); // Use gain 1=default, valid 0-7, 7 not recommended.
-  // Single mode conversion was used in calibration, now set continuous mode
-  magn.setMode(0);
-  delay(10);
-  magn.setDOR(B110);
+	// init HMC5843
+	magn.init(false); // Don't set mode yet, we'll do that later on.
+	// Calibrate HMC using self test, not recommended to change the gain after calibration.
+	magn.calibrate(1); // Use gain 1=default, valid 0-7, 7 not recommended.
+	// Single mode conversion was used in calibration, now set continuous mode
+	magn.setMode(0);
+	delay(10);
+	magn.setDOR(B110);
   #endif
   
   
@@ -369,11 +382,12 @@ void FreeIMU::init(int accgyro_addr, bool fastmode) {
   
   // zero gyro
   //zeroGyro();
-  initGyros();
-
+  if(temp_corr_on == 0) {
+	initGyros(); }
+	
   #ifndef CALIBRATION_H
-  // load calibration from eeprom
-  calLoad();
+	// load calibration from eeprom
+	calLoad();
   #endif
 }
 
@@ -441,24 +455,8 @@ void FreeIMU::getRawValues(int * raw_values) {
   #if HAS_ITG3200()
     acc.readAccel(&raw_values[0], &raw_values[1], &raw_values[2]);
     gyro.readGyroRaw(&raw_values[3], &raw_values[4], &raw_values[5]);
-
-	raw_values[0] = mfilter_accx.apply(raw_values[0]);
-	raw_values[1] = mfilter_accy.apply(raw_values[1]);
-	raw_values[2] = mfilter_accz.apply(raw_values[2]);
-	raw_values[3] = mfilter_gyrox.apply(raw_values[3]);
-	raw_values[4] = mfilter_gyroy.apply(raw_values[4]);
-	raw_values[5] = mfilter_gyroz.apply(raw_values[5]);	
-	
-	//LPF
-	for(int axis = 0; axis < 3; axis++){
-		accLPF[axis] = accLPF[axis] * (1.0f - acclfpFactor) + raw_values[axis] * acclfpFactor;
-		gyroLPF[axis] = gyroLPF[axis] * (1.0f - gyrolfpFactor) + raw_values[axis+3] * gyrolfpFactor;
-	}
-	
-	for(int axis = 0; axis < 3; axis++){
-		raw_values[axis] = accLPF[axis];
-		raw_values[axis+3] = gyroLPF[axis];
-	}		
+	gyro.readTemp(&senTemp);
+	raw_values[9] = senTemp*100;
 	
   #else
     #ifdef __AVR__
@@ -482,21 +480,7 @@ void FreeIMU::getRawValues(int * raw_values) {
   #if HAS_HMC5883L()
     magn.getValues(&raw_values[6], &raw_values[7], &raw_values[8]);
   #endif
-  
-  #if HAS_MS5611()
-    int temp, press;
-    //TODO: possible loss of precision
-    temp = baro.rawTemperature(MS561101BA_OSR_4096);
-    press = baro.rawPressure(MS561101BA_OSR_4096);
-  #endif
-  
-  #if HAS_BMP085()
-    long temp, press;
-	baro085.getPressure(&Pressure);
-	baro085.getTemperature(&Temperature); 
-	temp = Temperature * 0.1;
-	press = Pressure * 0.01;
-  #endif
+
 }
 
 
@@ -508,37 +492,60 @@ void FreeIMU::getValues(float * values) {
   float acgyro_corr[9] = {0.,0.,0.,0.,0.,0.,0.,0.,0.};
   int16_t DTemp;
   
-  #if HAS_MPU6050()
-	if(temp_corr_on == 1) {
-		DTemp = accgyro.getTemperature();
-		if(DTemp < temp_break){    
-			for(int i = 0; i < 9; i++) { 
-				acgyro_corr[i] = c3[i]*(DTemp*DTemp*DTemp) + c2[i]*(DTemp*DTemp) + c1[i]*DTemp + c0[i];
-			}
-		}
-		else {
-			for(int i = 0; i < 9; i++) { 
-				acgyro_corr[i] = 0.0;
-			}
-		}
-    }
-  #endif
-  
+
   #if HAS_ITG3200()
     int accval[3];
     acc.readAccel(&accval[0], &accval[1], &accval[2]);
-    values[0] = (float) accval[0] - acgyro_corr[0];
-    values[1] = (float) accval[1] - acgyro_corr[1];
-    values[2] = (float) accval[2] - acgyro_corr[2];
-    gyro.readGyro(&values[3]);
-    values[3] = values[3] - acgyro_corr[3];
-    values[4] = values[4] - acgyro_corr[4];
-    values[5] = values[5] - acgyro_corr[5];	
+    //values[0] = (float) accval[0];
+    //values[1] = (float) accval[1];
+    //values[2] = (float) accval[2];
+	accval[0] = mfilter_accx.apply(accval[0]);
+    accval[1] = mfilter_accy.apply(accval[1]);
+    accval[2] = mfilter_accz.apply(accval[2]);
+	
+    gyro.readGyro(&values[3]);	
+	if(temp_corr_on == 1) {
+		gyro.readTemp(&senTemp);
+		if(senTemp < senTemp_break) {
+			for(int i = 0; i < 9; i++) { 
+				acgyro_corr[i] = c3[i]*(senTemp*senTemp*senTemp) + c2[i]*(senTemp*senTemp) + c1[i]*senTemp + c0[i];
+			}
+		//gyro_off_x = 0.0;
+		//gyro_off_y = 0.0;		
+		//gyro_off_z = 0.0;			
+		} 
+	} else {
+		for(int i = 0; i < 9; i++) { 
+			acgyro_corr[i] = 0.0;
+		}
+	  }
+
+	values[0] = (float) accval[0] - acgyro_corr[0];
+	values[1] = (float) accval[1] - acgyro_corr[1];
+	values[2] = (float) accval[2] - acgyro_corr[2];
+		
+	//values[3] = values[3] - acgyro_corr[3];
+	//values[4] = values[4] - acgyro_corr[4];
+	//values[5] = values[5] - acgyro_corr[5];
+	
   #else // MPU6050
     int16_t accgyroval[6];
 	
     accgyro.getMotion6(&accgyroval[0], &accgyroval[1], &accgyroval[2], &accgyroval[3], &accgyroval[4], &accgyroval[5]);
-
+	
+	DTemp = accgyro.getTemperature();
+	if(temp_corr_on == 1){
+		if(DTemp < temp_break){    
+			for(int i = 0; i < 9; i++) { 
+				acgyro_corr[i] = c3[i]*(DTemp*DTemp*DTemp) + c2[i]*(DTemp*DTemp) + c1[i]*DTemp + c0[i];
+			}
+		} 
+	} else {
+		for(int i = 0; i < 9; i++) { 
+			acgyro_corr[i] = 0.0;
+	  }
+	}
+	
     // remove offsets from the gyroscope
 	if(temp_corr_on == 1){
 		accgyroval[3] = accgyroval[3] - acgyro_corr[3];
@@ -558,7 +565,6 @@ void FreeIMU::getValues(float * values) {
       else {
         //values[i] = ((float) accgyroval[i] - acgyro_corr[i])/ 16.4f; // NOTE: this depends on the sensitivity chosen
         values[i] = ((float) accgyroval[i] )/ 16.4f; // NOTE: this depends on the sensitivity chosen
-     
 	  }
     }
   #endif
@@ -626,7 +632,8 @@ void FreeIMU::initGyros() {
         last_average[k].zero();
         converged[k] = false;
     }
-    // the strategy is to average 50 points over 0.5 seconds, then do it
+    
+	// the strategy is to average 50 points over 0.5 seconds, then do it
     // again and see if the 2nd average is within a small margin of
     // the first
 
@@ -653,7 +660,7 @@ void FreeIMU::initGyros() {
             if (j == 0) {
                 best_diff[k] = diff_norm[k];
                 best_avg[k] = gyro_avg[k];
-            } else if (gyro_diff[k].length() < ToRad(0.07f)) {
+            } else if (gyro_diff[k].length() < ToRad(0.1f)) {
                 // we want the average to be within 0.1 bit, which is 0.04 degrees/s
                 last_average[k] = (gyro_avg[k] * 0.5f) + (last_average[k] * 0.5f);
                 gyro_offset[k] = last_average[k];            
@@ -671,6 +678,9 @@ void FreeIMU::initGyros() {
 	
 	if (num_converged == num_gyros) {
         // all OK
+		gyro_off_x = gyro_offset[0].x;
+		gyro_off_y = gyro_offset[0].y;
+		gyro_off_z = gyro_offset[0].z;
 		digitalWrite(12,LOW);
 		return;
 	}
@@ -692,8 +702,6 @@ void FreeIMU::initGyros() {
 	digitalWrite(12,LOW);
 
 }
-	
-		
 
 /**
  * Quaternion implementation of the 'DCM filter' [Mayhony et al].  Incorporates the magnetic distortion
@@ -862,7 +870,7 @@ void FreeIMU::getQ(float * q) {
       AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[7], -val[6], val[8]);
     #elif defined(ARDUIMU_v3)
       AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], -val[6], -val[7], val[8]);
-    #endif
+	#endif
   #else
     AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2]);
   #endif
@@ -878,7 +886,7 @@ const float def_sea_press = 1013.25;
 
   #if HAS_MS5611()
 	/**
-	* Returns an altitude estimate from baromether readings only using sea_press as current sea level pressure
+	* Returns an altitude estimate from barometer readings only using sea_press as current sea level pressure
 	*/
 	float FreeIMU::getBaroAlt(float sea_press) {
 		float temp = baro.getTemperature(MS561101BA_OSR_4096);
@@ -1027,6 +1035,14 @@ void FreeIMU::getYawPitchRoll(float * ypr) {
 */
 void FreeIMU::setTempCalib(int opt_temp_cal) {
    temp_corr_on = opt_temp_cal;
+   if(temp_corr_on == 1) {
+		gyro_off_x = 0.0;
+		gyro_off_y = 0.0;
+		gyro_off_z = 0.0;
+	}
+	if(temp_corr_on == 0) {
+		initGyros();
+	}
 }
 
 

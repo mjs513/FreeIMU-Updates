@@ -2,12 +2,13 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Wednesday, March 5, 2014
-6:28 PM
+Thursday, April 7, 2014
+10:33 PM
 
-03-05-15
-Uploaded automated calibration code and methodology using Seb Madgwick calibration rig. His
-original paper is also posted on construction.
+04-07-14 Added initGyros() routing from Ardupilot as well as filtering library so a median filter can be used for ADXL345 accelerometer. Code added to allow multiple board configuration Kp/Ki gains. Added ADXL345 temp cal for the DFROBOT board. Noticed I have to fix GUI for when you don't have a magnetometer on board. Next step drift correction.
+
+03-05-14
+Uploaded automated calibration code and methodology using Seb Madgwick calibration rig. His original paper is also posted on construction.
 
 03-04-14
 Fixed issue with increased drift when magnetometer enabled by updating Fabio's code to the Madgwick

@@ -1,0 +1,219 @@
+/* Javadoc style sheet */
+/* Define colors, fonts and other style attributes here to override the defaults */
+/* processingLibs style by andreas schlegel, sojamo */
+
+
+body {
+	margin : 0;
+	padding : 0;
+	padding-left : 10px;
+	padding-right : 8px;
+	background-color : #FFFFFF;
+	margin-bottom:30px;
+}
+
+
+body, font, table, tr, td {
+	font-family : Times, serif; 
+    font-size:14px;
+}
+
+
+
+
+/* Headings */
+h1, h2, h3, h4, h5, th {
+	font-family : Times, serif; 
+    font-weight:normal;
+}
+
+
+pre, code {  
+	font-family : "Courier New", Courier, monospace; 
+	font-size : 12px; 
+	line-height : normal;
+}
+
+
+
+table {
+	border:0;
+	margin-bottom:0px;
+	margin-top:0px;
+}
+
+
+tr, td {
+	border-top: 0px solid;
+	border-left: 0px solid;
+	padding-top:8px;
+	padding-bottom:8px;
+}
+
+
+
+hr {
+	border:0;
+	height:1px;
+    background:#333;
+	padding:0;
+	margin:0;
+	margin-bottom:24px;
+
+}
+
+
+.FrameHeadingFont b {
+    line-height:40px;
+}
+
+.FrameItemFont {
+    font-size:1.0em;
+    line-height:1.4em;
+}
+
+
+
+dt {
+	margin-bottom:0px;
+}
+
+
+
+dd {
+	margin-top:2px;
+	margin-bottom:4px;
+}
+
+
+
+a {
+	text-decoration: underline;
+	font-weight: normal;
+}
+
+a:hover, 
+a:active {
+	text-decoration: underline;
+	font-weight: normal;
+}
+
+a:visited,
+a:link:visited {
+	text-decoration: underline;
+	font-weight: normal;
+    color:#00f;
+}
+
+
+img {
+	border: 0px solid #000000;
+}
+
+
+
+p,li {
+    width:70%;
+}
+
+
+li {
+    list-style:none;
+}
+
+tr.TableRowColor td {
+    padding:10px;
+}
+
+
+td code {
+    margin-bottom:120px;
+    line-height:20px;
+
+}
+
+.NavBarCell2 {
+    padding-bottom:40px;
+}
+
+.NavBarCell3 font, .NavBarCell2 font {
+    font-size:0.8em;
+    font-weight:normal;
+
+}
+
+/* Navigation bar fonts */
+.NavBarCell1    { 
+	border:0;
+    margin:0;
+}
+
+.NavBarCell1Rev {
+	border:0;
+}
+
+.NavBarFont1 b {
+	font-weight:normal;
+}
+
+
+
+.NavBarFont1:after, .NavBarFont1Rev:after {
+	font-weight:normal;
+}
+
+
+.NavBarFont1Rev b, .NavBarCell1Rev { 
+	font-weight:normal;
+    background:transparent;
+}
+
+
+
+
+
+.toggleList { 
+	padding:0;
+	margin:0;
+	margin-top:12px;
+}
+
+.toggleList dt {
+    background:#00ff90;
+    color:#333;
+    display:inline-block;
+	padding:8px 16px;
+	margin:10px 0px 10px 0px;
+    -moz-border-radius: 20px; /* Firefox */
+    -webkit-border-radius: 20px; /* Safari, Chrome */
+    border-radius: 20px; /* CSS3 */
+}
+
+.toggleList dt:hover {
+    cursor:pointer;
+}
+
+.toggleList dt span { 
+	font-family: monospace;
+    
+	padding:0;
+	margin:0;
+}
+
+ 
+.toggleList dd {
+	margin:0;
+	padding:0; 
+}
+
+html.isjs .toggleList dd { 
+  display: none; 
+}
+
+.toggleList pre {
+	padding: 4px 4px 4px 4px;
+}
+
+
+
+

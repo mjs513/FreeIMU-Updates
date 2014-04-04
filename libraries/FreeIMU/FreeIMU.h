@@ -168,27 +168,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // HMC5843 address is fixed so don't bother to define it
 
 // proportional gain governs rate of convergence to accelerometer/magnetometer
-//twoKpDef changed to 0.75 from 0.5 based on trial and error using new
-//temperature correction method
-// for dfrobot board use kp = 0.15, and ki = 0.000002
-//#define twoKpDef  (2.0f * 0.15f) // 2 * proportional gain 
-//integral gain governs rate of convergence of gyroscope biases
-//twoKiDef changed from 0.1 to 0f to match the values in Sebastian Madgwicks
-//twoKiDef changed from 0f to 0.0025f based on article in DIYDrones
-//twoKiDef changed to .1625 as a result of corrected temp - 1/4/14
-//updated code
-//#define twoKiDef  (2.0f * 0.000002f) // 2 * proportional gain
+// integral gain governs rate of convergence of gyroscope biases
+// set up defines for various boards in my inventory, DFROBOT and Freeimu have
+// temperature calibration curves. (3.31.14
 #if defined(DFROBOT) 
-	//#define twoKpDef  (2.0f * 0.05f)
-	//#define twoKiDef  (2.0f * 0.000002f)
-	#define twoKpDef  (2.0f * 0.05f)
-	#define twoKiDef  (2.0f * 0.000002f)		
+	//#define twoKpDef  (2.0f * 0.5f)
+	//#define twoKiDef  (2.0f * 0.0002f)
+	#define twoKpDef  (2.0f * 0.5f)
+	#define twoKiDef  (2.0f * 0.01f)	
 #elif defined(FREEIMU_v04)
 	#define twoKpDef  (2.0f * 0.75f)
 	#define twoKiDef  (2.0f * 0.1625f)
+#elif defined(GEN_MPU6050)
+	#define twoKpDef  (2.0f * 0.5f)
+	#define twoKiDef  (2.0f * 0.05f)
 #else
-	#define twoKpDef  (2.0f * 0.75f)
-	#define twoKiDef  (2.0f * 0.1625f)
+	#define twoKpDef  (2.0f * 0.5f)
+	#define twoKiDef  (2.0f * 0.1f)
 #endif 
 
 #ifndef cbi
@@ -203,14 +199,17 @@ class FreeIMU
     void init(bool fastmode);
 	void RESET();
 	void RESET_Q();
+	
     #if HAS_ITG3200()
-    void init(int acc_addr, int gyro_addr, bool fastmode);
+		void init(int acc_addr, int gyro_addr, bool fastmode);
     #else
-    void init(int accgyro_addr, bool fastmode);
+		void init(int accgyro_addr, bool fastmode);
     #endif
+	
     #ifndef CALIBRATION_H
-    void calLoad();
+		void calLoad();
     #endif
+	
     void zeroGyro();
 	void initGyros();
     void getRawValues(int * raw_values);
@@ -274,6 +273,7 @@ class FreeIMU
     int16_t acc_off_x, acc_off_y, acc_off_z, magn_off_x, magn_off_y, magn_off_z;
     float acc_scale_x, acc_scale_y, acc_scale_z, magn_scale_x, magn_scale_y, magn_scale_z;
 	int nsamples, temp_break, temp_corr_on, instability_fix;
+	float rt, senTemp, senTemp_break;
 	float sampleFreq; // half the sample period expressed in seconds
 	
   private:

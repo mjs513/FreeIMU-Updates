@@ -1,12 +1,17 @@
+
+#include <AP_Math_freeimu.h>
+#include <Filter.h>                     // Filter library
+#include <ModeFilter.h>         // ModeFilter class (inherits from Filter class)
+
 /**
  * FreeIMU library serial communication protocol
 */
 
 #include <ADXL345.h>
-#include <bma180.h>
 #include <HMC58X3.h>
 #include <LSM303.h>
 #include <ITG3200.h>
+#include <bma180.h>
 #include <MS561101BA.h>
 #include <BMP085.h>
 #include <I2Cdev.h>
@@ -21,7 +26,7 @@
 #include "CommunicationUtils.h"
 #include "FreeIMU.h"
 
-#define Has_LSM303 1
+#define Has_LSM303 0
 
 #include "FilteringScheme.h"
 
@@ -34,12 +39,12 @@ float ypr[3]; // yaw pitch roll
 char str[256];
 float val[9];
 float val_array[17]; 
+//float senTemp;
 
 // Set the FreeIMU object and LSM303 Compass
 FreeIMU my3IMU = FreeIMU();
 
 #if Has_LSM303
-
   //Set up tilt corrected LSM303D
   LSM303 compass;
   float declinationAngle = 0.229622;
@@ -101,13 +106,14 @@ void loop() {
       Serial.print('\n');
     }
     else if(cmd=='1'){
-      #if HAS_MPU6050()
-           my3IMU.RESET();
-      #endif	
       my3IMU.init(true);
     }
     else if(cmd=='2'){
       my3IMU.RESET_Q();           
+    }
+    else if(cmd=='g'){
+      my3IMU.initGyros();
+      //my3IMU.zeroGyro();      
     }
     else if(cmd=='t'){
       //available opttions temp_corr_on, instability_fix
@@ -115,11 +121,13 @@ void loop() {
     }
     else if(cmd=='f'){
       //available opttions temp_corr_on, instability_fix
+      my3IMU.initGyros();
       my3IMU.setTempCalib(0);
     }    
     else if(cmd=='r') {
       uint8_t count = serial_busy_wait();
       for(uint8_t i=0; i<count; i++) {
+        //my3IMU.getUnfilteredRawValues(raw_values);
         my3IMU.getRawValues(raw_values);
         sprintf(str, "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,", raw_values[0], raw_values[1], raw_values[2], raw_values[3], raw_values[4], raw_values[5], raw_values[6], raw_values[7], raw_values[8], raw_values[9]);
         Serial.print(str);
@@ -130,7 +138,7 @@ void loop() {
         #if Has_LSM303
            compass.read();
            Serial.print(compass.heading());Serial.print(",");
-        #endif       
+        #endif
         Serial.print(millis()); Serial.print(",");
         Serial.println("\r\n");
       }
@@ -190,6 +198,8 @@ void loop() {
         #if Has_LSM303
            compass.read();
            val_array[16] = compass.heading();
+        #else
+            val_array[16] = -9999;
         #endif
 		
         #if (HAS_MS5611() || HAS_BMP085())
@@ -227,6 +237,8 @@ void loop() {
         #if Has_LSM303
 	   compass.read();
            val_array[16] = compass.heading();
+        #else
+            val_array[16] = -9999;
         #endif
 
 	#if (HAS_MS5611() || HAS_BMP085())
