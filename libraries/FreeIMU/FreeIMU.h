@@ -172,12 +172,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // set up defines for various boards in my inventory, DFROBOT and Freeimu have
 // temperature calibration curves. (3.31.14
 #if defined(DFROBOT) 
-	//#define twoKpDef  (2.0f * 0.5f)
-	//#define twoKiDef  (2.0f * 0.0002f)
 	#define twoKpDef  (2.0f * 0.5f)
-	#define twoKiDef  (2.0f * 0.01f)	
+	#define twoKiDef  (2.0f * 0.0f)	
 #elif defined(FREEIMU_v04)
-	#define twoKpDef  (2.0f * 0.75f)
+	#define twoKpDef  (2.0f * 0.75f)	//works with and without mag enabled
 	#define twoKiDef  (2.0f * 0.1625f)
 #elif defined(GEN_MPU6050)
 	#define twoKpDef  (2.0f * 0.5f)

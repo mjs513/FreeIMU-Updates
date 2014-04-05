@@ -101,27 +101,29 @@ Below changes were made by Michael J Smorto
 
 //#include "vector_math.h"
 
-//initialize temperature calibrations, mjs, 10/24/13
-//calibration for MPU-6050 at default scales of freeIMU
-//need to change if you use different MPU-6050 or change scales.
-//Mag cal not used - TBD
-//MPU-6050 Cal
-//float c3[9] = {            0.,           0., -1.618180e-09,            0.,          0.,          0.,     0., 0.,  0.};
-//float c2[9] = {4.798083e-07 ,-7.104300e-08 , -1.899410e-05, -4.387634e-08, -1.779335e-08,  4.216745e-09, 0., 0., 0. };
-//float c1[9] = {1.801522e-02 ,-5.200081e-03 , -1.462879e-01, -5.878346e-04,  1.172002e-03, -6.897733e-05, 0., 0., 0. };
-//float c0[9] = {      -45.61 ,	     -45.24,       -305.58,  6.699801e+00,  8.341212e+00,	-2.171155e+01, 0., 0., 0. };
-
-// DFROBOT
-float c3[9] = {          0.,             0.,           0.,          0.,            0.,           0., 0., 0., 0.};
-float c2[9] = {0.007829365 , -0.0009776705 ,   0.01271437,  -0.01214285,   0.00615132,  0.002638248, 0., 0., 0.};
-float c1[9] = {-0.330832467, -0.0945206152 ,  -0.59609025,  -2.14580824,  -4.68951187, -2.832623092, 0., 0., 0. };
-float c0[9] = {   +5.648888, +9.784001     ,     2.775708,  60.71009177, 109.32876618, 85.639595449, 0., 0., 0. };
-
-//float c3[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
-//float c2[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
-//float c1[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
-//float c0[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
-
+//initialize temperature calibrations, mjs, 10/24/13 - udapted 4-7-14
+//comment out ifs and leave float 0's only if you don't temp cal boards
+#if defined(FREEIMU_v04)
+	//calibration for MPU-6050 at default scales of freeIMU
+	//need to change if you use different MPU-6050 or change scales.
+	//Mag cal not used - TBD
+	//MPU-6050 Cal
+	float c3[9] = {           0.,            0., -1.618180e-09,            0.,          0.,          0.,     0., 0.,  0.};
+	float c2[9] = {4.798083e-07 ,-7.104300e-08 , -1.899410e-05, -4.387634e-08, -1.779335e-08,  4.216745e-09, 0., 0., 0. };
+	float c1[9] = {1.801522e-02 ,-5.200081e-03 , -1.462879e-01, -5.878346e-04,  1.172002e-03, -6.897733e-05, 0., 0., 0. };
+	float c0[9] = {      -45.61 ,	     -45.24,       -305.58,  6.699801e+00,  8.341212e+00,	-2.171155e+01, 0., 0., 0. };
+#elif defined(DFROBOT)
+	// DFROBOT
+	float c3[9] = {          0.,             0.,           0.,          0.,            0.,           0., 0., 0., 0.};
+	float c2[9] = {0.007829365 , -0.0009776705 ,   0.01271437,  -0.01214285,   0.00615132,  0.002638248, 0., 0., 0.};
+	float c1[9] = {-0.330832467, -0.0945206152 ,  -0.59609025,  -2.14580824,  -4.68951187, -2.832623092, 0., 0., 0. };
+	float c0[9] = {   +5.648888, +9.784001     ,     2.775708,  60.71009177, 109.32876618, 85.639595449, 0., 0., 0. };
+#else
+	float c3[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
+	float c2[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
+	float c1[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
+	float c0[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
+#endif
 
 //float rt, senTemp, senTemp_break;
 long Temperature = 0, Pressure = 0, Altitude = 0;
@@ -490,7 +492,7 @@ void FreeIMU::getRawValues(int * raw_values) {
 void FreeIMU::getValues(float * values) { 
 
   float acgyro_corr[9] = {0.,0.,0.,0.,0.,0.,0.,0.,0.};
-  int16_t DTemp;
+  int16_t DTemp; uint8_t i;
   
 
   #if HAS_ITG3200()
@@ -507,7 +509,7 @@ void FreeIMU::getValues(float * values) {
 	if(temp_corr_on == 1) {
 		gyro.readTemp(&senTemp);
 		if(senTemp < senTemp_break) {
-			for(int i = 0; i < 9; i++) { 
+			for(i = 0; i < 9; i++) { 
 				acgyro_corr[i] = c3[i]*(senTemp*senTemp*senTemp) + c2[i]*(senTemp*senTemp) + c1[i]*senTemp + c0[i];
 			}
 		//gyro_off_x = 0.0;
@@ -515,8 +517,8 @@ void FreeIMU::getValues(float * values) {
 		//gyro_off_z = 0.0;			
 		} 
 	} else {
-		for(int i = 0; i < 9; i++) { 
-			acgyro_corr[i] = 0.0;
+		for(i = 0; i < 9; i++) { 
+			acgyro_corr[i] = 0.0f;
 		}
 	  }
 
@@ -536,35 +538,39 @@ void FreeIMU::getValues(float * values) {
 	DTemp = accgyro.getTemperature();
 	if(temp_corr_on == 1){
 		if(DTemp < temp_break){    
-			for(int i = 0; i < 9; i++) { 
+			for( i = 0; i < 9; i++) { 
 				acgyro_corr[i] = c3[i]*(DTemp*DTemp*DTemp) + c2[i]*(DTemp*DTemp) + c1[i]*DTemp + c0[i];
 			}
 		} 
 	} else {
-		for(int i = 0; i < 9; i++) { 
-			acgyro_corr[i] = 0.0;
+		for( i = 0; i < 9; i++) { 
+			acgyro_corr[i] = 0.0f;
 	  }
 	}
 	
     // remove offsets from the gyroscope
 	if(temp_corr_on == 1){
-		accgyroval[3] = accgyroval[3] - acgyro_corr[3];
-		accgyroval[4] = accgyroval[4] - acgyro_corr[4];
-		accgyroval[5] = accgyroval[5] - acgyro_corr[5];
+		//accgyroval[3] = accgyroval[3] - acgyro_corr[3];
+		//accgyroval[4] = accgyroval[4] - acgyro_corr[4];
+		//accgyroval[5] = accgyroval[5] - acgyro_corr[5];
+		
+		values[3] = (float) accgyroval[3] - acgyro_corr[3];
+		values[4] = (float) accgyroval[4] - acgyro_corr[4];
+		values[5] = (float) accgyroval[5] - acgyro_corr[5];
 		}
 	  else {
-		accgyroval[3] = accgyroval[3] - gyro_off_x;
-		accgyroval[4] = accgyroval[4] - gyro_off_y;
-		accgyroval[5] = accgyroval[5] - gyro_off_z;
+		values[3] = (float) accgyroval[3] - gyro_off_x;
+		values[4] = (float) accgyroval[4] - gyro_off_y;
+		values[5] = (float) accgyroval[5] - gyro_off_z;
 	  }
 	
-    for(int i = 0; i<6; i++) {
-      if(i < 3) {
+    for( i = 0; i<6; i++) {
+      if( i < 3 ) {
         values[i] = (float) accgyroval[i] - acgyro_corr[i];
       }
       else {
         //values[i] = ((float) accgyroval[i] - acgyro_corr[i])/ 16.4f; // NOTE: this depends on the sensitivity chosen
-        values[i] = ((float) accgyroval[i] )/ 16.4f; // NOTE: this depends on the sensitivity chosen
+        values[i] = values[i] / 16.4f; // NOTE: this depends on the sensitivity chosen
 	  }
     }
   #endif
@@ -789,9 +795,9 @@ void  FreeIMU::AHRSupdate(float gx, float gy, float gz, float ax, float ay, floa
     //halfex += (ay * halfvz - az * halfvy);
     //halfey += (az * halfvx - ax * halfvz);
     //halfez += (ax * halfvy - ay * halfvx);
-	halfex = (ay * halfvz - az * halfvy);
-	halfey = (az * halfvx - ax * halfvz);
-	halfez = (ax * halfvy - ay * halfvx);
+	halfex += (ay * halfvz - az * halfvy);
+	halfey += (az * halfvx - ax * halfvz);
+	halfez += (ax * halfvy - ay * halfvx);
 	
   }
 
@@ -837,6 +843,7 @@ void  FreeIMU::AHRSupdate(float gx, float gy, float gz, float ax, float ay, floa
   q2 *= recipNorm;
   q3 *= recipNorm;
 }
+
 
 
 /**
