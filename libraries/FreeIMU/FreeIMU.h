@@ -173,7 +173,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // temperature calibration curves. (3.31.14
 #if defined(DFROBOT) 
 	#define twoKpDef  (2.0f * 0.5f)
-	#define twoKiDef  (2.0f * 0.0f)	
+	#define twoKiDef  (2.0f * 0.00002f)
 #elif defined(FREEIMU_v04)
 	#define twoKpDef  (2.0f * 0.75f)	//works with and without mag enabled
 	#define twoKiDef  (2.0f * 0.1625f)
@@ -275,17 +275,17 @@ class FreeIMU
 	float sampleFreq; // half the sample period expressed in seconds
 	
   private:
-    #if IS_9DOM()
+    //#if IS_9DOM()
     void AHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz);
-    #elif IS_6DOM()
-    void AHRSupdate(float gx, float gy, float gz, float ax, float ay, float az);
-    #endif
+    //#elif IS_6DOM()
+    void AHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az);
+    //#endif
     //float q0, q1, q2, q3; // quaternion elements representing the estimated orientation
     float iq0, iq1, iq2, iq3;
     float exInt, eyInt, ezInt;  // scaled integral error
     volatile float twoKp;      // 2 * proportional gain (Kp)
     volatile float twoKi;      // 2 * integral gain (Ki)
-    volatile float q0, q1, q2, q3; // quaternion of sensor frame relative to auxiliary frame
+    volatile float q0, q1, q2, q3, q3old; // quaternion of sensor frame relative to auxiliary frame
     volatile float integralFBx,  integralFBy, integralFBz;
     unsigned long lastUpdate, now; // sample period expressed in milliseconds
     //float sampleFreq; // half the sample period expressed in seconds

@@ -2,8 +2,12 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Thursday, April 7, 2014
-10:33 PM
+Friday, April 9, 2014
+4:33 AM
+
+04-09-14	1. Deleted Fabio's implementation of the AHRS filter and inserted the complete version from 	Seb Madgwick's X-io website. Seemed to fix the mag issue dramatically.
+2. Put median filter back in using a 5 point filter instead of 7
+3. Fixed zero gyro issue when using the ADXL345
 
 04-07-14 Added initGyros() routing from Ardupilot as well as filtering library so a median filter can be used for ADXL345 accelerometer. Code added to allow multiple board configuration Kp/Ki gains. Added ADXL345 temp cal for the DFROBOT board. Noticed I have to fix GUI for when you don't have a magnetometer on board. Next step drift correction.
 
