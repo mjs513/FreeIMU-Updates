@@ -198,6 +198,8 @@ void loop() {
         #if Has_LSM303
            compass.read();
            val_array[16] = compass.heading();
+        #elif IS_9DOM()
+           calcMagHeading(val_array);
         #else
             val_array[16] = -9999;
         #endif
@@ -237,6 +239,8 @@ void loop() {
         #if Has_LSM303
 	   compass.read();
            val_array[16] = compass.heading();
+        #elif IS_9DOM()
+           calcMagHeading(val_array);   
         #else
             val_array[16] = -9999;
         #endif
@@ -351,5 +355,53 @@ void eeprom_serial_dump_column() {
     sprintf(buf, "%03X: %02X", i, b);
     Serial.println(buf);
   }
+}
+
+//=============================================================
+// Get heading from magnetometer if LSM303 not available
+// code extracted from rob42/FreeIMU-20121106_1323 Github library
+// (https://github.com/rob42/FreeIMU-20121106_1323.git)
+// which is based on 
+//
+//=========================================================
+float calcMagHeading(float * val_array){
+  float Head_X, Head_Y;
+  float cos_roll, sin_roll, cos_pitch, sin_pitch;
+  float gx, gy, gz; // estimated gravity direction
+  //float ypr1[3];
+  
+  gx = 2 * (val_array[1]*val_array[3] 
+            - val_array[0]*val_array[2]);
+  gy = 2 * (val_array[0]*val_array[1] 
+            + val_array[2]*val_array[3]);
+  gz = val_array[0]*val_array[0] 
+       - val_array[1]*val_array[1] 
+       - val_array[2]*val_array[2] 
+       + val_array[3]*val_array[3];
+  
+  ypr[0] = atan2(2 * val_array[1] * val_array[2] 
+          - 2 * val_array[0] * val_array[3], 
+          2 * val_array[0]*val_array[0] 
+          + 2 * val_array[1] * val_array[1] - 1);
+  ypr[1] = atan(gx / sqrt(gy*gy + gz*gz));
+  ypr[2] = atan(gy / sqrt(gx*gx + gz*gz));  
+
+  cos_roll = cos(-ypr[2]);
+  sin_roll = sin(-ypr[2]);
+  cos_pitch = cos(ypr[1]);
+  sin_pitch = sin(ypr[1]);
+  
+  //Example calc
+  //Xh = bx * cos(theta) + by * sin(phi) * sin(theta) + bz * cos(phi) * sin(theta)
+  //Yh = by * cos(phi) - bz * sin(phi)
+  //return wrap((atan2(-Yh, Xh) + variation))
+    
+  // Tilt compensated Magnetic field X component:
+  Head_X = val_array[10]*cos_pitch+val_array[11]*sin_roll*sin_pitch+val_array[12]*cos_roll*sin_pitch;
+  // Tilt compensated Magnetic field Y component:
+  Head_Y = val_array[11]*cos_roll-val_array[12]*sin_roll;
+  // Magnetic Heading
+  val_array[16] = atan2(-Head_Y,-Head_X)*180./M_PI;
+ 
 }
 
