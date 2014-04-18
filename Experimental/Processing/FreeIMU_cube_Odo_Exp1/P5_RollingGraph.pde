@@ -208,14 +208,14 @@ public class ControlFrame extends PApplet {
        //.setSize(100,20)
        .setSize(180,20)
        //.setRange(0.05, 16)
-       .setRange(0.05, 100)
+       .setRange(0.05, 10)
        .setNumberOfTickMarks(75)
        .setPosition(140,10);
     cp5.addSlider("Min")
        //.setSize(100,20)
        .setSize(180,20)
        //.setRange(-16, -0.05)
-       .setRange(-100,-0.05)
+       .setRange(-10,0)
        .setNumberOfTickMarks(75)
        //.setPosition(290,10);
        .setPosition(370,10);

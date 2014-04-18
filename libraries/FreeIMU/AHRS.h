@@ -37,6 +37,8 @@ void FreeIMU::AHRSupdate(float gx, float gy, float gz, float ax, float ay, float
 	float qa, qb, qc;
 
 	// Use IMU algorithm if magnetometer measurement invalid (avoids NaN in magnetometer normalisation)
+	//  #if IS_9DOM() && not defined(DISABLE_MAGN)
+
 	if((mx == 0.0f) && (my == 0.0f) && (mz == 0.0f)) {
 		AHRSupdateIMU(gx, gy, gz, ax, ay, az);
 		return;

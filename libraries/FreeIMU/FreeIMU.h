@@ -40,7 +40,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define SEN_10183 //9 Degrees of Freedom - Sensor Stick  SEN-10183 http://www.sparkfun.com/products/10183
 //#define ARDUIMU_v3 //  DIYDrones ArduIMU+ V3 http://store.diydrones.com/ArduIMU_V3_p/kt-arduimu-30.htm or https://www.sparkfun.com/products/11055
 //#define GEN_MPU6050 // Generic MPU6050 breakout board. Compatible with GY-521, SEN-11028 and other MPU6050 wich have the MPU6050 AD0 pin connected to GND.
-#define DFROBOT  //DFROBOT 10DOF SEN-1040 IMU
+//#define DFROBOT  //DFROBOT 10DOF SEN-1040 IMU
+#define GEN_MPU9150
 
 //#define DISABLE_MAGN // Uncomment this line to disable the magnetometer in the sensor fusion algorithm
 
@@ -85,6 +86,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #define FREEIMU_ID "DFROBOT"
 #elif defined(GEN_MPU6050)
   #define FREEIMU_ID "GEN MPU6050"
+#elif defined(GEN_MPU9150)
+  #define FREEIMU_ID "GEN MPU9150"  
 #endif
 
 
@@ -92,6 +95,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define HAS_ADXL345() (defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(SEN_10121) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183))
 #define HAS_BMA180() (defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP))
 #define HAS_MPU6050() (defined(FREEIMU_v04) || defined(GEN_MPU6050))
+#define HAS_MPU9150() (defined(GEN_MPU9150))
 #define HAS_MS5611() (defined(FREEIMU_v035_MS) || defined(FREEIMU_v04))
 #define HAS_BMP085() (defined(DFROBOT))
 #define HAS_HMC5883L() (defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183)  || defined(ARDUIMU_v3))
@@ -99,7 +103,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 #define IS_6DOM() (defined(SEN_10121) || defined(GEN_MPU6050))
-#define IS_9DOM() (defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183) || defined(ARDUIMU_v3))
+#define IS_9DOM() (defined(GEN_MPU9150) || defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183) || defined(ARDUIMU_v3))
 #define HAS_AXIS_ALIGNED() (defined(GEN_MPU6050) || defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10121) || defined(SEN_10736))
 
 
@@ -135,6 +139,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #include "I2Cdev.h"
   #include "MPU60X0.h"
   #define FIMU_ACCGYRO_ADDR MPU60X0_DEFAULT_SS_PIN
+#elif HAS_MPU9150()
+  #include <Wire.h>
+  #include "I2Cdev.h"
+  #include "MPU9150.h"
+  #define FIMU_ACCGYRO_ADDR MPU6050_DEFAULT_ADDRESS  
 #endif
 
 #if HAS_BMP085()
@@ -175,6 +184,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #elif defined(GEN_MPU6050)
 	#define twoKpDef  (2.0f * 0.5f)
 	#define twoKiDef  (2.0f * 0.05f)
+#elif defined(GEN_MPU9150)
+	#define twoKpDef  (2.0f * 0.75f)
+	#define twoKiDef  (2.0f * 0.1f)	
 #else
 	#define twoKpDef  (2.0f * 0.5f)
 	#define twoKiDef  (2.0f * 0.1f)
@@ -207,13 +219,15 @@ class FreeIMU
 	void initGyros();
     void getRawValues(int * raw_values);
     void getValues(float * values);
-    void getQ(float * q);
+    void getQ(float * q, float * val);
     void getEuler(float * angles);
     void getYawPitchRoll(float * ypr);
     void getEulerRad(float * angles);
     void getYawPitchRollRad(float * ypr);
 	float invSqrt(float x);
 	void setTempCalib(int opt_temp_cal);
+	float calcMagHeading(float q0, float q1, float q2, float q3, float bx, float by, float bz);
+
 	
     #if HAS_MS5611()
       float getBaroAlt();
@@ -246,7 +260,9 @@ class FreeIMU
     #elif HAS_MPU6050()
       MPU60X0 accgyro; 
     #elif HAS_MPU6000()
-      MPU60X0 accgyro; 
+      MPU60X0 accgyro;
+	#elif HAS_MPU9150()
+	  MPU6050 accgyromag;
     #endif
       
       
@@ -263,7 +279,9 @@ class FreeIMU
     int16_t gyro_off_x, gyro_off_y, gyro_off_z;
     int16_t acc_off_x, acc_off_y, acc_off_z, magn_off_x, magn_off_y, magn_off_z;
     float acc_scale_x, acc_scale_y, acc_scale_z, magn_scale_x, magn_scale_y, magn_scale_z;
-	int nsamples, temp_break, temp_corr_on, instability_fix;
+	float val[10];
+	int8_t nsamples, temp_break, temp_corr_on, instability_fix;
+	int16_t DTemp; 
 	float rt, senTemp, senTemp_break;
 	float sampleFreq; // half the sample period expressed in seconds
 	
@@ -271,6 +289,7 @@ class FreeIMU
     void AHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz);
     void AHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az);
     
+	float bx, by, bz;
     float iq0, iq1, iq2, iq3;
     float exInt, eyInt, ezInt;  			// scaled integral error
     volatile float twoKp;      				// 2 * proportional gain (Kp)

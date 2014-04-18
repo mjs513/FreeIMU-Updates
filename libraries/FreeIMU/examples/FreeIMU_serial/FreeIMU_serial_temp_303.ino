@@ -16,6 +16,7 @@
 #include <BMP085.h>
 #include <I2Cdev.h>
 #include <MPU60X0.h>
+#include <MPU9150.h>
 
 #include <EEPROM.h>
 #include <Wire.h>
@@ -37,7 +38,7 @@ float q[4];
 int raw_values[11];
 float ypr[3]; // yaw pitch roll
 char str[256];
-float val[9];
+float val[10];
 float val_array[17]; 
 //float senTemp;
 
@@ -149,17 +150,20 @@ void loop() {
         #if HAS_ITG3200()
           my3IMU.acc.readAccel(&raw_values[0], &raw_values[1], &raw_values[2]);
           my3IMU.gyro.readGyroRaw(&raw_values[3], &raw_values[4], &raw_values[5]);
-        #else // MPU6050
+          writeArr(raw_values, 6, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
+        #elif HAS_MPU9150()
+          my3IMU.accgyromag.getMotion9(&raw_values[0], &raw_values[1], &raw_values[2], 
+                                       &raw_values[3], &raw_values[4], &raw_values[5],
+                                       &raw_values[6], &raw_values[7], &raw_values[8]);
+          writeArr(raw_values, 9, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
+        #elif HAS_MPU6050 || HAS_MPU6000   // MPU6050
           my3IMU.accgyro.getMotion6(&raw_values[0], &raw_values[1], &raw_values[2], &raw_values[3], &raw_values[4], &raw_values[5]);
+          writeArr(raw_values, 6, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
         #endif
-        writeArr(raw_values, 6, sizeof(int)); // writes accelerometer and gyro values
-        #if IS_9DOM()
+        //writeArr(raw_values, 6, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
+        
+        #if IS_9DOM() && !HAS_MPU9150()
           my3IMU.magn.getValues(&raw_values[0], &raw_values[1], &raw_values[2]);
-          writeArr(raw_values, 3, sizeof(int));
-         #else
-          raw_values[0] = 0;
-          raw_values[1] = 0;
-          raw_values[2] = 0;
           writeArr(raw_values, 3, sizeof(int));
         #endif
         Serial.println();
@@ -168,7 +172,7 @@ void loop() {
     else if(cmd == 'q') {
       uint8_t count = serial_busy_wait();
       for(uint8_t i=0; i<count; i++) {
-        my3IMU.getQ(q);
+        my3IMU.getQ(q, val);
         serialPrintFloatArr(q, 4);
         Serial.println("");
       }
@@ -177,9 +181,9 @@ void loop() {
       float val_array[17] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
       uint8_t count = serial_busy_wait();
       for(uint8_t i=0; i<count; i++) {
-        my3IMU.getQ(q);
+        my3IMU.getQ(q, val);
 	val_array[15] = my3IMU.sampleFreq;        
-        my3IMU.getValues(val);
+        //my3IMU.getValues(val);       
         val_array[7] = (val[3] * M_PI/180);
         val_array[8] = (val[4] * M_PI/180);
         val_array[9] = (val[5] * M_PI/180);
@@ -194,20 +198,21 @@ void loop() {
         val_array[2] = (q[2]);
         val_array[3] = (q[3]);
         //val_array[15] = millis();
-
+        val_array[16] = val[9];
+        
         #if Has_LSM303
            compass.read();
-           val_array[16] = compass.heading();
-        #elif IS_9DOM()
-           calcMagHeading(val_array);
-        #else
-            val_array[16] = -9999;
+           val_array[16] = compass.heading();;
         #endif
 		
         #if (HAS_MS5611() || HAS_BMP085())
            // with baro
            val_array[13] = (my3IMU.getBaroTemperature());
            val_array[14] = (my3IMU.getBaroPressure());
+        #elif HAS_MPU6050() || HAS_MPU9150()
+           val_array[13] = (my3IMU.DTemp/340.) + 35.;
+        #elif HAS_ITG3200()
+           val_array[13] = myIMU.rt;
         #endif
 
         serialPrintFloatArr(val_array,17);
@@ -218,9 +223,9 @@ void loop() {
       float val_array[17] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
       uint8_t count = serial_busy_wait();
       for(uint8_t i=0; i<count; i++) {
-        my3IMU.getQ(q);
+        my3IMU.getQ(q, val);
         val_array[15] = my3IMU.sampleFreq;
-        my3IMU.getValues(val);        
+        //my3IMU.getValues(val);        
 	val_array[7] = (val[3] * M_PI/180);
 	val_array[8] = (val[4] * M_PI/180);
 	val_array[9] = (val[5] * M_PI/180);
@@ -239,10 +244,6 @@ void loop() {
         #if Has_LSM303
 	   compass.read();
            val_array[16] = compass.heading();
-        #elif IS_9DOM()
-           calcMagHeading(val_array);   
-        #else
-            val_array[16] = -9999;
         #endif
 
 	#if (HAS_MS5611() || HAS_BMP085())
@@ -314,7 +315,7 @@ void loop() {
         sprintf(str, "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,", raw_values[0], raw_values[1], raw_values[2], raw_values[3], raw_values[4], raw_values[5], raw_values[6], raw_values[7], raw_values[8], raw_values[9], raw_values[10]);
         Serial.print(str);
         Serial.print('\n');
-        my3IMU.getQ(q);
+        my3IMU.getQ(q, val);
         serialPrintFloatArr(q, 4);
         Serial.println("");
         my3IMU.getYawPitchRoll(ypr);
@@ -355,53 +356,5 @@ void eeprom_serial_dump_column() {
     sprintf(buf, "%03X: %02X", i, b);
     Serial.println(buf);
   }
-}
-
-//=============================================================
-// Get heading from magnetometer if LSM303 not available
-// code extracted from rob42/FreeIMU-20121106_1323 Github library
-// (https://github.com/rob42/FreeIMU-20121106_1323.git)
-// which is based on 
-//
-//=========================================================
-float calcMagHeading(float * val_array){
-  float Head_X, Head_Y;
-  float cos_roll, sin_roll, cos_pitch, sin_pitch;
-  float gx, gy, gz; // estimated gravity direction
-  //float ypr1[3];
-  
-  gx = 2 * (val_array[1]*val_array[3] 
-            - val_array[0]*val_array[2]);
-  gy = 2 * (val_array[0]*val_array[1] 
-            + val_array[2]*val_array[3]);
-  gz = val_array[0]*val_array[0] 
-       - val_array[1]*val_array[1] 
-       - val_array[2]*val_array[2] 
-       + val_array[3]*val_array[3];
-  
-  ypr[0] = atan2(2 * val_array[1] * val_array[2] 
-          - 2 * val_array[0] * val_array[3], 
-          2 * val_array[0]*val_array[0] 
-          + 2 * val_array[1] * val_array[1] - 1);
-  ypr[1] = atan(gx / sqrt(gy*gy + gz*gz));
-  ypr[2] = atan(gy / sqrt(gx*gx + gz*gz));  
-
-  cos_roll = cos(-ypr[2]);
-  sin_roll = sin(-ypr[2]);
-  cos_pitch = cos(ypr[1]);
-  sin_pitch = sin(ypr[1]);
-  
-  //Example calc
-  //Xh = bx * cos(theta) + by * sin(phi) * sin(theta) + bz * cos(phi) * sin(theta)
-  //Yh = by * cos(phi) - bz * sin(phi)
-  //return wrap((atan2(-Yh, Xh) + variation))
-    
-  // Tilt compensated Magnetic field X component:
-  Head_X = val_array[10]*cos_pitch+val_array[11]*sin_roll*sin_pitch+val_array[12]*cos_roll*sin_pitch;
-  // Tilt compensated Magnetic field Y component:
-  Head_Y = val_array[11]*cos_roll-val_array[12]*sin_roll;
-  // Magnetic Heading
-  val_array[16] = atan2(-Head_Y,-Head_X)*180./M_PI;
- 
 }
 

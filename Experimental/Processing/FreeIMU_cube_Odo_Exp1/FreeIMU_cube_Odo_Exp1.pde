@@ -206,7 +206,7 @@ void setup()
   skpath = sketchPath("") + "/";
   
   // Create a new file in the sketch directory
-  output = createWriter("IMUData.txt"); 
+  output = createWriter("IMUData2a.txt"); 
   
   // The font must be located in the sketch's "data" directory to load successfully
   font = loadFont("CourierNew36.vlw"); 
@@ -318,9 +318,9 @@ void draw() {
   //text(nfp(degrees(Euler[1]),3,2), xLevelObj-40, yLevelObj + 75);
   //text(nfp(degrees(Euler[2]),3,2), xLevelObj-40, yLevelObj + 135);
   //text(nfp(degrees(Euler[0]),3,2), xLevelObj-40, yLevelObj + 195);
-  text(nfp(degrees(Euler[1]),3,2), xLevelObj-40, yLevelObj + 70);
-  text(nfp(degrees(Euler[2]),3,2), xLevelObj-40, yLevelObj + 120);
-  text(nfp(degrees(Euler[0]),3,2), xLevelObj-40, yLevelObj + 170);
+  text(nfp(degrees(ypr[1]),3,2), xLevelObj-40, yLevelObj + 70);
+  text(nfp(degrees(ypr[2]),3,2), xLevelObj-40, yLevelObj + 120);
+  text(nfp(degrees(ypr[0]),3,2), xLevelObj-40, yLevelObj + 170);
   
   textFont(font, 18);
   fill(#FFFF00);
@@ -398,7 +398,7 @@ void draw() {
 
   if(PrintOutput == 1){
       output.println(acc[0]+","+acc[1]+","+acc[2]+","+gyro[0]+","+gyro[1]+","+gyro[2]+","+
-         magn[0]+","+magn[1]+","+magn[2]+","+
+         magn[0]+","+magn[1]+","+magn[2] + "," + temp + "," +
          dyn_acc[0]+","+dyn_acc[1]+","+dyn_acc[2]+","+dyn_acc_q_earth.x+","+dyn_acc_q_earth.y+","+dyn_acc_q_earth.z+","+
          dt+","+corr_heading+","+ypr[0]+","+ypr[1]+","+ypr[2]+","+Euler[0]+","+Euler[1]+","+Euler[2]+","+
          motionDetect+","+motionDetect_transition+","+fused_alt+","+q[0]+","+q[1]+","+q[2]+","+q[3]+","+
@@ -445,13 +445,12 @@ void serialEvent(Serial p) {
 	magn[2] = decodeFloat(inputStringArr[12]);
 	temp = decodeFloat(inputStringArr[13]);
 	press = decodeFloat(inputStringArr[14]);
-        dt = 1./decodeFloat(inputStringArr[15]);
+        dt = (1./decodeFloat(inputStringArr[15]))/4;
         heading = decodeFloat(inputStringArr[16]);
         //dt = tnew - told;
         //told = tnew;
         if(heading < -9990) {
-            getYawPitchRollRad();
-            heading = rad2degs*calcMagHeading();
+            heading = 0;
         }
       }
     }
@@ -666,39 +665,6 @@ void getYawPitchRollRad() {
   ypr[0] = atan2(2 * q[1] * q[2] - 2 * q[0] * q[3], 2 * q[0]*q[0] + 2 * q[1] * q[1] - 1);
   ypr[1] = atan(gx / sqrt(gy*gy + gz*gz));
   ypr[2] = atan(gy / sqrt(gx*gx + gz*gz));
-}
-
-//=============================================================
-// Get heading from magnetometer if LSM303 not available
-// code extracted from rob42/FreeIMU-20121106_1323 Github library
-// (https://github.com/rob42/FreeIMU-20121106_1323.git)
-// which is based on 
-//
-//=========================================================
-float calcMagHeading(){
-  float Head_X;
-  float Head_Y;
-  float cos_roll;
-  float sin_roll;
-  float cos_pitch;
-  float sin_pitch;
-  
-  cos_roll = cos(-ypr[2]);
-  sin_roll = sin(-ypr[2]);
-  cos_pitch = cos(ypr[1]);
-  sin_pitch = sin(ypr[1]);
-  
-  //Example calc
-  //Xh = bx * cos(theta) + by * sin(phi) * sin(theta) + bz * cos(phi) * sin(theta)
-  //Yh = by * cos(phi) - bz * sin(phi)
-  //return wrap((atan2(-Yh, Xh) + variation))
-    
-  // Tilt compensated Magnetic field X component:
-  Head_X = magn[0]*cos_pitch+magn[1]*sin_roll*sin_pitch+magn[2]*cos_roll*sin_pitch;
-  // Tilt compensated Magnetic field Y component:
-  Head_Y = magn[1]*cos_roll-magn[2]*sin_roll;
-  // Magnetic Heading
-  return(atan2(-Head_Y,-Head_X)); 
 }
 
 //=============================================================
