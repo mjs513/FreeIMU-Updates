@@ -2,8 +2,14 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Friday, April 9, 2014
-4:33 AM
+Friday, April 18, 2014
+7:00 pm
+
+04-18-14
+------- Added 9150 library - 6050 library with getMotion9 function fully operational
+------- Fixed heading function so heading is aligned with the IMU axis alignment
+------- Put median filter on mag values
+---------------------------------------
 
 04-09-14	1. Deleted Fabio's implementation of the AHRS filter and inserted the complete version from 	Seb Madgwick's X-io website. Seemed to fix the mag issue dramatically.
 2. Put median filter back in using a 5 point filter instead of 7
