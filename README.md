@@ -5,6 +5,11 @@ Change Log
 Friday, April 18, 2014
 7:00 pm
 
+04-19-14
+------- Added support for GPS in Arduino and Processing Sketch using TinyGPS++ and AltSerialSoft libraries.
+------- TinyGPS++ : http://arduiniana.org/libraries/tinygpsplus/
+------- AltSoftwareSerial : https://www.pjrc.com/teensy/td_libs_AltSoftSerial.html
+
 04-18-14
 ------- Added 9150 library - 6050 library with getMotion9 function fully operational
 ------- Fixed heading function so heading is aligned with the IMU axis alignment
