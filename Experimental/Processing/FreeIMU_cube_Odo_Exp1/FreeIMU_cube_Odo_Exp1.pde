@@ -102,6 +102,10 @@ Quaternion dyn_acc_q_earth;
 Quaternion conQ;
 AltitudeComplementary altitudeFilter = new AltitudeComplementary();
 
+// GPS Variables
+float hdop, lat, longt, cog, sog, gpsalt, gpschars;
+float hdop_val, loc_val, gpsalt_val, sog_val, cog_val;
+int HAS_GPS = 1;
 // Sphere Variables
 float R = 150;
 int xDetail = 40;
@@ -248,7 +252,7 @@ void setup()
   setupSphere(R, xDetail, yDetail);
  
   //serial port set up
-  myPort = new Serial(this, serialPort, 38400);
+  myPort = new Serial(this, serialPort, 115200);
 
   //elapsed time start call
   sw.start();
@@ -321,6 +325,26 @@ void draw() {
   text(nfp(degrees(ypr[1]),3,2), xLevelObj-40, yLevelObj + 70);
   text(nfp(degrees(ypr[2]),3,2), xLevelObj-40, yLevelObj + 120);
   text(nfp(degrees(ypr[0]),3,2), xLevelObj-40, yLevelObj + 170);
+
+  if(HAS_GPS == 1){
+    fill(#ffff00);    
+    text("Latitude:\n", xLevelObj-50, yLevelObj + 195);
+    text("Long:\n", xLevelObj-50, yLevelObj + 245);
+    text("CoG:\n", xLevelObj-50, yLevelObj + 295);
+    text("SoG:\n", xLevelObj-50, yLevelObj + 345);
+    text("GPS Alt:\n", xLevelObj-50, yLevelObj + 395);  
+    
+    if(motionDetect == 0) {
+      sog = 0;
+      cog = -9999; }
+    
+    fill(#00CF00);
+    text(nfp(lat,3,5), xLevelObj-40, yLevelObj + 220);
+    text(nfp(longt,3,5), xLevelObj-40, yLevelObj + 270);
+    text(nfp(cog,3,2), xLevelObj-40, yLevelObj + 320);
+    text(nfp(sog,3,2), xLevelObj-40, yLevelObj + 370);
+    text(nfp(gpsalt,3,2), xLevelObj-40, yLevelObj + 420);
+  }
   
   textFont(font, 18);
   fill(#FFFF00);
@@ -425,7 +449,7 @@ float decodeFloat(String inString) {
 ////////////////////////////////////////////////////////////////////////
 void serialEvent(Serial p) {
   if(p.available() >= 17) {
-    String inputString = p.readStringUntil('\n');
+    String inputString = p.readStringUntil('\n');  
     //print(inputString);
     if (inputString != null && inputString.length() > 0) {
       String [] inputStringArr = split(inputString, ",");
@@ -452,8 +476,25 @@ void serialEvent(Serial p) {
         if(heading < -9990) {
             heading = 0;
         }
+        
+      //read GPS
+      if(HAS_GPS == 1){
+          hdop = decodeFloat(inputStringArr[17]);
+          hdop_val = decodeFloat(inputStringArr[18]);
+          lat = decodeFloat(inputStringArr[19]);
+          longt = decodeFloat(inputStringArr[20]);
+          loc_val = decodeFloat(inputStringArr[21]);
+          gpsalt = decodeFloat(inputStringArr[22]);
+          gpsalt_val = decodeFloat(inputStringArr[23]);
+          cog = decodeFloat(inputStringArr[24]);
+          cog_val = decodeFloat(inputStringArr[25]);
+          sog = decodeFloat(inputStringArr[26]);
+          sog_val = decodeFloat(inputStringArr[27]);
+          gpschars = decodeFloat(inputStringArr[28]);    
+       }        
       }
     }
+    
     count = count + 1;
     if(burst == count) { // ask more data when burst completed
       //1 = RESET MPU-6050, 2 = RESET Q Matrix
@@ -481,8 +522,7 @@ void serialEvent(Serial p) {
             calib = 1;
             sea_press = 1013.25;
             setup();
-      }
-      
+      } 
       if(calib == 0) {
          myPort.clear();
          myPort.write("f");
