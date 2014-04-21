@@ -1,4 +1,3 @@
-
 #include <AP_Math_freeimu.h>
 #include <Filter.h>                     // Filter library
 #include <ModeFilter.h>         // ModeFilter class (inherits from Filter class)
@@ -26,10 +25,10 @@
 #include "DebugUtils.h"
 #include "CommunicationUtils.h"
 #include "FreeIMU.h"
+#include "FilteringScheme.h"
 
 #define Has_LSM303 0
-
-#include "FilteringScheme.h"
+#define HAS_GPS 1
 
 KalmanFilter kFilters[4];
 int k_index = 4;
@@ -40,7 +39,6 @@ float ypr[3]; // yaw pitch roll
 char str[256];
 float val[10];
 float val_array[17]; 
-//float senTemp;
 
 // Set the FreeIMU object and LSM303 Compass
 FreeIMU my3IMU = FreeIMU();
@@ -50,6 +48,16 @@ FreeIMU my3IMU = FreeIMU();
   LSM303 compass;
   float declinationAngle = 0.229622;
   float heading_corr = -9999.;
+#endif
+
+#if HAS_GPS
+  #include <AltSoftSerial.h>
+  #include <TinyGPS++.h>
+  static const unsigned long GPSBaud = 57600;
+  // The TinyGPS++ object
+  TinyGPSPlus gps;
+  // The serial connection to the GPS device
+  AltSoftSerial ss;
 #endif
 
 //The command from the PC
@@ -76,22 +84,17 @@ void setup() {
   #if Has_LSM303
      compass.init();
      compass.enableDefault();
-  
      /*
      Calibration values; the default values of +/-32767 for each axis
      lead to an assumed magnetometer bias of 0. Use the Calibrate example
      program to determine appropriate values for your particular unit.
      */
-     //compass.m_min = (LSM303::vector<int16_t>){-32767, -32767, -32767};
-     //compass.m_max = (LSM303::vector<int16_t>){+32767, +32767, +32767};
-     //compass.m_min = (LSM303::vector<int16_t>){-3317, -4057, -3161};
-     //compass.m_max = (LSM303::vector<int16_t>){+2494, +1743, +2584};
-     //compass.m_min = (LSM303::vector<int16_t>){-2653, -3008, -2907};
-     //compass.m_max = (LSM303::vector<int16_t>){+2624, +2677, +2687};
-     //compass.m_min = (LSM303::vector<int16_t>){-3033, -3509, -3162};
-     //compass.m_max = (LSM303::vector<int16_t>){+3370, +2903, +3074};
      compass.m_min = (LSM303::vector<int16_t>){-2815, -3090, -2958};
      compass.m_max = (LSM303::vector<int16_t>){+2946, +2654, +2734};
+  #endif
+
+  #if HAS_GPS
+    ss.begin(GPSBaud);
   #endif
   
   // LED
@@ -204,7 +207,7 @@ void loop() {
            compass.read();
            val_array[16] = compass.heading();;
         #endif
-		
+	
         #if (HAS_MS5611() || HAS_BMP085())
            // with baro
            val_array[13] = (my3IMU.getBaroTemperature());
@@ -216,8 +219,28 @@ void loop() {
         #endif
 
         serialPrintFloatArr(val_array,17);
-        Serial.print('\n');
-      }	  
+        //Serial.print('\n');
+        
+        #if HAS_GPS
+          val_array[0] = (float) gps.hdop.value();
+          val_array[1] = (float) gps.hdop.isValid();
+          val_array[2] = (float) gps.location.lat();
+          val_array[3] = (float) gps.location.lng();
+          val_array[4] = (float) gps.location.isValid();
+          val_array[5] = (float) gps.altitude.meters();
+          val_array[6] = (float) gps.altitude.isValid();
+          val_array[7] = (float) gps.course.deg();
+          val_array[8] = (float) gps.course.isValid();
+          val_array[9] = (float) gps.speed.kmph();
+          val_array[10] = (float) gps.speed.isValid();
+          val_array[11] = (float) gps.charsProcessed();
+          serialPrintFloatArr(val_array,12);
+          Serial.print('\n');
+          smartDelay(20);
+        #elif
+          Serial.print('\n');
+        #endif        
+      }
     }
     else if(cmd == 'a') {
       float val_array[17] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
@@ -253,7 +276,27 @@ void loop() {
 	#endif
 
 	serialPrintFloatArr(val_array, 17);
-        Serial.println("");
+        //Serial.print('\n');
+        
+        #if HAS_GPS
+          val_array[0] = (float) gps.hdop.value();
+          val_array[1] = (float) gps.hdop.isValid();
+          val_array[2] = (float) gps.location.lat();
+          val_array[3] = (float) gps.location.lng();
+          val_array[4] = (float) gps.location.isValid();
+          val_array[5] = (float) gps.altitude.meters();
+          val_array[6] = (float) gps.altitude.isValid();
+          val_array[7] = (float) gps.course.deg();
+          val_array[8] = (float) gps.course.isValid();
+          val_array[9] = (float) gps.speed.kmph();
+          val_array[10] = (float) gps.speed.isValid();
+          val_array[11] = (float) gps.charsProcessed();
+          serialPrintFloatArr(val_array,12);
+          Serial.print('\n');
+          smartDelay(20);
+        #elif
+          Serial.print('\n');
+        #endif 
        }
      }
 
@@ -356,5 +399,17 @@ void eeprom_serial_dump_column() {
     sprintf(buf, "%03X: %02X", i, b);
     Serial.println(buf);
   }
+}
+
+// This custom version of delay() ensures that the gps object
+// is being "fed".
+static void smartDelay(unsigned long ms)
+{
+  unsigned long start = millis();
+  do 
+  {
+    while (ss.available())
+      gps.encode(ss.read());
+  } while (millis() - start < ms);
 }
 

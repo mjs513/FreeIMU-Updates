@@ -39,7 +39,11 @@ import java.awt.event.*;
 import controlP5.*;
 ControlP5 cp5;
 ControlFrame cf;
+ControlFrame cf1;
 int def;
+
+PFrame f;
+secondApplet mesg;
 
 PrintWriter output;
 
@@ -242,6 +246,13 @@ void setup()
      .setCaptionLabel("Open Rolling Trace Frame")
      ;
 
+  //add button to open gps trace
+  cp5.addButton("gpscam")
+     .setPosition(550,520)
+     .setSize(240,30)
+     .setCaptionLabel("GPS Trace")
+     ;
+
   //setup attitdude indicator
   noStroke();
   imageMode(CENTER);
@@ -252,7 +263,7 @@ void setup()
   setupSphere(R, xDetail, yDetail);
  
   //serial port set up
-  myPort = new Serial(this, serialPort, 115200);
+  myPort = new Serial(this, serialPort, 38400);
 
   //elapsed time start call
   sw.start();
@@ -426,7 +437,7 @@ void draw() {
          dyn_acc[0]+","+dyn_acc[1]+","+dyn_acc[2]+","+dyn_acc_q_earth.x+","+dyn_acc_q_earth.y+","+dyn_acc_q_earth.z+","+
          dt+","+corr_heading+","+ypr[0]+","+ypr[1]+","+ypr[2]+","+Euler[0]+","+Euler[1]+","+Euler[2]+","+
          motionDetect+","+motionDetect_transition+","+fused_alt+","+q[0]+","+q[1]+","+q[2]+","+q[3]+","+
-         positionX[0]+","+positionY[0]+","+positionZ[0]);
+         positionX[0]+","+positionY[0]+","+positionZ[0]+", "+lat+", "+longt+", "+gpsalt);
   }
   
 }

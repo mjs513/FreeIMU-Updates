@@ -227,7 +227,7 @@ class FreeIMU
 	float invSqrt(float x);
 	void setTempCalib(int opt_temp_cal);
 	float calcMagHeading(float q0, float q1, float q2, float q3, float bx, float by, float bz);
-
+	void initializeQ(float hdg);
 	
     #if HAS_MS5611()
       float getBaroAlt();
