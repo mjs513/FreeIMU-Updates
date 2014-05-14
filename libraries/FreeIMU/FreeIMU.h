@@ -41,7 +41,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define ARDUIMU_v3 //  DIYDrones ArduIMU+ V3 http://store.diydrones.com/ArduIMU_V3_p/kt-arduimu-30.htm or https://www.sparkfun.com/products/11055
 //#define GEN_MPU6050 // Generic MPU6050 breakout board. Compatible with GY-521, SEN-11028 and other MPU6050 wich have the MPU6050 AD0 pin connected to GND.
 //#define DFROBOT  //DFROBOT 10DOF SEN-1040 IMU
-#define GEN_MPU9150
+#define MPU9250_5611  //MPU-91250 IMU with MS5611 Altimeter from E-Bay
+//#define GEN_MPU9150
 
 //#define DISABLE_MAGN // Uncomment this line to disable the magnetometer in the sensor fusion algorithm
 
@@ -88,6 +89,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #define FREEIMU_ID "GEN MPU6050"
 #elif defined(GEN_MPU9150)
   #define FREEIMU_ID "GEN MPU9150"  
+#elif defined(MPU9250_5611)
+  #define FREEIMU_ID "MPU9150_5611"
 #endif
 
 
@@ -95,15 +98,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define HAS_ADXL345() (defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(SEN_10121) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183))
 #define HAS_BMA180() (defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP))
 #define HAS_MPU6050() (defined(FREEIMU_v04) || defined(GEN_MPU6050))
-#define HAS_MPU9150() (defined(GEN_MPU9150))
-#define HAS_MS5611() (defined(FREEIMU_v035_MS) || defined(FREEIMU_v04))
+#define HAS_MPU9150() (defined(GEN_MPU9150) || defined(MPU9250_5611))  //9150 and 9250 code same config.
+#define HAS_MPU9250() (defined(MPU9250_5611))
+#define HAS_MS5611() (defined(MPU9250_5611) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v04))
 #define HAS_BMP085() (defined(DFROBOT))
 #define HAS_HMC5883L() (defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183)  || defined(ARDUIMU_v3))
 #define HAS_MPU6000() (defined(ARDUIMU_v3))
 
 
 #define IS_6DOM() (defined(SEN_10121) || defined(GEN_MPU6050))
-#define IS_9DOM() (defined(GEN_MPU9150) || defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183) || defined(ARDUIMU_v3))
+#define IS_9DOM() (defined(MPU9250_5611) || defined(GEN_MPU9150) || defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183) || defined(ARDUIMU_v3))
 #define HAS_AXIS_ALIGNED() (defined(GEN_MPU6050) || defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10121) || defined(SEN_10736))
 
 #include <Wire.h>
@@ -142,8 +146,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #elif HAS_MPU9150()
   #include <Wire.h>
   #include "I2Cdev.h"
-  #include "MPU9150.h"
-  #define FIMU_ACCGYRO_ADDR MPU6050_DEFAULT_ADDRESS  
+  #include "MPU60X0.h"
+  #include "AK8975.h"
+  #include "iCompass.h"
+  #define FIMU_ACCGYRO_ADDR MPU60X0_DEFAULT_ADDRESS  
 #endif
 
 #if HAS_BMP085()
@@ -164,6 +170,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #if HAS_HMC5883L()
   #include <HMC58X3.h>
+  #include "iCompass.h"
 #endif
 
 
@@ -253,6 +260,7 @@ class FreeIMU
     
     #if HAS_HMC5883L()
       HMC58X3 magn;
+	  iCompass compass;
     #endif
     
     #if HAS_ITG3200()
@@ -262,7 +270,9 @@ class FreeIMU
     #elif HAS_MPU6000()
       MPU60X0 accgyro;
 	#elif HAS_MPU9150()
-	  MPU6050 accgyromag;
+	  MPU60X0 accgyro;
+	  AK8975 mag;
+	  iCompass compass;	  
     #endif
       
       
@@ -279,7 +289,7 @@ class FreeIMU
     int16_t gyro_off_x, gyro_off_y, gyro_off_z;
     int16_t acc_off_x, acc_off_y, acc_off_z, magn_off_x, magn_off_y, magn_off_z;
     float acc_scale_x, acc_scale_y, acc_scale_z, magn_scale_x, magn_scale_y, magn_scale_z;
-	float val[10];
+	float val[11];
 	int8_t nsamples, temp_break, temp_corr_on, instability_fix;
 	int16_t DTemp; 
 	float rt, senTemp, senTemp_break;
@@ -289,6 +299,7 @@ class FreeIMU
     void AHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz);
     void AHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az);
     
+	bool	bSPI;
 	float bx, by, bz;
     float iq0, iq1, iq2, iq3;
     float exInt, eyInt, ezInt;  			// scaled integral error

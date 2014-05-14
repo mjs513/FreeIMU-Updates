@@ -36,14 +36,16 @@ import java.awt.Frame;
 import java.awt.BorderLayout;
 import java.awt.event.*;
 
+import javax.swing.JFrame;
+EmbeddedSketch eSketch;
+ChildApplet child = new ChildApplet();
+
+import peasy.*;
+PeasyCam cam, cam2;
+
 import controlP5.*;
 ControlP5 cp5;
 ControlFrame cf;
-ControlFrame cf1;
-int def;
-
-PFrame f;
-secondApplet mesg;
 
 PrintWriter output;
 
@@ -54,6 +56,19 @@ MyKalman pressK = new MyKalman();
 
 //Settup Stop Watch
 StopWatchTimer sw = new StopWatchTimer();
+
+    //screen limits in lat, lon and elevation
+    float west = -73.81465;
+    float east = -79.81455;
+    float north = 40.77459;
+    float south = 40.77450;
+    float lowest = 50;
+    float highest = 200;
+
+    //screen display point coordinates
+    float screen_X;
+    float screen_Y;
+    float screen_Z;
 
 // These are needed for the moving average calculation
 float[] data = new float[32];
@@ -109,7 +124,7 @@ AltitudeComplementary altitudeFilter = new AltitudeComplementary();
 // GPS Variables
 float hdop, lat, longt, cog, sog, gpsalt, gpschars;
 float hdop_val, loc_val, gpsalt_val, sog_val, cog_val;
-int HAS_GPS = 1;
+int HAS_GPS = 0;
 // Sphere Variables
 float R = 150;
 int xDetail = 40;
@@ -133,8 +148,8 @@ float S;
 float A;
 
 float sea_press = 1013.25;           //Input local sea level pressure
-float declinationAngle = -13.1603;   //Flushing, NY magnetic declination in degrees
-//float declinationAngle = 0;
+//float declinationAngle = -13.1603;   //Flushing, NY magnetic declination in degrees
+float declinationAngle = 0;
 float STATIONALTFT = 36.0;           //LaGuardia AP measurement height
 float SEA_PRESS  = 1013.25;          //default sea level pressure level in mb
 float KNOWNALT   = 65.0;             //default known altitude, 
@@ -209,10 +224,9 @@ void myDelay(int time) {
 void setup() 
 {
   size(VIEW_SIZE_X, VIEW_SIZE_Y, OPENGL);
-  //frameRate(120);
-  
+
   skpath = sketchPath("") + "/";
-  
+
   // Create a new file in the sketch directory
   output = createWriter("IMUData2a.txt"); 
   
@@ -245,13 +259,13 @@ void setup()
      .setSize(240,30)
      .setCaptionLabel("Open Rolling Trace Frame")
      ;
-
-  //add button to open gps trace
-  cp5.addButton("gpscam")
-     .setPosition(550,520)
+  //add button to open gps trace window
+  cp5.addButton("GPStrace")
+     .setPosition(500,420)
      .setSize(240,30)
-     .setCaptionLabel("GPS Trace")
+     .setCaptionLabel("Open Rolling Trace Frame")
      ;
+
 
   //setup attitdude indicator
   noStroke();
@@ -285,6 +299,7 @@ void setup()
 
 ///////////////////////////////////////////////////////////////////
 void draw() {
+  
   //background(#585858);
   background(#000000);
   textFont(font, 18);
@@ -355,6 +370,7 @@ void draw() {
     text(nfp(cog,3,2), xLevelObj-40, yLevelObj + 320);
     text(nfp(sog,3,2), xLevelObj-40, yLevelObj + 370);
     text(nfp(gpsalt,3,2), xLevelObj-40, yLevelObj + 420);
+
   }
   
   textFont(font, 18);

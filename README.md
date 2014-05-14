@@ -2,8 +2,17 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Friday, April 18, 2014
+Tuesday, May 13, 2014
 7:00 pm
+
+05-13-14
+-------- Deleted 9150 library and added support for MPU-9150/9250 using Jeff Rowbergs AK8975 library for the magnetometer and maintained integrity of original 60X0 library
+-------- Replaced Median Filter with Butterworh filters
+-------- Added Filter library from ArduIMU (nice addition)
+-------- Reduced size of serial sketch to fit on arduino uno for calibration
+-------- Added azimuth code for heading when magnetometer and accelerometer available by extracting the code segment from the Pololu LSM303D library. Made a library called iCompass so it can be used elsewhere.
+-------- In process of modifing code for use with Pololu AltIMU-10 v3.
+---------------------------------------------------------------------------
 
 04-19-14
 ------- Added support for GPS in Arduino and Processing Sketch using TinyGPS++ and AltSerialSoft libraries.

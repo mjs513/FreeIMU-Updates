@@ -90,20 +90,26 @@ Below changes were made by Michael J Smorto
 			Seb Madgwick's X-io website. Seemed to fix the mag issue dramatically.
 			2. Put median filter back in using a 5 point filter instead of 7
 			3. Fixed zero gyro issue when using the ADXL345 chip
+04-21-14	1. Added tilt compensated compass just using the HMC5883L or the 9150 on chip magnetomer
+			2. Added GPS support using the TinyGPS++ and the AltSoftwareSerial libraries - modified processing
+			GUI to support GPS.
+04-23-14	Incorporated Butterworth filter from AP_Filter
+04-28-14	Modified LS303D Pololu library for use with any magnetometer and accelerometer.
 
 */
 
 #include "Arduino.h"
 #include <inttypes.h>
 #include <stdint.h>
-#define DEBUG
+//#define DEBUG
 #include "FreeIMU.h"
 #include "AHRS.h"
 
 // #include "WireUtils.h"
 #include "DebugUtils.h"
 #include <Filter.h>             // Filter library
-#include <ModeFilter.h>         // ModeFilter class (inherits from Filter class)
+#include <Butter.h>
+#include <iCompass.h>
 
 //#include "vector_math.h"
 
@@ -134,17 +140,16 @@ Below changes were made by Michael J Smorto
 //used for BMP085
 long Temperature = 0, Pressure = 0, Altitude = 0;
 
-//Set up MOde Filter - complimentary
-ModeFilterInt16_Size5 mfilter_accx(2);   // buffer of 7 values, result will be from buffer element 2 
-                                         // (ie. the 3rd element which is the middle)
-ModeFilterInt16_Size5 mfilter_accy(2);
-ModeFilterInt16_Size5 mfilter_accz(2);
+//Setup accelerometer filter
+butter50hz2_0 mfilter_accx;
+butter50hz2_0 mfilter_accy;
+butter50hz2_0 mfilter_accz;
 
 #if HAS_MPU9150()
-	//Set up MOde Filter for 9150 mag - more noisey than HMC5883L
-	ModeFilterInt16_Size5 mfilter_mx(2);
-	ModeFilterInt16_Size5 mfilter_my(2);
-	ModeFilterInt16_Size5 mfilter_mz(2);
+	//Set up Butterworth Filter for 9150 mag - more noisey than HMC5883L
+	butter50hz2_0 mfilter_mx;
+	butter50hz2_0 mfilter_my;
+	butter50hz2_0 mfilter_mz;
 #endif
 
 //Set-up constants for gyro calibration
@@ -163,6 +168,7 @@ FreeIMU::FreeIMU() {
   
   #if HAS_HMC5883L()
     magn = HMC58X3();
+	compass = iCompass();
   #endif
   
   #if HAS_ITG3200()
@@ -172,7 +178,9 @@ FreeIMU::FreeIMU() {
   #elif HAS_MPU6000()
     accgyro = MPU60X0(); // SPI for Arduimu v3
   #elif HAS_MPU9150()
-    accgyromag = MPU6050();  // uses 9150 arduino library
+    accgyro = MPU60X0();
+	mag = AK8975();
+	compass = iCompass();
   #endif
     
   #if HAS_MS5611()
@@ -235,17 +243,17 @@ FreeIMU::FreeIMU() {
 
 void FreeIMU::init() {
   #if HAS_ITG3200()
-  init(FIMU_ACC_ADDR, FIMU_ITG3200_DEF_ADDR, false);
+	init(FIMU_ACC_ADDR, FIMU_ITG3200_DEF_ADDR, false);
   #else
-  init(FIMU_ACCGYRO_ADDR, false);
+	init(FIMU_ACCGYRO_ADDR, false);
   #endif
 }
 
 void FreeIMU::init(bool fastmode) {
   #if HAS_ITG3200()
-  init(FIMU_ACC_ADDR, FIMU_ITG3200_DEF_ADDR, fastmode);
+	init(FIMU_ACC_ADDR, FIMU_ITG3200_DEF_ADDR, fastmode);
   #else
-  init(FIMU_ACCGYRO_ADDR, fastmode);
+	init(FIMU_ACCGYRO_ADDR, fastmode);
   #endif
 }
 
@@ -291,9 +299,9 @@ void FreeIMU::RESET_Q() {
  * Initialize the FreeIMU I2C bus, sensors and performs gyro offsets calibration
 */
 #if HAS_ITG3200()
-void FreeIMU::init(int acc_addr, int gyro_addr, bool fastmode) {
+	void FreeIMU::init(int acc_addr, int gyro_addr, bool fastmode) {
 #else
-void FreeIMU::init(int accgyro_addr, bool fastmode) {
+	void FreeIMU::init(int accgyro_addr, bool fastmode) {
 #endif
   delay(5);
   
@@ -365,15 +373,24 @@ void FreeIMU::init(int accgyro_addr, bool fastmode) {
   #endif
   
   #if HAS_MPU9150()
-	accgyromag = MPU6050(false, accgyro_addr);
-	accgyromag.initialize();
-	accgyromag.setDLPFMode(MPU6050_DLPF_BW_20); 
-	accgyromag.setI2CMasterModeEnabled(0);
-	accgyromag.setI2CBypassEnabled(1);
-	accgyromag.setFullScaleGyroRange(MPU6050_GYRO_FS_2000);
-	delay(5);
-	delay(30);
+	//initialize accelerometer and gyroscope
+	accgyro = MPU60X0(false, accgyro_addr);
+	#if HAS_MPU9250()
+		accgyro.initialize9250(50);
+	#else
+		accgyro.initialize();
+	#endif
+	accgyro.setDLPFMode(MPU60X0_DLPF_BW_20); 
+	accgyro.setI2CMasterModeEnabled(0);
+	accgyro.setI2CBypassEnabled(1);
+	accgyro.setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);
+	delay(100);
+	//initialize magnetometer
+	mag = AK8975(false, AK8975_DEFAULT_ADDRESS);
+    mag.initialize();
   #endif
+  
+  
   
   #if HAS_MPU6000()
 	accgyro = MPU60X0(true, accgyro_addr);
@@ -391,6 +408,7 @@ void FreeIMU::init(int accgyro_addr, bool fastmode) {
 	magn.setMode(0);
 	delay(10);
 	magn.setDOR(B110);
+	compass iCompass();
   #endif
   
   
@@ -484,7 +502,7 @@ void FreeIMU::getRawValues(int * raw_values) {
     gyro.readGyroRaw(&raw_values[3], &raw_values[4], &raw_values[5]);
 	gyro.readTemp(&senTemp);
 	raw_values[9] = senTemp*100;
-  #elif HAS_MPU6050 || HAS_MPU6000
+  #else HAS_MPU6050 || HAS_MPU6000 || HAS_MPU9150
     #ifdef __AVR__
      accgyro.getMotion6(&raw_values[0], &raw_values[1], &raw_values[2], &raw_values[3], &raw_values[4], &raw_values[5]);  	  
      rt = accgyro.getTemperature();	  
@@ -501,32 +519,12 @@ void FreeIMU::getRawValues(int * raw_values) {
       rt = accgyro.getTemperature();	  
       raw_values[9] = rt;
     #endif
-  #elif HAS_MPU9150()
-    #ifdef __AVR__
-     accgyromag.getMotion9(&raw_values[0], &raw_values[1], &raw_values[2], 
-						   &raw_values[3], &raw_values[4], &raw_values[5],
-						   &raw_values[6], &raw_values[7], &raw_values[8]);  	  
-     rt = accgyromag.getTemperature();	  
-     raw_values[9] = rt;	 
-	 #else
-      int16_t ax, ay, az, gx, gy, gz, mx, my, mz, rt;
-      accgyromag.getMotion9(&ax, &ay, &az, &gx, &gy, &gz, &mx, &my, &mz);
-      raw_values[0] = ax;
-      raw_values[1] = ay;
-      raw_values[2] = az;
-      raw_values[3] = gx;
-      raw_values[4] = gy;
-      raw_values[5] = gz;
-      raw_values[6] = mx;
-      raw_values[7] = my;
-      raw_values[8] = mz;	  
-      rt = accgyromag.getTemperature();	  
-      raw_values[9] = rt;
-    #endif  
-  #endif
+  #endif 
    
   #if HAS_HMC5883L()
     magn.getValues(&raw_values[6], &raw_values[7], &raw_values[8]);
+  #elif HAS_MPU9150()
+	mag.getHeading(&raw_values[6], &raw_values[7], &raw_values[8]);
   #endif
 
 }
@@ -543,9 +541,9 @@ void FreeIMU::getValues(float * values) {
   #if HAS_ITG3200()
     int accval[3];
     acc.readAccel(&accval[0], &accval[1], &accval[2]);
-	accval[0] = mfilter_accx.apply(accval[0]);
-    accval[1] = mfilter_accy.apply(accval[1]);
-    accval[2] = mfilter_accz.apply(accval[2]);
+	accval[0] = mfilter_accx.filter((float) accval[0]);
+    accval[1] = mfilter_accy.filter((float) accval[1]);
+    accval[2] = mfilter_accz.filter((float) accval[2]);
 	
     gyro.readGyro(&values[3]);	
 	gyro.readTemp(&senTemp);
@@ -572,26 +570,33 @@ void FreeIMU::getValues(float * values) {
   #else// MPU6050
     int16_t accgyroval[9];
 	#if HAS_MPU9150()
-		accgyromag.getMotion9(&accgyroval[0], &accgyroval[1], &accgyroval[2], 
-						   &accgyroval[3], &accgyroval[4], &accgyroval[5],
-						   &accgyroval[6], &accgyroval[7], &accgyroval[8]);
-						   
-		accgyroval[0] = mfilter_accx.apply(accgyroval[0]);
+		accgyro.getMotion6(&accgyroval[0], &accgyroval[1], &accgyroval[2], 
+						   &accgyroval[3], &accgyroval[4], &accgyroval[5]);	   
+		// read raw heading measurements from device
+		mag.getHeading(&accgyroval[6], &accgyroval[7], &accgyroval[8]);				   
+		/* accgyroval[0] = mfilter_accx.apply(accgyroval[0]);
 		accgyroval[1] = mfilter_accy.apply(accgyroval[1]);
 		accgyroval[2] = mfilter_accz.apply(accgyroval[2]);
 		values[6] = (float) mfilter_mx.apply(accgyroval[6]);
 		values[7] = (float) mfilter_my.apply(accgyroval[7]);
-		values[8] = (float) mfilter_mz.apply(accgyroval[8]);				   
+		values[8] = (float) mfilter_mz.apply(accgyroval[8]); */
+		
+		accgyroval[0] = mfilter_accx.filter((float) accgyroval[0]);
+		accgyroval[1] = mfilter_accy.filter((float) accgyroval[1]);
+		accgyroval[2] = mfilter_accz.filter((float) accgyroval[2]);
+		
+		values[6] = mfilter_mx.filter((float) accgyroval[6]);
+		values[7] = mfilter_my.filter((float) accgyroval[7]);
+		values[8] = mfilter_mz.filter((float) accgyroval[8]);
+
+		
 	#else
 		accgyro.getMotion6(&accgyroval[0], &accgyroval[1], &accgyroval[2], 
 						   &accgyroval[3], &accgyroval[4], &accgyroval[5]);
 	#endif
 	
-	#if HAS_MPU9150()
-		DTemp = accgyromag.getTemperature();
-	#else
-		DTemp = accgyro.getTemperature();
-	#endif
+	DTemp = accgyro.getTemperature();
+
 	if(temp_corr_on == 1){
 		if(DTemp < temp_break){    
 			for( i = 0; i < 9; i++) { 
@@ -637,7 +642,6 @@ void FreeIMU::getValues(float * values) {
   values[1] = (values[1] - acc_off_y) / acc_scale_y;
   values[2] = (values[2] - acc_off_z) / acc_scale_z;
   
-  
   #if HAS_HMC5883L()
     magn.getValues(&values[6]);
   #endif
@@ -664,7 +668,7 @@ void FreeIMU::getValues(float * values) {
 */
 void FreeIMU::zeroGyro() {
   const int totSamples = nsamples;
-  int raw[10];
+  int raw[11];
   float values[10];
   float tmpOffsets[] = {0,0,0};
   
@@ -802,16 +806,17 @@ void FreeIMU::getQ(float * q, float * val) {
   #if IS_9DOM() && not defined(DISABLE_MAGN)
     #if HAS_AXIS_ALIGNED()
       AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
-      val[9] = calcMagHeading(q0, q1, q2, q3, val[6], val[7], val[8]);
+      val[9] = calcMagHeading(q0,  q1,  q2,  q3, val[6], val[7], val[8]);
 	#elif defined(SEN_10724)
       AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[7], -val[6], val[8]);
-      val[9] = calcMagHeading(q0, q1, q2, q3, val[7], -val[6], val[8]);
+      val[9] = calcMagHeading( q0,  q1,  q2,  q3, val[7], -val[6], val[8]);
 	#elif defined(ARDUIMU_v3)
       AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], -val[6], -val[7], val[8]);
-      val[9] = calcMagHeading(q0, q1, q2, q3, -val[6], -val[7], val[8]);    
-	#elif defined(GEN_MPU9150)
+      val[9] = calcMagHeading( q0,  q1,  q2,  q3, -val[6], -val[7], val[8]);    
+	#elif defined(GEN_MPU9150) || defined(MPU9250_5611)
       AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[7], val[6], val[8]);
-      val[9] = calcMagHeading(q0, q1, q2, q3, val[7], val[6], val[8]); 
+      //val[9] = calcMagHeading( q0,  q1,  q2, q3, val[7], val[6], val[8]); 
+	  val[9] = compass.iheading(1, 0, 0, val[0], val[1], val[2], val[7], val[6], val[8]);
 	#endif
   #else
     AHRSupdateIMU(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2]);
@@ -1012,7 +1017,6 @@ float FreeIMU::calcMagHeading(float q0, float q1, float q2, float q3, float bx, 
   return (atan2(-Head_Y,Head_X)*180./M_PI);
  
 }
-
 
 
 /**
