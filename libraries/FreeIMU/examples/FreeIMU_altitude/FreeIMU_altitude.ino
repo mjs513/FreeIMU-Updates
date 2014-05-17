@@ -24,20 +24,23 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
 #include <ADXL345.h>
 #include <bma180.h>
 #include <HMC58X3.h>
+#include <LSM303.h>
 #include <ITG3200.h>
 #include <MS561101BA.h>
 #include <I2Cdev.h>
 #include <MPU60X0.h>
 #include <EEPROM.h>
+#include <L3G.h>
+#include <LPS331.h> 
+#include <iCompass.h>
 
-//#define DEBUG
-#include "DebugUtils.h"
-#include "FreeIMU.h"
-#include <Wire.h>
-#include <SPI.h>
+#include <AP_Math_freeimu.h>
+#include <Filter.h>    // Filter library
+#include <Butter.h>    // Butterworth filter
 
 
 float val[11];

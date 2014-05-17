@@ -1,11 +1,19 @@
 #include <ADXL345.h>
 #include <bma180.h>
 #include <HMC58X3.h>
+#include <LSM303.h>
 #include <ITG3200.h>
 #include <MS561101BA.h>
 #include <I2Cdev.h>
 #include <MPU60X0.h>
 #include <EEPROM.h>
+#include <L3G.h>
+#include <LPS331.h> 
+#include <iCompass.h>
+
+#include <AP_Math_freeimu.h>
+#include <Filter.h>    // Filter library
+#include <Butter.h>    // Butterworth filter
 
 //#define DEBUG
 #include "DebugUtils.h"
@@ -62,7 +70,7 @@ void loop() {
   Serial.println("Testing sensor fusion speed (average on 1024 samples):");
   start = micros();
   for(int i=0; i<1024; i++) {
-    my3IMU.getQ(q);
+    my3IMU.getQ(q,val);
   }
   stop = micros();
   Serial.print("--> result: ");

@@ -9,12 +9,21 @@
 */
 
 #include <ADXL345.h>
-#include <HMC58X3.h>
-#include <ITG3200.h>
 #include <bma180.h>
+#include <HMC58X3.h>
+#include <LSM303.h>
+#include <ITG3200.h>
 #include <MS561101BA.h>
 #include <I2Cdev.h>
-#include <MPU6050.h>
+#include <MPU60X0.h>
+#include <EEPROM.h>
+#include <L3G.h>
+#include <LPS331.h> 
+#include <iCompass.h>
+
+#include <AP_Math_freeimu.h>
+#include <Filter.h>    // Filter library
+#include <Butter.h>    // Butterworth filter
 
 //#define DEBUG
 #include "DebugUtils.h"
@@ -80,6 +89,5 @@ void loop() {
   }
   
 }
-
 
 

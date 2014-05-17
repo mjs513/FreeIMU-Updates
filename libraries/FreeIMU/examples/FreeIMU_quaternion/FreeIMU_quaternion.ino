@@ -1,23 +1,32 @@
+#
 #include <ADXL345.h>
 #include <bma180.h>
 #include <HMC58X3.h>
+#include <LSM303.h>
 #include <ITG3200.h>
 #include <MS561101BA.h>
 #include <I2Cdev.h>
 #include <MPU60X0.h>
 #include <EEPROM.h>
+#include <L3G.h>
+#include <LPS331.h> 
+#include <iCompass.h>
+
+#include <AP_Math_freeimu.h>
+#include <Filter.h>    // Filter library
+#include <Butter.h>    // Butterworth filter
+
+#include <EEPROM.h>
+#include <Wire.h>
+#include <SPI.h>
 
 //#define DEBUG
 #include "DebugUtils.h"
 #include "CommunicationUtils.h"
 #include "FreeIMU.h"
-#include <Wire.h>
-#include <SPI.h>
+#include "FilteringScheme.h"
 
-int raw_values[9];
-//char str[512];
-float ypr[3]; // yaw pitch roll
-float val[9];
+float q[4], val[11];
 
 // Set the FreeIMU object
 FreeIMU my3IMU = FreeIMU();
@@ -27,20 +36,14 @@ void setup() {
   Wire.begin();
   
   delay(5);
-  my3IMU.init(); // the parameter enable or disable fast mode
+  my3IMU.init();
   delay(5);
 }
 
+
 void loop() { 
-  
-  my3IMU.getYawPitchRoll(ypr);
-  Serial.print("Yaw: ");
-  Serial.print(ypr[0]);
-  Serial.print(" Pitch: ");
-  Serial.print(ypr[1]);
-  Serial.print(" Roll: ");
-  Serial.print(ypr[2]);
+  my3IMU.getQ(q,val);
+  serialPrintFloatArr(q, 4);
   Serial.println("");
-  
-  delay(10);
+  delay(20);
 }
