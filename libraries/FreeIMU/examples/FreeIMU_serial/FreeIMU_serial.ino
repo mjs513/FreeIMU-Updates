@@ -1,7 +1,7 @@
 #include <AP_Math_freeimu.h>
-#include <Filter.h>                     // Filter library
-#include <ModeFilter.h>         // ModeFilter class (inherits from Filter class)
-
+#include <Filter.h>    // Filter library
+#include <Butter.h>    // Butterworth filter
+#include <iCompass.h>
 /**
  * FreeIMU library serial communication protocol
 */
@@ -15,7 +15,9 @@
 #include <BMP085.h>
 #include <I2Cdev.h>
 #include <MPU60X0.h>
-#include <MPU9150.h>
+#include <AK8975.h>
+#include <L3G.h>
+#include <LPS331.h> 
 
 #include <EEPROM.h>
 #include <Wire.h>
@@ -27,8 +29,7 @@
 #include "FreeIMU.h"
 #include "FilteringScheme.h"
 
-#define Has_LSM303 0
-#define HAS_GPS 1
+#define HAS_GPS 0
 
 KalmanFilter kFilters[4];
 int k_index = 4;
@@ -36,19 +37,12 @@ int k_index = 4;
 float q[4];
 int raw_values[11];
 float ypr[3]; // yaw pitch roll
-char str[256];
-float val[10];
+char str[128];
+float val[11];
 float val_array[17]; 
 
 // Set the FreeIMU object and LSM303 Compass
 FreeIMU my3IMU = FreeIMU();
-
-#if Has_LSM303
-  //Set up tilt corrected LSM303D
-  LSM303 compass;
-  float declinationAngle = 0.229622;
-  float heading_corr = -9999.;
-#endif
 
 #if HAS_GPS
   #include <AltSoftSerial.h>
@@ -80,18 +74,6 @@ void setup() {
   //#endif
 	
   my3IMU.init(true);
-
-  #if Has_LSM303
-     compass.init();
-     compass.enableDefault();
-     /*
-     Calibration values; the default values of +/-32767 for each axis
-     lead to an assumed magnetometer bias of 0. Use the Calibrate example
-     program to determine appropriate values for your particular unit.
-     */
-     compass.m_min = (LSM303::vector<int16_t>){-2815, -3090, -2958};
-     compass.m_max = (LSM303::vector<int16_t>){+2946, +2654, +2734};
-  #endif
 
   #if HAS_GPS
     ss.begin(GPSBaud);
@@ -127,7 +109,7 @@ void loop() {
       //available opttions temp_corr_on, instability_fix
       my3IMU.initGyros();
       my3IMU.setTempCalib(0);
-    }    
+    }
     else if(cmd=='r') {
       uint8_t count = serial_busy_wait();
       for(uint8_t i=0; i<count; i++) {
@@ -135,17 +117,13 @@ void loop() {
         my3IMU.getRawValues(raw_values);
         sprintf(str, "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,", raw_values[0], raw_values[1], raw_values[2], raw_values[3], raw_values[4], raw_values[5], raw_values[6], raw_values[7], raw_values[8], raw_values[9]);
         Serial.print(str);
-        #if (HAS_MS5611() || HAS_BMP085())
+        #if (HAS_MS5611() || HAS_BMP085() || HAS_LPS331())
           Serial.print(my3IMU.getBaroTemperature()); Serial.print(",");
           Serial.print(my3IMU.getBaroPressure()); Serial.print(",");
         #endif
-        #if Has_LSM303
-           compass.read();
-           Serial.print(compass.heading());Serial.print(",");
-        #endif
         Serial.print(millis()); Serial.print(",");
         Serial.println("\r\n");
-      }
+     }
     }
     else if(cmd=='b') {
       uint8_t count = serial_busy_wait();
@@ -155,17 +133,18 @@ void loop() {
           my3IMU.gyro.readGyroRaw(&raw_values[3], &raw_values[4], &raw_values[5]);
           writeArr(raw_values, 6, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
         #elif HAS_MPU9150()
-          my3IMU.accgyromag.getMotion9(&raw_values[0], &raw_values[1], &raw_values[2], 
-                                       &raw_values[3], &raw_values[4], &raw_values[5],
-                                       &raw_values[6], &raw_values[7], &raw_values[8]);
+          my3IMU.getRawValues(raw_values);
           writeArr(raw_values, 9, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
-        #elif HAS_MPU6050 || HAS_MPU6000   // MPU6050
+        #elif HAS_MPU6050() || HAS_MPU6000()   // MPU6050
           my3IMU.accgyro.getMotion6(&raw_values[0], &raw_values[1], &raw_values[2], &raw_values[3], &raw_values[4], &raw_values[5]);
           writeArr(raw_values, 6, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
+        #elif HAS_ALTIMU10()
+          my3IMU.getRawValues(raw_values);
+          writeArr(raw_values, 9, sizeof(int)); // writes accelerometer, gyro values & mag of Altimu 10        
         #endif
         //writeArr(raw_values, 6, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
         
-        #if IS_9DOM() && !HAS_MPU9150()
+        #if IS_9DOM() && (!HAS_MPU9150() && !HAS_ALTIMU10())
           my3IMU.magn.getValues(&raw_values[0], &raw_values[1], &raw_values[2]);
           writeArr(raw_values, 3, sizeof(int));
         #endif
@@ -202,13 +181,8 @@ void loop() {
         val_array[3] = (q[3]);
         //val_array[15] = millis();
         val_array[16] = val[9];
-        
-        #if Has_LSM303
-           compass.read();
-           val_array[16] = compass.heading();;
-        #endif
 	
-        #if (HAS_MS5611() || HAS_BMP085())
+        #if (HAS_MS5611() || HAS_BMP085() || HAS_LPS331())
            // with baro
            val_array[13] = (my3IMU.getBaroTemperature());
            val_array[14] = (my3IMU.getBaroPressure());
@@ -237,11 +211,11 @@ void loop() {
           serialPrintFloatArr(val_array,12);
           Serial.print('\n');
           smartDelay(20);
-        #elif
+        #else
           Serial.print('\n');
         #endif        
       }
-    }
+    } 
     else if(cmd == 'a') {
       float val_array[17] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
       uint8_t count = serial_busy_wait();
@@ -249,33 +223,32 @@ void loop() {
         my3IMU.getQ(q, val);
         val_array[15] = my3IMU.sampleFreq;
         //my3IMU.getValues(val);        
-	val_array[7] = (val[3] * M_PI/180);
-	val_array[8] = (val[4] * M_PI/180);
-	val_array[9] = (val[5] * M_PI/180);
-	val_array[4] = (val[0]);
-	val_array[5] = (val[1]);
-	val_array[6] = (val[2]);
-	val_array[10] = (val[6]);
-	val_array[11] = (val[7]);
-	val_array[12] = (val[8]);
-	val_array[0] = kFilters[0].measureRSSI(q[0]);
-	val_array[1] = kFilters[1].measureRSSI(q[1]);
-	val_array[2] = kFilters[2].measureRSSI(q[2]);
-	val_array[3] = kFilters[3].measureRSSI(q[3]);
-	//val_array[15] = millis();
-		
-        #if Has_LSM303
-	   compass.read();
-           val_array[16] = compass.heading();
+		val_array[7] = (val[3] * M_PI/180);
+		val_array[8] = (val[4] * M_PI/180);
+		val_array[9] = (val[5] * M_PI/180);
+		val_array[4] = (val[0]);
+		val_array[5] = (val[1]);
+		val_array[6] = (val[2]);
+		val_array[10] = (val[6]);
+		val_array[11] = (val[7]);
+		val_array[12] = (val[8]);
+		val_array[0] = kFilters[0].measureRSSI(q[0]);
+		val_array[1] = kFilters[1].measureRSSI(q[1]);
+		val_array[2] = kFilters[2].measureRSSI(q[2]);
+		val_array[3] = kFilters[3].measureRSSI(q[3]);
+		//val_array[15] = millis();
+		val_array[16] = val[9];
+
+        #if (HAS_MS5611() || HAS_BMP085() || HAS_LPS331())
+           // with baro
+           val_array[13] = (my3IMU.getBaroTemperature());
+           val_array[14] = (my3IMU.getBaroPressure());
+        #elif HAS_MPU6050() || HAS_MPU9150()
+           val_array[13] = (my3IMU.DTemp/340.) + 35.;
+        #elif HAS_ITG3200()
+           val_array[13] = myIMU.rt;
         #endif
-
-	#if (HAS_MS5611() || HAS_BMP085())
-	// with baro
-	   val_array[13] = (my3IMU.getBaroTemperature());
-	   val_array[14] = (my3IMU.getBaroPressure());
-	#endif
-
-	serialPrintFloatArr(val_array, 17);
+        serialPrintFloatArr(val_array, 17);
         //Serial.print('\n');
         
         #if HAS_GPS
@@ -294,7 +267,7 @@ void loop() {
           serialPrintFloatArr(val_array,12);
           Serial.print('\n');
           smartDelay(20);
-        #elif
+        #else
           Serial.print('\n');
         #endif 
        }
@@ -405,11 +378,12 @@ void eeprom_serial_dump_column() {
 // is being "fed".
 static void smartDelay(unsigned long ms)
 {
+  #if HAS_GPS
   unsigned long start = millis();
   do 
   {
     while (ss.available())
       gps.encode(ss.read());
   } while (millis() - start < ms);
+  #endif
 }
-

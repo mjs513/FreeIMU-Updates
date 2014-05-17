@@ -16,6 +16,8 @@
 #include <I2Cdev.h>
 #include <MPU60X0.h>
 #include <AK8975.h>
+#include <L3G.h>
+#include <LPS331.h> 
 
 #include <EEPROM.h>
 #include <Wire.h>
@@ -64,7 +66,7 @@ FreeIMU my3IMU = FreeIMU();
 char cmd, tempCorr;
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(38400);
   Wire.begin();
   
   //float qVal = 0.125; //Set Q Kalman Filter(process noise) value between 0 and 1
@@ -135,7 +137,7 @@ void loop() {
         my3IMU.getRawValues(raw_values);
         sprintf(str, "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,", raw_values[0], raw_values[1], raw_values[2], raw_values[3], raw_values[4], raw_values[5], raw_values[6], raw_values[7], raw_values[8], raw_values[9]);
         Serial.print(str);
-        #if (HAS_MS5611() || HAS_BMP085())
+        #if (HAS_MS5611() || HAS_BMP085() || HAS_LPS331())
           Serial.print(my3IMU.getBaroTemperature()); Serial.print(",");
           Serial.print(my3IMU.getBaroPressure()); Serial.print(",");
         #endif
@@ -157,13 +159,16 @@ void loop() {
         #elif HAS_MPU9150()
           my3IMU.getRawValues(raw_values);
           writeArr(raw_values, 9, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
-        #elif HAS_MPU6050 || HAS_MPU6000   // MPU6050
+        #elif HAS_MPU6050() || HAS_MPU6000()   // MPU6050
           my3IMU.accgyro.getMotion6(&raw_values[0], &raw_values[1], &raw_values[2], &raw_values[3], &raw_values[4], &raw_values[5]);
           writeArr(raw_values, 6, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
+        #elif HAS_ALTIMU10()
+          my3IMU.getRawValues(raw_values);
+          writeArr(raw_values, 9, sizeof(int)); // writes accelerometer, gyro values & mag of Altimu 10        
         #endif
         //writeArr(raw_values, 6, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
         
-        #if IS_9DOM() && !HAS_MPU9150()
+        #if IS_9DOM() && (!HAS_MPU9150() && !HAS_ALTIMU10())
           my3IMU.magn.getValues(&raw_values[0], &raw_values[1], &raw_values[2]);
           writeArr(raw_values, 3, sizeof(int));
         #endif
@@ -206,7 +211,7 @@ void loop() {
            val_array[16] = compass.heading();;
         #endif
 	
-        #if (HAS_MS5611() || HAS_BMP085())
+        #if (HAS_MS5611() || HAS_BMP085() || HAS_LPS331())
            // with baro
            val_array[13] = (my3IMU.getBaroTemperature());
            val_array[14] = (my3IMU.getBaroPressure());
@@ -268,7 +273,7 @@ void loop() {
 			val_array[16] = compass.heading();
         #endif
 
-        #if (HAS_MS5611() || HAS_BMP085())
+        #if (HAS_MS5611() || HAS_BMP085() || HAS_LPS331())
            // with baro
            val_array[13] = (my3IMU.getBaroTemperature());
            val_array[14] = (my3IMU.getBaroPressure());
