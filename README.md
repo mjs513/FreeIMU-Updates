@@ -2,8 +2,13 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Tuesday, May 13, 2014
+Saturday, May 17, 2014
 7:00 pm
+
+05-17-14
+-------- updated FreeIMU examples to work with current library
+-------- Added support for the Pololu AltIMU-10 v3 IMU
+--------------------------------------------------------------------------
 
 05-13-14
 -------- Deleted 9150 library and added support for MPU-9150/9250 using Jeff Rowbergs AK8975 library for the magnetometer and maintained integrity of original 60X0 library
