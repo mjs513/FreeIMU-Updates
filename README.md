@@ -2,8 +2,14 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Saturday, May 17, 2014
-7:00 pm
+Saturday, May 24, 2014
+7:00 am
+
+05-24-14
+-------- Corrected test for AltIMU-10 v3 and updated Kp/Ki
+-------- Created a new Serial Example for when using a Arduino Due - AltSoftSerial does not work for Due.
+-------- Minor correction to Processing sketch
+--------------------------------------------------------------------------
 
 05-17-14
 -------- updated FreeIMU examples to work with current library
