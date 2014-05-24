@@ -19,7 +19,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -----------------------------------------------------------------------------------------------
-Below changes were made by Michael J Smorto
+Below changes were made by Michael J Smorto, above license still applies. 
+All changes to this program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
 10-27-2013   1. Modified incorporate temperature correction for gyro and accelerometer
 			 2. Corrected __AVR__ to __AVR_ATmega128__
              3. Added call to get temperature from MPU-6050 in getRawValues
@@ -90,11 +95,36 @@ Below changes were made by Michael J Smorto
 			Seb Madgwick's X-io website. Seemed to fix the mag issue dramatically.
 			2. Put median filter back in using a 5 point filter instead of 7
 			3. Fixed zero gyro issue when using the ADXL345 chip
+04-18-14
+			Added 9150 library - 6050 library with getMotion9 function fully operational
+			Fixed heading function so heading is aligned with the IMU axis alignment
+			Put median filter on mag values
+04-19-14
+			Added support for GPS in Arduino and Processing Sketch using TinyGPS++ and AltSerialSoft libraries.
+			TinyGPS++ : http://arduiniana.org/libraries/tinygpsplus/
+			AltSoftwareSerial : https://www.pjrc.com/teensy/td_libs_AltSoftSerial.html
 04-21-14	1. Added tilt compensated compass just using the HMC5883L or the 9150 on chip magnetomer
 			2. Added GPS support using the TinyGPS++ and the AltSoftwareSerial libraries - modified processing
 			GUI to support GPS.
 04-23-14	Incorporated Butterworth filter from AP_Filter
 04-28-14	Modified LS303D Pololu library for use with any magnetometer and accelerometer.
+05-13-14
+-------- Deleted 9150 library and added support for MPU-9150/9250 using Jeff Rowbergs AK8975 library for the magnetometer and maintained integrity of original 60X0 library
+-------- Replaced Median Filter with Butterworh filters
+-------- Added Filter library from ArduIMU (nice addition)
+-------- Reduced size of serial sketch to fit on arduino uno for calibration
+-------- Added azimuth code for heading when magnetometer and accelerometer available by extracting the code segment from the Pololu LSM303D library. Made a library called iCompass so it can be used elsewhere.
+-------- In process of modifing code for use with Pololu AltIMU-10 v3.
+---------------------------------------------------------------------------
+05-17-14
+-------- updated FreeIMU examples to work with current library
+-------- Added support for the Pololu AltIMU-10 v3 IMU
+--------------------------------------------------------------------------
+05-24-14
+-------- Corrected test for AltIMU-10 v3 and updated Kp/Ki
+-------- Created a new Serial Example for when using a Arduino Due - AltSoftSerial does not work for Due.
+-------- Minor correction to Processing sketch
+--------------------------------------------------------------------------
 
 */
 
