@@ -284,13 +284,14 @@ void setup()
   
   println("Waiting IMU..");
 
-  while (myPort.available() > 0) {
+  while (myPort.available() == 0) {
+    println(myPort.available());
     myPort.write("v");
     //myPort.write("1");
     myDelay(1000);
   }
-  //println(myPort.readStringUntil('\n'));
-  myPort.write("z" + char(burst));
+  
+  myPort.write("a" + char(burst));
   myPort.bufferUntil('\n');
   
   cp5.setAutoDraw(false);
@@ -563,7 +564,7 @@ void serialEvent(Serial p) {
          calib = 99;
       }      
       myDelay(100);
-      p.write("z" + char(burst));
+      p.write("a" + char(burst));
       count = 0;
     }
   }
