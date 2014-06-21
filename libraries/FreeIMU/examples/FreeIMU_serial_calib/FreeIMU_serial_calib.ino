@@ -16,6 +16,7 @@
 #include <I2Cdev.h>
 #include <MPU60X0.h>
 #include <AK8975.h>
+#include <AK8963.h>
 #include <L3G.h>
 #include <LPS331.h> 
 
@@ -156,7 +157,7 @@ void loop() {
           my3IMU.acc.readAccel(&raw_values[0], &raw_values[1], &raw_values[2]);
           my3IMU.gyro.readGyroRaw(&raw_values[3], &raw_values[4], &raw_values[5]);
           writeArr(raw_values, 6, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
-        #elif HAS_MPU9150()
+        #elif HAS_MPU9150() || HAS_MPU9250()
           my3IMU.getRawValues(raw_values);
           writeArr(raw_values, 9, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
         #elif HAS_MPU6050() || HAS_MPU6000()   // MPU6050
@@ -168,7 +169,7 @@ void loop() {
         #endif
         //writeArr(raw_values, 6, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
         
-        #if IS_9DOM() && (!HAS_MPU9150() && !HAS_ALTIMU10())
+        #if IS_9DOM() && (!HAS_MPU9150() && !HAS_MPU9250() && !HAS_ALTIMU10())
           my3IMU.magn.getValues(&raw_values[0], &raw_values[1], &raw_values[2]);
           writeArr(raw_values, 3, sizeof(int));
         #endif
@@ -215,7 +216,7 @@ void loop() {
            // with baro
            val_array[13] = (my3IMU.getBaroTemperature());
            val_array[14] = (my3IMU.getBaroPressure());
-        #elif HAS_MPU6050() || HAS_MPU9150()
+        #elif HAS_MPU6050() || HAS_MPU9150() || HAS_MPU9250()
            val_array[13] = (my3IMU.DTemp/340.) + 35.;
         #elif HAS_ITG3200()
            val_array[13] = myIMU.rt;
@@ -277,7 +278,7 @@ void loop() {
            // with baro
            val_array[13] = (my3IMU.getBaroTemperature());
            val_array[14] = (my3IMU.getBaroPressure());
-        #elif HAS_MPU6050() || HAS_MPU9150()
+        #elif HAS_MPU6050() || HAS_MPU9150() || HAS_MPU9250()
            val_array[13] = (my3IMU.DTemp/340.) + 35.;
         #elif HAS_ITG3200()
            val_array[13] = myIMU.rt;

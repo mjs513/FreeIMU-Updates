@@ -2,8 +2,12 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Saturday, May 24, 2014
-7:00 am
+Friday, June 20, 2014
+
+06-20-14
+-------- Based on Kris Winer's work on the MPU-9250 and the AK8963 I was able to create a basic AK8963 library
+         modeled after that of the AK8975 library from Jeff Rowberg. This was then incorporated into
+		 FreeIMU library.
 
 05-24-14
 -------- Corrected test for AltIMU-10 v3 and updated Kp/Ki

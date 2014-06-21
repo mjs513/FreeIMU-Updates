@@ -43,6 +43,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define DFROBOT  //DFROBOT 10DOF SEN-1040 IMU
 //#define MPU9250_5611  //MPU-91250 IMU with MS5611 Altimeter from E-Bay
 //#define GEN_MPU9150
+//#define GEN_MPU9250
 //#define Altimu10  // Pololu AltIMU v10 - 10 DOF IMU - http://www.pololu.com/product/1269
 
 //#define DISABLE_MAGN // Uncomment this line to disable the magnetometer in the sensor fusion algorithm
@@ -88,11 +89,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #elif defined(DFROBOT)
   #define FREEIMU_ID "DFROBOT"
 #elif defined(GEN_MPU6050)
-  #define FREEIMU_ID "GEN MPU6050"
+  #define FREEIMU_ID "GEN MPU-6050"
 #elif defined(GEN_MPU9150)
-  #define FREEIMU_ID "GEN MPU9150"  
+  #define FREEIMU_ID "GEN MPU-9150"  
 #elif defined(MPU9250_5611)
   #define FREEIMU_ID "MPU9150_5611"
+#elif defined(GEN_MPU9250)
+  #define FREEIMU_ID "GEN MPU-9250"
 #elif defined(Altimu10)
   #define FREEIMU_ID "AltIMU-v10"  
 #endif
@@ -102,8 +105,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define HAS_ADXL345() (defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(SEN_10121) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183))
 #define HAS_BMA180() (defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP))
 #define HAS_MPU6050() (defined(FREEIMU_v04) || defined(GEN_MPU6050))
-#define HAS_MPU9150() (defined(GEN_MPU9150) || defined(MPU9250_5611))  //9150 and 9250 code same config.
-#define HAS_MPU9250() (defined(MPU9250_5611))
+#define HAS_MPU9150() (defined(GEN_MPU9150))
+#define HAS_MPU9250() (defined(MPU9250_5611) || defined(GEN_MPU9250)) 
 #define HAS_MS5611() (defined(MPU9250_5611) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v04))
 #define HAS_BMP085() (defined(DFROBOT))
 #define HAS_HMC5883L() (defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183)  || defined(ARDUIMU_v3))
@@ -155,6 +158,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #include "I2Cdev.h"
   #include "MPU60X0.h"
   #include "AK8975.h"
+  #include "iCompass.h"
+  #define FIMU_ACCGYRO_ADDR MPU60X0_DEFAULT_ADDRESS
+#elif HAS_MPU9250()
+  #include <Wire.h>
+  #include "I2Cdev.h"
+  #include "MPU60X0.h"
+  #include "AK8963.h"
   #include "iCompass.h"
   #define FIMU_ACCGYRO_ADDR MPU60X0_DEFAULT_ADDRESS
 #elif HAS_ALTIMU10()
@@ -299,6 +309,10 @@ class FreeIMU
 	  MPU60X0 accgyro;
 	  AK8975 mag;
 	  iCompass maghead;	  
+	#elif HAS_MPU9250()
+	  MPU60X0 accgyro;
+	  AK8963 mag;
+	  iCompass maghead;	 	
     #endif
 
 	#if HAS_L3D20()
