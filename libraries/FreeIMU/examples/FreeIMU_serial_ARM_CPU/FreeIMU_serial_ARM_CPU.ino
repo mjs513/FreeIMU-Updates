@@ -186,8 +186,10 @@ void loop() {
            // with baro
            val_array[13] = (my3IMU.getBaroTemperature());
            val_array[14] = (my3IMU.getBaroPressure());
-        #elif HAS_MPU6050() || HAS_MPU9150()  || HAS_MPU9250()
+        #elif HAS_MPU6050()
            val_array[13] = (my3IMU.DTemp/340.) + 35.;
+		#elif HAS_MPU9150()  || HAS_MPU9250()
+           val_array[13] = ((float) my3IMU.DTemp) / 333.87 + 21.0;
         #elif HAS_ITG3200()
            val_array[13] = myIMU.rt;
         #endif
@@ -243,8 +245,10 @@ void loop() {
            // with baro
            val_array[13] = (my3IMU.getBaroTemperature());
            val_array[14] = (my3IMU.getBaroPressure());
-        #elif HAS_MPU6050() || HAS_MPU9150()  || HAS_MPU9250()
+        #elif HAS_MPU6050()
            val_array[13] = (my3IMU.DTemp/340.) + 35.;
+		#elif HAS_MPU9150()  || HAS_MPU9250()
+           val_array[13] = ((float) my3IMU.DTemp) / 333.87 + 21.0;
         #elif HAS_ITG3200()
            val_array[13] = myIMU.rt;
         #endif

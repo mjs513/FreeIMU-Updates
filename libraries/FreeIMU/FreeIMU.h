@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define FREEIMU_v035
 //#define FREEIMU_v035_MS
 //#define FREEIMU_v035_BMP
-#define FREEIMU_v04
+//#define FREEIMU_v04
 
 // 3rd party boards. Please consider donating or buying a FreeIMU board to support this library development.
 //#define SEN_10121 //IMU Digital Combo Board - 6 Degrees of Freedom ITG3200/ADXL345 SEN-10121 http://www.sparkfun.com/products/10121
@@ -43,7 +43,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define DFROBOT  //DFROBOT 10DOF SEN-1040 IMU
 //#define MPU9250_5611  //MPU-91250 IMU with MS5611 Altimeter from E-Bay
 //#define GEN_MPU9150
-//#define GEN_MPU9250
+#define GEN_MPU9250
 //#define Altimu10  // Pololu AltIMU v10 - 10 DOF IMU - http://www.pololu.com/product/1269
 
 //#define DISABLE_MAGN // Uncomment this line to disable the magnetometer in the sensor fusion algorithm
@@ -117,7 +117,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define HAS_LSM303() (defined(Altimu10))
 
 #define IS_6DOM() (defined(SEN_10121) || defined(GEN_MPU6050))
-#define IS_9DOM() (defined(Altimu10) || defined(MPU9250_5611) || defined(GEN_MPU9150) || defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183) || defined(ARDUIMU_v3))
+#define IS_9DOM() (defined(Altimu10) || defined(GEN_MPU9250) || defined(MPU9250_5611) || defined(GEN_MPU9150) || defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183) || defined(ARDUIMU_v3))
 #define HAS_AXIS_ALIGNED() (defined(GEN_MPU6050) || defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10121) || defined(SEN_10736))
 
 #include <Wire.h>
@@ -215,7 +215,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	#define twoKiDef  (2.0f * 0.1625f)
 #elif defined(GEN_MPU6050)
 	#define twoKpDef  (2.0f * 0.5f)
-	#define twoKiDef  (2.0f * 0.05f)
+	#define twoKiDef  (2.0f * 0.25f)
 #elif defined(GEN_MPU9150)
 	#define twoKpDef  (2.0f * 0.75f)
 	#define twoKiDef  (2.0f * 0.1f)	

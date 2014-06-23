@@ -101,7 +101,7 @@ void AK8963::getHeading(int16_t *x, int16_t *y, int16_t *z) {
     //I2Cdev::writeByte(bSPI, devAddr, AK8963_RA_CNTL1, AK8963_MODE_SINGLE);
     //delay(10);
 	
-	if(getDataReady() & 0x01) {
+	if (getDataReady() & 0x01) {
 	    I2Cdev::readBytes(bSPI, devAddr, AK8963_RA_HXL, 7, buffer);
 		uint8_t c = buffer[6]; // End data read by reading ST2 register
 		if(!(c & 0x08)) { // Check if magnetic sensor overflow set, if not then report data

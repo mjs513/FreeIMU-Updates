@@ -168,6 +168,12 @@ GNU General Public License for more details.
 	float c0[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
 #endif
 
+enum Mscale {
+  MFS_14BITS = 0, // 0.6 mG per LSB
+  MFS_16BITS = 1     // 0.15 mG per LSB
+};
+
+
 //used for BMP085
 long Temperature = 0, Pressure = 0, Altitude = 0;
 
@@ -447,8 +453,9 @@ void FreeIMU::RESET_Q() {
 	accgyro.setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);
 	delay(100);
 	//initialize magnetometer
-	mag = AK896(false, AK8975_DEFAULT_ADDRESS);
+	mag = AK8963(false, AK8963_DEFAULT_ADDRESS);
 	mag.initialize();  
+	mag.setModeRes(AK8963_MODE_CONT2, MFS_16BITS);
   #elif HAS_MPU6000()
 	accgyro = MPU60X0(true, accgyro_addr);
 	accgyro.initialize();
@@ -615,6 +622,7 @@ void FreeIMU::getRawValues(int * raw_values) {
     magn.getValues(&raw_values[6], &raw_values[7], &raw_values[8]);
   #elif HAS_MPU9150() || HAS_MPU9250()
 	mag.getHeading(&raw_values[6], &raw_values[7], &raw_values[8]);
+	delay(6);
   #endif
  
 
@@ -926,7 +934,7 @@ void FreeIMU::getQ(float * q, float * val) {
 	#elif defined(GEN_MPU9150) || defined(MPU9250_5611) || defined(GEN_MPU9250)
       AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[7], val[6], val[8]);
       //val[9] = calcMagHeading( q0,  q1,  q2, q3, val[7], val[6], val[8]); 
-	  val[9] = compass.iheading(1, 0, 0, val[0], val[1], val[2], val[7], val[6], val[8]);
+	  val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[7], val[6], val[8]);
 	#elif defined(Altimu10)
       AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], -val[2], val[6], val[7], -val[8]);
 	  //val[9] = maghead.iheading(0, 1, 0, val[0], val[1], -val[2], val[7], val[6], -val[8]);
