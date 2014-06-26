@@ -224,6 +224,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	//#define twoKiDef  (2.0f * 0.00002f)	
 	#define twoKpDef  (2.0f * 2.75f)
 	#define twoKiDef  (2.0f * 0.1625f)	
+#elif defined(GEN_MPU9250)
+	#define twoKpDef  (2.0f * 0.95f)
+	#define twoKiDef  (2.0f * 0.05f)	
 #else
 	#define twoKpDef  (2.0f * 0.5f)
 	#define twoKiDef  (2.0f * 0.1f)

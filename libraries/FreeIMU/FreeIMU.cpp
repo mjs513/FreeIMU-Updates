@@ -180,8 +180,7 @@ long Temperature = 0, Pressure = 0, Altitude = 0;
 //Setup accelerometer filter
 butter50hz2_0 mfilter_accx;
 butter50hz2_0 mfilter_accy;
-butter50hz2_0 mfilter_accz;	
-
+butter50hz2_0 mfilter_accz;		
 
 #if HAS_MPU9150() || HAS_MPU9250()
 	//Set up Butterworth Filter for 9150 mag - more noisey than HMC5883L
@@ -258,7 +257,7 @@ FreeIMU::FreeIMU() {
   nsamples = 75;
   temp_break = -1000;	  //original temp_break = -4300;
   senTemp_break = 32.;
-  temp_corr_on = 0;
+  temp_corr_on = 1;
   nsamples = 75;
   instability_fix = 1;
   
@@ -692,22 +691,16 @@ void FreeIMU::getValues(float * values) {
 		accgyro.getMotion6(&accgyroval[0], &accgyroval[1], &accgyroval[2], 
 						   &accgyroval[3], &accgyroval[4], &accgyroval[5]);	   
 		// read raw heading measurements from device
-		mag.getHeading(&accgyroval[6], &accgyroval[7], &accgyroval[8]);				   
-		/* accgyroval[0] = mfilter_accx.apply(accgyroval[0]);
-		accgyroval[1] = mfilter_accy.apply(accgyroval[1]);
-		accgyroval[2] = mfilter_accz.apply(accgyroval[2]);
-		values[6] = (float) mfilter_mx.apply(accgyroval[6]);
-		values[7] = (float) mfilter_my.apply(accgyroval[7]);
-		values[8] = (float) mfilter_mz.apply(accgyroval[8]); */
-		
+		mag.getHeading(&accgyroval[6], &accgyroval[7], &accgyroval[8]);	
+				
 		accgyroval[0] = mfilter_accx.filter((float) accgyroval[0]);
 		accgyroval[1] = mfilter_accy.filter((float) accgyroval[1]);
 		accgyroval[2] = mfilter_accz.filter((float) accgyroval[2]);
 		
 		values[6] = mfilter_mx.filter((float) accgyroval[6]);
 		values[7] = mfilter_my.filter((float) accgyroval[7]);
-		values[8] = mfilter_mz.filter((float) accgyroval[8]);
-		
+		values[8] = mfilter_mz.filter((float) accgyroval[8]); 
+
 	#else
 		accgyro.getMotion6(&accgyroval[0], &accgyroval[1], &accgyroval[2], 
 						   &accgyroval[3], &accgyroval[4], &accgyroval[5]);
