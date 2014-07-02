@@ -80,12 +80,42 @@ void MPU60X0::initialize() {
     setSleepEnabled(false); // thanks to Jack Elston for pointing this one out!
 }
 
+/** initialize 9250.
+ * 
+ */
+void MPU60X0::initialize9250() {
+	uint8_t data;
+    // SPI Configuration
+	if (bSPI) {
+      SPI.begin();
+    	pinMode(devAddr, OUTPUT);
+    	digitalWrite(devAddr, HIGH);
+		reset();
+		delay(100);
+		switchSPIEnabled(true);
+		delay(1);
+	}
+	reset();
+	//setAuxVDDIOLevel(1);
+	setStandbyDisable();
+	setSleepEnabled(false); // thanks to Jack Elston for pointing this one out!
+    setClockSource(MPU60X0_CLOCK_PLL_XGYRO);
+    setFullScaleGyroRange(MPU60X0_GYRO_FS_250);
+    setFullScaleAccelRange(MPU60X0_ACCEL_FS_2);
+	setI2CMasterModeEnabled(false); 
+	setI2CBypassEnabled(true);
+
+	//data = 1000 / rate - 1;
+	//setRate(data);	
+}
+ 
+ 
 /** Verify the I2C/SPI connection.
  * Make sure the device is connected and responds as expected.
  * @return True if connection is valid, false otherwise
  */
 bool MPU60X0::testConnection() {
-    return getDeviceID() == 0b110100;
+    return getDeviceID() == 0b110100 || getDeviceID() == 0x71;
 }
 
 // AUX_VDDIO register (InvenSense demo code calls this RA_*G_OFFS_TC)
@@ -2371,6 +2401,7 @@ void MPU60X0::resetSensors() {
  */
 void MPU60X0::reset() {
     I2Cdev::writeBit(bSPI, devAddr, MPU60X0_RA_PWR_MGMT_1, MPU60X0_PWR1_DEVICE_RESET_BIT, true);
+	delay(50);
 }
 /** Get sleep mode status.
  * Setting the SLEEP bit in the register puts the device into very low power
@@ -2640,6 +2671,16 @@ bool MPU60X0::getStandbyZGyroEnabled() {
  */
 void MPU60X0::setStandbyZGyroEnabled(bool enabled) {
     I2Cdev::writeBit(bSPI, devAddr, MPU60X0_RA_PWR_MGMT_2, MPU60X0_PWR2_STBY_ZG_BIT, enabled);
+}
+
+/** Disable MPU-6050 standby mode. Really only used for MPU-9250
+ * @param 
+ * @see 
+ * @see MPU60X0_RA_PWR_MGMT_2
+ * @see 
+ */
+void MPU60X0::setStandbyDisable() {
+    I2Cdev::writeByte(bSPI, devAddr, MPU60X0_RA_PWR_MGMT_2, 0x00);
 }
 
 // FIFO_COUNT* registers

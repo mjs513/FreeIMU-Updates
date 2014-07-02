@@ -428,6 +428,7 @@ class MPU60X0 {
         MPU60X0(bool useSPI, uint8_t address);
 
         void initialize();
+		void initialize9250();
         bool testConnection();
 
         // AUX_VDDIO register
@@ -688,6 +689,7 @@ class MPU60X0 {
         void setStandbyYGyroEnabled(bool enabled);
         bool getStandbyZGyroEnabled();
         void setStandbyZGyroEnabled(bool enabled);
+		void setStandbyDisable();
 
         // FIFO_COUNT_* registers
         uint16_t getFIFOCount();
