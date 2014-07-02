@@ -131,7 +131,7 @@ GNU General Public License for more details.
 #include "Arduino.h"
 #include <inttypes.h>
 #include <stdint.h>
-#define DEBUG
+//#define DEBUG
 #include "FreeIMU.h"
 #include "AHRS.h"
 
@@ -621,7 +621,7 @@ void FreeIMU::getRawValues(int * raw_values) {
     magn.getValues(&raw_values[6], &raw_values[7], &raw_values[8]);
   #elif HAS_MPU9150() || HAS_MPU9250()
 	mag.getHeading(&raw_values[6], &raw_values[7], &raw_values[8]);
-	delay(6);
+	delay(10);
   #endif
  
 
@@ -692,7 +692,8 @@ void FreeIMU::getValues(float * values) {
 						   &accgyroval[3], &accgyroval[4], &accgyroval[5]);	   
 		// read raw heading measurements from device
 		mag.getHeading(&accgyroval[6], &accgyroval[7], &accgyroval[8]);	
-				
+		delay(10);
+		
 		accgyroval[0] = mfilter_accx.filter((float) accgyroval[0]);
 		accgyroval[1] = mfilter_accy.filter((float) accgyroval[1]);
 		accgyroval[2] = mfilter_accz.filter((float) accgyroval[2]);
@@ -779,7 +780,7 @@ void FreeIMU::getValues(float * values) {
 */
 void FreeIMU::zeroGyro() {
   const int totSamples = nsamples;
-  int raw[11];
+  int16_t raw[11];
   float values[10];
   float tmpOffsets[] = {0,0,0};
   

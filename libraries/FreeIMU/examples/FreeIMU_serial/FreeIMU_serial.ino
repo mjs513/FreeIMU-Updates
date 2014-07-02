@@ -192,7 +192,7 @@ void loop() {
 		#elif HAS_MPU9150()  || HAS_MPU9250()
            val_array[13] = ((float) my3IMU.DTemp) / 333.87 + 21.0;
         #elif HAS_ITG3200()
-           val_array[13] = myIMU.rt;
+           val_array[13] = my3IMU.rt;
         #endif
 
         serialPrintFloatArr(val_array,17);
@@ -251,7 +251,7 @@ void loop() {
 		#elif HAS_MPU9150()  || HAS_MPU9250()
            val_array[13] = ((float) my3IMU.DTemp) / 333.87 + 21.0;
         #elif HAS_ITG3200()
-           val_array[13] = myIMU.rt;
+           val_array[13] = my3IMU.rt;
         #endif
         serialPrintFloatArr(val_array, 17);
         //Serial.print('\n');

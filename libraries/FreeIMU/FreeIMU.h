@@ -36,14 +36,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // 3rd party boards. Please consider donating or buying a FreeIMU board to support this library development.
 //#define SEN_10121 //IMU Digital Combo Board - 6 Degrees of Freedom ITG3200/ADXL345 SEN-10121 http://www.sparkfun.com/products/10121
 //#define SEN_10736 //9 Degrees of Freedom - Razor IMU SEN-10736 http://www.sparkfun.com/products/10736/
-//#define SEN_10724 //9 Degrees of Freedom - Sensor Stick SEN-10724 http://www.sparkfun.com/products/10724
+#define SEN_10724 //9 Degrees of Freedom - Sensor Stick SEN-10724 http://www.sparkfun.com/products/10724
 //#define SEN_10183 //9 Degrees of Freedom - Sensor Stick  SEN-10183 http://www.sparkfun.com/products/10183
 //#define ARDUIMU_v3 //  DIYDrones ArduIMU+ V3 http://store.diydrones.com/ArduIMU_V3_p/kt-arduimu-30.htm or https://www.sparkfun.com/products/11055
 //#define GEN_MPU6050 // Generic MPU6050 breakout board. Compatible with GY-521, SEN-11028 and other MPU6050 wich have the MPU6050 AD0 pin connected to GND.
 //#define DFROBOT  //DFROBOT 10DOF SEN-1040 IMU
 //#define MPU9250_5611  //MPU-91250 IMU with MS5611 Altimeter from E-Bay
 //#define GEN_MPU9150
-#define GEN_MPU9250
+//#define GEN_MPU9250
 //#define Altimu10  // Pololu AltIMU v10 - 10 DOF IMU - http://www.pololu.com/product/1269
 
 //#define DISABLE_MAGN // Uncomment this line to disable the magnetometer in the sensor fusion algorithm
@@ -240,16 +240,18 @@ class FreeIMU
 {
   public:
     FreeIMU();
-    void init();
+	void init();
+    /*void init();
 	void init0(bool fastmode);
-    //void init(bool fastmode);
+    //void init(bool fastmode); */
 	void RESET();
 	void RESET_Q();
 	
     #if HAS_ITG3200()
+		void init(bool fastmode);
 		void init(int acc_addr, int gyro_addr, bool fastmode);
 	#elif HAS_ALTIMU10()
-		void init(bool fastmode);
+		void init0(bool fastmode);
 	#else
 		void init(bool fastmode);
 		void init(int accgyro_addr, bool fastmode);
