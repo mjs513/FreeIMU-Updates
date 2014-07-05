@@ -37,6 +37,15 @@ acc_file_name = "acc.txt"
 magn_file_name = "magn.txt"
 calibration_h_file_name = "calibration.h"
 
+#####
+##
+## For 16-bit processors use word = 2
+## For 32-bit processors use word = 4
+##
+#####
+
+word = 4
+
 acc_range = 25000
 magn_range = 1000
 
@@ -52,7 +61,7 @@ class FreeIMUCal(QMainWindow, Ui_FreeIMUCal):
     # restore previous serial port used
     self.serialPortEdit.setText(self.settings.value("calgui/serialPortEdit", "").toString())
     
-    # when user hits enter, we generate the clicked signal to the button so that connection starts
+    # when user hits enter, we generate the clicked signal to the button so that connections
     self.connect(self.serialPortEdit, SIGNAL("returnPressed()"), self.connectButton, SIGNAL("clicked()"))
     
     # Connect up the buttons to their functions
@@ -171,7 +180,8 @@ class FreeIMUCal(QMainWindow, Ui_FreeIMUCal):
         
         self.ser.write('v') # ask version
         self.set_status("Connected to: " + self.ser.readline()) # TODO: hangs if a wrong serial protocol has been loaded. To be fixed.
-        
+
+     
         self.connectButton.setText("Disconnect")
         self.connectButton.clicked.connect(self.serial_disconnect)
         self.serialPortEdit.setEnabled(False)
@@ -388,12 +398,17 @@ class SerialWorker(QThread):
     count = 100
     in_values = 9
     reading = [0.0 for i in range(in_values)]
+    # read data for calibration    
     while not self.exiting:
+      # determine word size   
       self.ser.write('b')
       self.ser.write(chr(count))
       for j in range(count):
         for i in range(in_values):
-          reading[i] = unpack('h', self.ser.read(2))[0]
+          if word == 4:
+            reading[i] = unpack('hh', self.ser.read(4))[0]
+          if word == 2:
+            reading[i] = unpack('h', self.ser.read(2))[0]            
         self.ser.read(2) # consumes remaining '\r\n'
         # prepare readings to store on file
         acc_readings_line = "%d %d %d\r\n" % (reading[0], reading[1], reading[2])
