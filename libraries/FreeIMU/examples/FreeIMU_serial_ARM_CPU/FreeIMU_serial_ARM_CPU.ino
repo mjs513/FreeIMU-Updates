@@ -24,6 +24,10 @@
 #include <Wire.h>
 #include <SPI.h>
 
+#if defined(__AVR__)
+	#include <EEPROM.h>
+#endif
+
 //#define DEBUG
 #include "DebugUtils.h"
 #include "CommunicationUtils.h"
@@ -75,6 +79,7 @@ void setup() {
   my3IMU.init(true);
 
   #if HAS_GPS
+	// For Galileo,DUE and Teensy use Serial port
     Serial1.begin(GPSBaud);
   #endif
   
@@ -279,24 +284,24 @@ void loop() {
 
     #ifdef __AVR__
       #ifndef CALIBRATION_H
-      else if(cmd == 'c') {
-        const uint8_t eepromsize = sizeof(float) * 6 + sizeof(int) * 6;
-        while(Serial.available() < eepromsize) ; // wait until all calibration data are received
-        EEPROM.write(FREEIMU_EEPROM_BASE, FREEIMU_EEPROM_SIGNATURE);
-        for(uint8_t i = 1; i<(eepromsize + 1); i++) {
-          EEPROM.write(FREEIMU_EEPROM_BASE + i, (char) Serial.read());
-        }
+		else if(cmd == 'c') {
+			const uint8_t eepromsize = sizeof(float) * 6 + sizeof(int) * 6;
+			while(Serial.available() < eepromsize) ; // wait until all calibration data are received
+			EEPROM.write(FREEIMU_EEPROM_BASE, FREEIMU_EEPROM_SIGNATURE);
+			for(uint8_t i = 1; i<(eepromsize + 1); i++) {
+				EEPROM.write(FREEIMU_EEPROM_BASE + i, (char) Serial.read());
+			}
         my3IMU.calLoad(); // reload calibration
         // toggle LED after calibration store.
         digitalWrite(13, HIGH);
         delay(1000);
         digitalWrite(13, LOW);
-      }
-    #endif
-    else if(cmd == 'x') {
-      EEPROM.write(FREEIMU_EEPROM_BASE, 0); // reset signature
-      my3IMU.calLoad(); // reload calibration
-    }
+		}
+		else if(cmd == 'x') {
+		EEPROM.write(FREEIMU_EEPROM_BASE, 0); // reset signature
+		my3IMU.calLoad(); // reload calibration
+		}
+		#endif
     #endif
     else if(cmd == 'C') { // check calibration values
       Serial.print("acc offset: ");

@@ -310,13 +310,13 @@ void HMC58X3::getRaw(int *x,int *y,int *z) {
   Wire.requestFrom(HMC58X3_ADDR, 6);
   if(6 == Wire.available()) {
     // read out the 3 values, 2 bytes each.
-    *x = (Wire.read() << 8) | Wire.read();
+    *x = (int16_t)((Wire.read() << 8) | Wire.read());
     #ifdef ISHMC5843
-      *y = (Wire.read() << 8) | Wire.read();
-      *z = (Wire.read() << 8) | Wire.read();
+      *y = (int16_t)((Wire.read() << 8) | Wire.read());
+      *z = (int16_t)((Wire.read() << 8) | Wire.read());
     #else // the Z registers comes before the Y registers in the HMC5883L
-      *z = (Wire.read() << 8) | Wire.read();
-      *y = (Wire.read() << 8) | Wire.read();
+      *z = (int16_t)((Wire.read() << 8) | Wire.read());
+      *y = (int16_t)((Wire.read() << 8) | Wire.read());
     #endif
     // the HMC58X3 will automatically wrap around on the next request
   }

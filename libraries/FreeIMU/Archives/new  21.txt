@@ -1,0 +1,22 @@
+////////////////////////////////////////////////////////////////////////////////
+// Initialize MARG
+////////////////////////////////////////////////////////////////////////////////
+void initializeKinematics(float hdgX, float hdgY) 
+{
+  initializeBaseKinematicsParam(hdgX,hdgY);
+  float hdg = atan2(hdgY, hdgX);
+    
+  q0 = cos(hdg/2);
+  q1 = 0;
+  q2 = 0;
+  q3 = sin(hdg/2);
+  exInt = 0.0;
+  eyInt = 0.0;
+  ezInt = 0.0;
+
+  kpAcc = 0.2;
+  kiAcc = 0.0005;
+    
+  kpMag = 0.2;//2.0;
+  kiMag = 0.0005;//0.005;
+}

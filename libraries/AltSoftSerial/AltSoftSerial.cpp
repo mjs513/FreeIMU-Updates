@@ -1,6 +1,6 @@
 /* An Alternative Software Serial Library
  * http://www.pjrc.com/teensy/td_libs_AltSoftSerial.html
- * Copyright (c) 2012 PJRC.COM, LLC, Paul Stoffregen, paul@pjrc.com
+ * Copyright (c) 2014 PJRC.COM, LLC, Paul Stoffregen, paul@pjrc.com
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,9 +21,16 @@
  * THE SOFTWARE.
  */
 
+// Version 1.2: Support Teensy 3.x
+//
+// Version 1.1: Improve performance in receiver code
+//
+// Version 1.0: Initial Release
+
+
 #include "AltSoftSerial.h"
-#include "config/known_boards.h"
-#include "config/known_timers.h"
+#include "config/AltSoftSerial_Boards.h"
+#include "config/AltSoftSerial_Timers.h"
 
 /****************************************/
 /**          Initialization            **/
@@ -32,9 +39,6 @@
 static uint16_t ticks_per_bit=0;
 bool AltSoftSerial::timing_error=false;
 
-//#define MAX_RX_EVENTS 10
-//static volatile uint8_t rx_count=0;
-//static uint16_t rx_event[MAX_RX_EVENTS];
 static uint8_t rx_state;
 static uint8_t rx_byte;
 static uint8_t rx_bit = 0;
@@ -75,7 +79,6 @@ void AltSoftSerial::init(uint32_t cycles_per_bit)
 	pinMode(INPUT_CAPTURE_PIN, INPUT_PULLUP);
 	digitalWrite(OUTPUT_COMPARE_A_PIN, HIGH);
 	pinMode(OUTPUT_COMPARE_A_PIN, OUTPUT);
-	//rx_count = 0;
 	rx_state = 0;
 	rx_buffer_head = 0;
 	rx_buffer_tail = 0;
@@ -186,14 +189,12 @@ void AltSoftSerial::flushOutput(void)
 /****************************************/
 
 
-#if 1
 ISR(CAPTURE_INTERRUPT)
 {
 	uint8_t state, bit, head;
 	uint16_t capture, target;
 	int16_t offset;
 
-	//PORTD |= 1;
 	capture = GET_INPUT_CAPTURE();
 	bit = rx_bit;
 	if (bit) {
@@ -216,10 +217,8 @@ ISR(CAPTURE_INTERRUPT)
 		while (1) {
 			offset = capture - target;
 			if (offset < 0) break;
-			//PORTD |= 1;
 			rx_byte = (rx_byte >> 1) | rx_bit;
 			target += ticks_per_bit;
-			//PORTD &= ~1;
 			state++;
 			if (state >= 9) {
 				DISABLE_INT_COMPARE_B();
@@ -239,14 +238,12 @@ ISR(CAPTURE_INTERRUPT)
 		rx_state = state;
 	}
 	//if (GET_TIMER_COUNT() - capture > ticks_per_bit) AltSoftSerial::timing_error = true;
-	//PORTD &= ~1;
 }
 
 ISR(COMPARE_B_INTERRUPT)
 {
 	uint8_t head, state, bit;
 
-	//PORTD |= 1;
 	DISABLE_INT_COMPARE_B();
 	CONFIG_CAPTURE_FALLING_EDGE();
 	state = rx_state;
@@ -264,90 +261,7 @@ ISR(COMPARE_B_INTERRUPT)
 	rx_state = 0;
 	CONFIG_CAPTURE_FALLING_EDGE();
 	rx_bit = 0;
-	//PORTD &= ~1;
 }
-#endif
-
-
-
-#if 0
-
-// Original receive code... this doesn't work at 57600.
-// Leaving all the analysis until the stop bit causes
-// us to sometimes miss the falling edge of the next
-// start bit.
-
-ISR(CAPTURE_INTERRUPT)
-{
-	uint8_t count;
-	uint16_t capture, current;
-
-	PORTD |= 1;
-	capture = GET_INPUT_CAPTURE();
-	count = rx_count;
-	if (count & 1) {
-		CONFIG_CAPTURE_FALLING_EDGE();
-	} else {
-		CONFIG_CAPTURE_RISING_EDGE();
-	}
-	if (count == 0) {
-		SET_COMPARE_B(capture + rx_stop_ticks);
-		ENABLE_INT_COMPARE_B();
-		rx_event[0] = capture;
-	} else if (count < MAX_RX_EVENTS) {
-		rx_event[count] = capture;
-	}
-	rx_count = count + 1;
-	if (GET_TIMER_COUNT() - capture > ticks_per_bit) {
-		AltSoftSerial::timing_error = true;
-	}
-	PORTD &= ~1;
-}
-
-static inline uint8_t analyze(uint8_t count)
-{
-	const uint16_t *p = rx_event;
-	uint8_t out=0xFF, mask=0x01, state=0;
-	uint16_t begin, tmp, target, now=0;
-
-	if (count > MAX_RX_EVENTS) count = MAX_RX_EVENTS;
-	begin = *p++;
-	target = ticks_per_bit + ticks_per_bit / 2;
-	while (--count > 0) {
-		tmp = *p++;
-		now += tmp - begin;
-		begin = tmp;
-		while (now >= target) {
-			if (state == 0) out &= ~mask;
-			mask <<= 1;
-			target += ticks_per_bit;
-		}
-		state ^= 1;
-	}
-	return out;
-}
-
-ISR(COMPARE_B_INTERRUPT)
-{
-	uint8_t head;
-
-	PORTD |= 1;
-	DISABLE_INT_COMPARE_B();
-	CONFIG_CAPTURE_FALLING_EDGE();
-	head = rx_buffer_head + 1;
-	if (head >= RX_BUFFER_SIZE) head = 0;
-	if (head != rx_buffer_tail) {
-		rx_buffer[head] = analyze(rx_count);
-		rx_buffer_head = head;
-	}
-	rx_count = 0;
-	PORTD &= ~1;
-}
-#endif
-
-
-
-
 
 
 
@@ -390,4 +304,14 @@ void AltSoftSerial::flushInput(void)
 }
 
 
+#ifdef ALTSS_USE_FTM0
+void ftm0_isr(void)
+{
+	uint32_t flags = FTM0_STATUS;
+	FTM0_STATUS = 0;
+	if (flags & (1<<5)) altss_capture_interrupt();
+	if (flags & (1<<6)) altss_compare_a_interrupt();
+	if (flags & (1<<0)) altss_compare_b_interrupt();
+}
+#endif
 

@@ -51,7 +51,7 @@ else:
 # instantiate a serial port object. port gets opened by default, no need to explicitly open it.
 ser = serial.Serial(
 	port= arduino_port,
-	baudrate=115200,
+	baudrate=57600,
 	parity=serial.PARITY_NONE,
 	stopbits=serial.STOPBITS_ONE,
 	bytesize=serial.EIGHTBITS

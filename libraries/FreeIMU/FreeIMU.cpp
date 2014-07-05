@@ -295,7 +295,7 @@ void FreeIMU::init() {
   #if HAS_ITG3200()
 	init(FIMU_ACC_ADDR, FIMU_ITG3200_DEF_ADDR, false);
   #elif HAS_ALTIMU10()
-    init(false);
+    init0(false);
   #else
 	init(FIMU_ACCGYRO_ADDR, false);
   #endif
@@ -584,11 +584,22 @@ void FreeIMU::getRawValues(int * raw_values) {
   #elif HAS_MPU6050() || HAS_MPU6000() || HAS_MPU9150() || HAS_MPU9250()
     #ifdef __AVR__
      accgyro.getMotion6(&raw_values[0], &raw_values[1], &raw_values[2], &raw_values[3], &raw_values[4], &raw_values[5]);  	  
-     rt = accgyro.getTemperature();	  
+ 	  #if HAS_MPU9150() || HAS_MPU9250()
+		mag.getHeading(&raw_values[6], &raw_values[7], &raw_values[8]);			
+		delay(10);
+		#endif
+	 rt = accgyro.getTemperature();	  
      raw_values[9] = rt;
 	 #else
-      int16_t ax, ay, az, gx, gy, gz, rt;
+      int16_t ax, ay, az, gx, gy, gz, mx, my, mz, rt;
       accgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+	  #if HAS_MPU9150() || HAS_MPU9250() 
+		mag.getHeading(&mx, &my, &mz);
+		raw_values[6] = mx;
+		raw_values[7] = my;
+		raw_values[8] = mz;				
+		delay(10);
+		#endif
       raw_values[0] = ax;
       raw_values[1] = ay;
       raw_values[2] = az;
@@ -600,6 +611,10 @@ void FreeIMU::getRawValues(int * raw_values) {
     #endif
   #endif 
 
+  #if HAS_HMC5883L()
+    magn.getValues(&raw_values[6], &raw_values[7], &raw_values[8]);
+  #endif  
+  
  #if HAS_L3D20()
 	  gyro.read();
       raw_values[3] = gyro.g.x;
@@ -617,14 +632,6 @@ void FreeIMU::getRawValues(int * raw_values) {
     raw_values[8] = compass.m.z;
   #endif	
   
-  #if HAS_HMC5883L()
-    magn.getValues(&raw_values[6], &raw_values[7], &raw_values[8]);
-  #elif HAS_MPU9150() || HAS_MPU9250()
-	mag.getHeading(&raw_values[6], &raw_values[7], &raw_values[8]);
-	delay(10);
-  #endif
- 
-
 }
 
 
@@ -780,7 +787,7 @@ void FreeIMU::getValues(float * values) {
 */
 void FreeIMU::zeroGyro() {
   const int totSamples = nsamples;
-  int16_t raw[11];
+  int raw[11];
   float values[10];
   float tmpOffsets[] = {0,0,0};
   

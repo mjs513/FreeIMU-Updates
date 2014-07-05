@@ -50,9 +50,9 @@ void ADXL345::readAccel(int *x, int *y, int *z) {
 
   // each axis reading comes in 10 bit resolution, ie 2 bytes.  Least Significat Byte first!!
   // thus we are converting both bytes in to one int
-  *x = (((int)_buff[1]) << 8) | _buff[0];  
-  *y = (((int)_buff[3]) << 8) | _buff[2];
-  *z = (((int)_buff[5]) << 8) | _buff[4];
+  *x = (int16_t)((((int)_buff[1]) << 8) | _buff[0]);
+  *y = (int16_t)((((int)_buff[3]) << 8) | _buff[2]);
+  *z = (int16_t)((((int)_buff[5]) << 8) | _buff[4]);
 }
 
 void ADXL345::get_Gxyz(float *xyz){

@@ -1,0 +1,41 @@
+//Set up Low Pass Filter - complimentary
+#define acclfpFactor 0.8
+#define gyrolfpFactor 0.9
+static int16_t accLPF[3] = {0, 0, 0};
+static int16_t gyroLPF[3] = {0, 0, 0};
+
+//ModeFilterInt16_Size7 mfilter_accx(2);  // buffer of 10 values, result will be from buffer element 2 
+                                         // (ie. the 3rd element which is the middle)
+//ModeFilterInt16_Size5 mfilter_accy(2);
+//ModeFilterInt16_Size5 mfilter_accz(2);
+//ModeFilterInt16_Size5 mfilter_gyrox(2);
+//ModeFilterInt16_Size5 mfilter_gyroy(2);
+//ModeFilterInt16_Size5 mfilter_gyroz(2);
+
+
+
+   //accval[0] = mfilter_accx.apply(accval[0]);
+	//accval[1] = mfilter_accy.apply(accval[1]);
+	//accval[2] = mfilter_accz.apply(accval[2]);
+	
+	//LPF
+	//for(int axis = 0; axis < 3; axis++){
+	//	accLPF[axis] = accLPF[axis] * (1.0f - acclfpFactor) + accval[axis] * acclfpFactor;
+	//	gyroLPF[axis] = gyroLPF[axis] * (1.0f - gyrolfpFactor) + values[axis+3] * gyrolfpFactor;
+	//}
+
+	//for(int axis = 0; axis < 3; axis++){
+	//	values[axis] = accLPF[axis];
+	//	values[axis+3] = gyroLPF[axis];
+	//}
+
+	//LPF
+	//for(int axis = 0; axis < 3; axis++){
+	//	accLPF[axis] = accLPF[axis] * (1.0f - acclfpFactor) + accval[axis] * acclfpFactor;
+		//gyroLPF[axis] = gyroLPF[axis] * (1.0f - gyrolfpFactor) + values[axis+3] * gyrolfpFactor;
+	//}
+	//for(int axis = 0; axis < 3; axis++){
+	//	values[axis] = accLPF[axis];
+	//	values[axis+3] = gyroLPF[axis];
+	}
+	

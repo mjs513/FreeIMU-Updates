@@ -182,9 +182,9 @@ void ITG3200::readTemp(float *_Temp) {
 
 void ITG3200::readGyroRaw(int *_GyroX, int *_GyroY, int *_GyroZ){
   readmem(GYRO_XOUT, 6, _buff);
-  *_GyroX = ((_buff[0] << 8) | _buff[1]);
-  *_GyroY = ((_buff[2] << 8) | _buff[3]); 
-  *_GyroZ = ((_buff[4] << 8) | _buff[5]);
+  *_GyroX = (int16_t)((_buff[0] << 8) | _buff[1]);
+  *_GyroY = (int16_t)((_buff[2] << 8) | _buff[3]);
+  *_GyroZ = (int16_t)((_buff[4] << 8) | _buff[5]);
 }
 
 void ITG3200::readGyroRaw(int *_GyroXYZ){

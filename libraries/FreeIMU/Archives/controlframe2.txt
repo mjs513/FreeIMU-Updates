@@ -1,0 +1,118 @@
+public void gpscam() {
+  cf1 = addControlFrame("GPS Visualization", 900, 600);
+  cp5.get(Button.class, "gpscam").setVisible(false);
+}
+
+/*ControlFrame addControlFrame(String theName, int theWidth, int theHeight) {
+  final Frame f = new Frame(theName);
+  final ControlFrame p = new ControlFrame(this, theWidth, theHeight);
+  f.add(p);
+  p.init();
+  f.setTitle(theName);
+  f.setSize(p.w, p.h);
+  f.setLocation(100, 100);
+  f.setResizable(false);
+  f.setVisible(true);
+  f.addWindowListener(new WindowAdapter() {
+    public void windowClosing(WindowEvent we) {
+      p.dispose();
+      f.dispose();
+      cp5.get(Button.class, "graphwin").setVisible(true);
+    }
+   }
+  );
+  return p;
+} */
+
+
+// the ControlFrame class extends PApplet, so we 
+// are creating a new processing applet inside a
+// new frame with a controlP5 object loaded
+public class ControlFrame extends PApplet {
+
+  int w, h;
+  int abc = 100;
+  import peasy.*;
+  
+  //GLOBAL VARIABLES
+  PeasyCam cam;
+ 
+  //screen limits in lat, lon and elevation
+  float west = -79.43;
+  float east = -79.35;
+  float north = 43.679;
+  float south = 43.635;
+  float lowest = 50;
+  float highest = 200;
+
+  //screen display point coordinates
+  float screen_X;
+  float screen_Y;
+  float screen_Z;
+
+  //to draw lines in chronological order
+  int totalCount  = 0;
+  int toDrawCount = 0; 
+
+  public void setup() {
+  size(900, 600, P3D);
+  background(0);
+  colorMode(HSB, 360, 100, 100);
+  fill(180); //colour of title & instructions
+
+  //initialize font for text
+  //instructions = loadFont("CenturyGothic-24.vlw");
+
+  //initial peasycam settings
+  cam = new PeasyCam(this, width/2, height/2, 0, width*0.6);
+  cam.lookAt(width/2, height/2, 0);
+  
+  }
+
+  public void draw() {
+    background(0);
+    noStroke();
+
+    int count = 0;
+    boolean finished = false;
+  
+    // map lat and long to height & width of screen display
+    float screen_X = map(longt, west, east, 0, width);
+    float screen_Y = map(lat, north, south, 0, height);
+
+    //map elevation to appropriate vertical scale for z-axis
+    float screen_Z = map(gpsalt, lowest, highest, 0, 50);
+
+    // call function to display the points
+    drawPoints(screen_X, screen_Y, screen_Z, count > toDrawCount - 10); 
+  }
+
+   //Drawing points is much much faster than drawing spheres
+   void drawPoints(float screen_X, float screen_Y, float screen_Z, boolean highlight) {
+      if (highlight) {
+        stroke(255); // colour most recent points white
+      } else {
+        stroke(map(screen_Z, 0, 50, 240, 50), 99, 99); //otherwise map point colour to elevation
+      }
+      point(screen_X, screen_Y, screen_Z);
+    }
+
+  
+  private ControlFrame() {
+  }
+
+  public ControlFrame(Object theParent, int theWidth, int theHeight) {
+      parent = theParent;
+      w = theWidth;
+      h = theHeight;
+  }
+
+  public ControlP5 control() {
+      return cp5;
+  }
+  
+  ControlP5 cp5;
+
+  Object parent;
+
+}

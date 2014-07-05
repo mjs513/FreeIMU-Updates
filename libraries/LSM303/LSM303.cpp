@@ -230,8 +230,9 @@ void LSM303::enableDefault(void)
     writeReg(CTRL5, 0x64);
 
     // 0x20 = 0b00100000
-    // MFS = 01 (+/- 4 gauss full scale)
-    writeReg(CTRL6, 0x20);
+    // MFS = 01 (+/- 4 gauss full scale) - MFS = 00(+/- 2 gauss full scale)
+	// original default was 01 (changed MJS - 5/13/14)
+    writeReg(CTRL6, 0x00);
 
     // 0x00 = 0b00000000
     // MLP = 0 (low power mode off); MD = 00 (continuous-conversion mode)

@@ -32,7 +32,7 @@ from struct import unpack
 from binascii import unhexlify
 from subprocess import call
 
-
+burst = 32
 
 print "\n\nWelcome to the FreeIMU timer routine!\nCopyright © Fabio Varesano 2012.\nReleased under GPL v3 - See http://www.gnu.org/copyleft/gpl.html\n\n"
 
@@ -44,18 +44,18 @@ arduino_port = raw_input('Insert the serial port which connects to the Arduino (
 
 # instantiate a serial port object. port gets opened by default, no need to explicitly open it.
 ser = serial.Serial(
-	port= arduino_port,
-	baudrate=115200,
-	parity=serial.PARITY_NONE,
-	stopbits=serial.STOPBITS_ONE,
-	bytesize=serial.EIGHTBITS
+	port= raw_input,
+	baudrate=38400,
+        timeout=1
 )
+
+ser.flushInput()
 
 if ser.isOpen():
   print "Arduino serial port opened correctly"
 # we rely on the unhandled serial exception which will stop the program in case of problems during serial opening
 
-ser.write('v') # ask version
+ser.write("v") # ask version
 print "\nFreeIMU library version informations:", 
 print ser.readline()
 
@@ -71,8 +71,7 @@ tot_readings = 0
 try:
   print "Sampling from FreeIMU and timing readings"
   while True:
-    ser.readline()
-    ser.readline()
+    ser.write("r" + str(burst))
     ser.readline()
     tot_readings = tot_readings + 1
     if(tot_readings % 100 == 0):

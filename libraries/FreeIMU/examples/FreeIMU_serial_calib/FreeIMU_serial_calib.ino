@@ -37,7 +37,7 @@
 //int k_index = 4;
 
 float q[4];
-int raw_values[11];
+int16_t raw_values[11];
 float ypr[3]; // yaw pitch roll
 char str[128];
 float val[11];
@@ -156,22 +156,22 @@ void loop() {
         #if HAS_ITG3200()
           my3IMU.acc.readAccel(&raw_values[0], &raw_values[1], &raw_values[2]);
           my3IMU.gyro.readGyroRaw(&raw_values[3], &raw_values[4], &raw_values[5]);
-          writeArr(raw_values, 6, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
+          writeArr(raw_values, 6, sizeof(int16_t)); // writes accelerometer, gyro values & mag if 9150
         #elif HAS_MPU9150() || HAS_MPU9250()
           my3IMU.getRawValues(raw_values);
-          writeArr(raw_values, 9, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
+          writeArr(raw_values, 9, sizeof(int16_t)); // writes accelerometer, gyro values & mag if 9150
         #elif HAS_MPU6050() || HAS_MPU6000()   // MPU6050
           my3IMU.accgyro.getMotion6(&raw_values[0], &raw_values[1], &raw_values[2], &raw_values[3], &raw_values[4], &raw_values[5]);
-          writeArr(raw_values, 6, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
+          writeArr(raw_values, 6, sizeof(int16_t)); // writes accelerometer, gyro values & mag if 9150
         #elif HAS_ALTIMU10()
           my3IMU.getRawValues(raw_values);
-          writeArr(raw_values, 9, sizeof(int)); // writes accelerometer, gyro values & mag of Altimu 10        
+          writeArr(raw_values, 9, sizeof(int16_t)); // writes accelerometer, gyro values & mag of Altimu 10        
         #endif
-        //writeArr(raw_values, 6, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
+        //writeArr(raw_values, 6, sizeof(int16_t)); // writes accelerometer, gyro values & mag if 9150
         
         #if IS_9DOM() && (!HAS_MPU9150() && !HAS_MPU9250() && !HAS_ALTIMU10())
           my3IMU.magn.getValues(&raw_values[0], &raw_values[1], &raw_values[2]);
-          writeArr(raw_values, 3, sizeof(int));
+          writeArr(raw_values, 3, sizeof(int16_t));
         #endif
         Serial.println();
       }
