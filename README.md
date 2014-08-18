@@ -2,7 +2,12 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Friday, June 20, 2014
+Monday, August 19, 2014
+
+08-18-14 Reload of Freeimu.cpp, freeimu.h, calibration.h, freeimu_serial.ino and freeimu calib.  Tommasso report errors but I could not duplicate with my test versions so i am re uploading.
+
+NOTE: With the advent of Processing 2.0 the GUI's do not seem to work anymore - issue with OPENGL. Will research and see if I can get operational again.
+-----------------------------------------------------------
 
 06-20-14
 -------- Based on Kris Winer's work on the MPU-9250 and the AK8963 I was able to create a basic AK8963 library

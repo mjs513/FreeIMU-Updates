@@ -140,7 +140,7 @@ GNU General Public License for more details.
 #include <Filter.h>             // Filter library
 #include <Butter.h>
 #include <iCompass.h>
-#include <FilteringScheme.h>
+//#include <FilteringScheme.h>
 
 //#include "vector_math.h"
 
