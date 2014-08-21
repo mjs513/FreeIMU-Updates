@@ -2,11 +2,22 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Monday, August 19, 2014
+<<<<<<< HEAD
+Thursday, August 21, 2014
+
+08-20-15 Update all Processing sketches with additional delay.
+----------------------------------------------------------------
+=======
+Wednesday, August 20, 2014
+>>>>>>> 5774641... Uploaded processing version 2.0b7 which plays nicely with opengl
+
+08-20-14 Added delay to processing sketch before serial read loop in set-up. Uploaded Processing 2.0b7 which works with the GUIs, no issue.
+
+-----------------------------------------------------------
 
 08-18-14 Reload of Freeimu.cpp, freeimu.h, calibration.h, freeimu_serial.ino and freeimu calib.  Tommasso report errors but I could not duplicate with my test versions so i am re uploading.
 
-NOTE: With the advent of Processing 2.0 the GUI's do not seem to work anymore - issue with OPENGL. Will research and see if I can get operational again.
+NOTE: With the advent of Processing 2.2 the GUI's do not seem to work anymore - issue with OPENGL. Will research and see if I can get operational again.
 -----------------------------------------------------------
 
 06-20-14

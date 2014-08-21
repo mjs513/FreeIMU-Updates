@@ -284,6 +284,8 @@ void setup()
   
   println("Waiting IMU..");
 
+  myDelay(1000);
+  
   while (myPort.available() == 0) {
     println(myPort.available());
     myPort.write("v");

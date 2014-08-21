@@ -249,16 +249,7 @@ void setup()
  
   //serial port set up
   myPort = new Serial(this, serialPort, 38400);
-
-  //elapsed time start call
-  sw.start();
-  
-  println("Waiting IMU..");
-
-  while (myPort.available() > 0) {
-    myPort.write("v");
-    //myPort.write("1");
-    myDelay(1000);
+  myDelay(1000);
   }
   //println(myPort.readStringUntil('\n'));
   myPort.write("z" + char(burst));
