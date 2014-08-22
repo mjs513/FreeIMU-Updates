@@ -41,16 +41,12 @@ final int VIEW_SIZE_X = 800, VIEW_SIZE_Y = 600;
 
 int burst = 32, count = 0;
 
-void myDelay(int time) {
-  try {
-    Thread.sleep(time);
-  } catch (InterruptedException e) { }
-}
+int calib = 0;
 
 void setup() 
 {
   size(VIEW_SIZE_X, VIEW_SIZE_Y, P3D);
-  myPort = new Serial(this, "/dev/ttyUSB9", 115200);  
+  myPort = new Serial(this, "COM3", 57600);  
   
   // The font must be located in the sketch's "data" directory to load successfully
   font = loadFont("CourierNew36.vlw"); 
@@ -100,13 +96,50 @@ void serialEvent(Serial p) {
     }
     count = count + 1;
     if(burst == count) { // ask more data when burst completed
+      //1 = RESET MPU-6050, 2 = RESET Q Matrix
+      if(key == '2') {
+         myPort.clear();
+         myPort.write("2");
+         println("pressed 2");
+         key = '0';
+      } else if(key == '1') {
+            myPort.clear();
+            myPort.write("1");
+            println("pressed 1");
+            key = '0';
+      } else if(key == 'g') {
+            myPort.clear();
+            myPort.write("g");
+            println("pressed g");
+            key = '0';            
+      } else if(key == 'r') {
+            myPort.clear();
+            calib = 1;
+            setup();
+      } 
+      if(calib == 0) {
+         myPort.clear();
+         myPort.write("f");
+         calib = 99;
+      }
+      if(calib == 1) {
+         myPort.clear();
+         myPort.write("t");
+         calib = 99;
+      }      
+      myDelay(100);
+
       p.write("q" + char(burst));
       count = 0;
     }
   }
 }
 
-
+void myDelay(int time) {
+  try {
+    Thread.sleep(time);
+  } catch (InterruptedException e) { }
+}
 
 void buildBoxShape() {
   //box(60, 10, 40);

@@ -67,7 +67,7 @@ MovingAverage accnorm_var = new MovingAverage(7);
 MovingAverage motion_detect_ma = new MovingAverage(7);
 MovingAverage accnorm_avg = new MovingAverage(5);
 
-final String serialPort = "COM4"; // replace this with your serial port. On windows you will need something like "COM1".
+final String serialPort = "COM3"; // replace this with your serial port. On windows you will need something like "COM1".
 
 float [] q = new float [4];
 float [] acc = new float [3];
@@ -151,7 +151,8 @@ void setup()
   dyn_acc_q_earth = new Quaternion();
   conQ = new Quaternion();
   
-  myPort = new Serial(this, serialPort, 38400);
+  myPort = new Serial(this, serialPort, 57600);
+  myDelay(1000);
   
   // The font must be located in the sketch's "data" directory to load successfully
   font = loadFont("CourierNew36.vlw"); 

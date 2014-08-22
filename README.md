@@ -2,14 +2,16 @@ FreeIMU-Updates
 ===============
 
 Change Log
-<<<<<<< HEAD
-Thursday, August 21, 2014
+Friday, August 22, 2014
 
-08-20-15 Update all Processing sketches with additional delay.
+08-22-14 Added same serial options in the Yaw-Pitch-Roll processing sketch as available with the processing GUI.
+
 ----------------------------------------------------------------
-=======
-Wednesday, August 20, 2014
->>>>>>> 5774641... Uploaded processing version 2.0b7 which plays nicely with opengl
+
+08-21-14 Update all Processing sketches with additional delay.
+
+Uploaded processing version 2.0b7 which plays nicely with opengl to a separate library under mjs513.
+-----------------------------------------------------------------
 
 08-20-14 Added delay to processing sketch before serial read loop in set-up. Uploaded Processing 2.0b7 which works with the GUIs, no issue.
 
