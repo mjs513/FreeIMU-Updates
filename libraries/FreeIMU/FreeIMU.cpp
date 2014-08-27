@@ -139,8 +139,6 @@ GNU General Public License for more details.
 #include "DebugUtils.h"
 #include <Filter.h>             // Filter library
 #include <Butter.h>
-#include <iCompass.h>
-//#include <FilteringScheme.h>
 
 //#include "vector_math.h"
 
@@ -183,7 +181,7 @@ butter50hz2_0 mfilter_accy;
 butter50hz2_0 mfilter_accz;		
 
 #if HAS_MPU9150() || HAS_MPU9250()
-	//Set up Butterworth Filter for 9150 mag - more noisey than HMC5883L
+	//Set up Butterworth Filter for 9150 mag - more noisy than HMC5883L
 	butter50hz2_0 mfilter_mx;
 	butter50hz2_0 mfilter_my;
 	butter50hz2_0 mfilter_mz;
@@ -195,7 +193,7 @@ uint8_t INS_MAX_INSTANCES = 2;
 
 FreeIMU::FreeIMU() {
 
-  pinMode(12,OUTPUT);
+  //pinMode(12,OUTPUT);
   
   #if HAS_ADXL345()
     acc = ADXL345();
@@ -205,12 +203,12 @@ FreeIMU::FreeIMU() {
   
   #if HAS_HMC5883L()
     magn = HMC58X3();
-	maghead = iCompass();
+	maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);
   #endif
   
   #if HAS_LSM303()
 	compass = LSM303();
-	maghead = iCompass();
+	maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);
   #endif
   
   #if HAS_ITG3200()
@@ -224,11 +222,11 @@ FreeIMU::FreeIMU() {
   #elif HAS_MPU9150()
     accgyro = MPU60X0();
 	mag = AK8975();
-	maghead = iCompass();
+	maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);
   #elif HAS_MPU9250()
     accgyro = MPU60X0();
 	mag = AK8963();
-	maghead = iCompass();  
+	maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);  
   #endif
     
   #if HAS_MS5611()
@@ -237,7 +235,11 @@ FreeIMU::FreeIMU() {
     baro085 = BMP085();
   #elif HAS_LPS331()
     baro331 = LPS331();
-  #endif  
+  #endif
+  
+  #if HAS_MS5611() || HAS_BMP085() || HAS_LPS331()
+    kPress.KalmanInit(0.0000005,0.01,1.0,0);
+  #endif
   
   // initialize quaternion
   q0 = 1.0f;
@@ -504,9 +506,9 @@ void FreeIMU::RESET_Q() {
   // zero gyro
   //zeroGyro();
   //if(temp_corr_on == 0) {
-  digitalWrite(12,HIGH);  
+  //digitalWrite(12,HIGH);  
   initGyros(); //}
-  digitalWrite(12,LOW);
+  //digitalWrite(12,LOW);
 	
   #ifndef CALIBRATION_H
 	// load calibration from eeprom
@@ -819,7 +821,7 @@ void FreeIMU::initGyros() {
     float best_diff[INS_MAX_INSTANCES];
     bool converged[INS_MAX_INSTANCES];
 	
-	//digitalWrite(12,HIGH);
+	////digitalWrite(12,HIGH);
 	
     // remove existing gyro offsets
     for (uint8_t k=0; k<num_gyros; k++) {
@@ -877,7 +879,7 @@ void FreeIMU::initGyros() {
 		gyro_off_x = gyro_offset[0].x;
 		gyro_off_y = gyro_offset[0].y;
 		gyro_off_z = gyro_offset[0].z;
-		//digitalWrite(12,LOW);
+		////digitalWrite(12,LOW);
 		return;
 	}
 
@@ -893,7 +895,7 @@ void FreeIMU::initGyros() {
 	gyro_off_y = gyro_offset[0].y;
 	gyro_off_z = gyro_offset[0].z;
 	
-	digitalWrite(12,LOW);
+	//digitalWrite(12,LOW);
 
 }
 
@@ -962,7 +964,8 @@ const float def_sea_press = 1013.25;
 	float FreeIMU::getBaroAlt(float sea_press) {
 		float temp = baro.getTemperature(MS561101BA_OSR_4096);
 		float press = baro.getPressure(MS561101BA_OSR_4096);
-		return ((pow((sea_press / press), 1/5.257) - 1.0) * (temp + 273.15)) / 0.0065;
+        float new_press = kPress.measureRSSI(press);
+		return ((pow((sea_press / new_press), 1/5.257) - 1.0) * (temp + 273.15)) / 0.0065;
 	}
 
 	// Returns temperature from MS5611 - added by MJS
@@ -996,8 +999,8 @@ const float def_sea_press = 1013.25;
 
 	float FreeIMU::getBaroPressure() {
 		baro085.getPressure(&Pressure);
-		float temp2 = Pressure * 0.01;
-		return(temp2);
+        float new_press = kPress.measureRSSI(Pressure * 0.01);
+		return(new_press);
 	}
 
 	/**
@@ -1019,40 +1022,52 @@ const float def_sea_press = 1013.25;
 	}
 
 	float FreeIMU::getBaroPressure() {
-		float temp2 = baro331.readPressureMillibars();
-		return(temp2);
+        float new_press = kPress.measureRSSI(baro331.readPressureMillibars());
+		return(new_press);
 	}
 
 	/**
 	* Returns an altitude estimate from baromether readings only using a default sea level pressure
 	*/
-	float FreeIMU::getBaroAlt() {
-		float temp3 = baro331.pressureToAltitudeMeters(baro331.readPressureMillibars());
+	float FreeIMU::getBaroAlt() {        
+        float new_press = kPress.measureRSSI(baro331.readPressureMillibars());
+		float temp3 = baro331.pressureToAltitudeMeters(new_press);
 		return(temp3);
 	}
 	
 #endif
 
 /**
- * Compensates the accelerometer readings in the 3D vector acc expressed in the sensor frame for gravity
- * @param acc the accelerometer readings to compensate for gravity
- * @param q the quaternion orientation of the sensor board with respect to the world
+ * Returns the estimated altitude from fusing barometer and accelerometer
+ * in a complementary filter.
 */
-void FreeIMU::gravityCompensateAcc(float * acc, float * q) {
-  float g[3];
+float FreeIMU::getEstAltitude() {
+  float q1[4]; // quaternion
+  float q2[4]; // quaternion
+  float val[10];
+  float dyn_acc[4];
+  float dyn_acc_temp[4];
+  float dyn_acc_earth[4];
+
+  getQ(q1, val);
+
+  dyn_acc[0] = 0;
+  dyn_acc[1] = val[0];
+  dyn_acc[2] = val[1];
+  dyn_acc[3] = val[2];
   
-  // get expected direction of gravity in the sensor frame
-  g[0] = 2 * (q[1] * q[3] - q[0] * q[2]);
-  g[1] = 2 * (q[0] * q[1] + q[2] * q[3]);
-  g[2] = q[0] * q[0] - q[1] * q[1] - q[2] * q[2] + q[3] * q[3];
+  gravityCompensateAcc(dyn_acc, q1);
+  dyn_acc[0] = 0;
   
-  // compensate accelerometer readings with the expected direction of gravity
-  acc[0] = acc[0] - g[0];
-  acc[1] = acc[1] - g[1];
-  acc[2] = acc[2] - g[2];
+  Qmultiply(dyn_acc_temp, q1, dyn_acc);
+
+  q2[1] = -q1[1]; q2[2] = -q1[2]; q2[3] = -q1[3]; q2[0] = q1[0]; //Conjugating
+  Qmultiply(dyn_acc_earth, dyn_acc_temp, q2);
+  
+  float alt = getBaroAlt();
+  return altComp.update(dyn_acc_earth[3], alt, (1./(sampleFreq*4)));
 }
- 
- 
+
 /**
  * Returns the Euler angles in radians defined in the Aerospace sequence.
  * See Sebastian O.H. Madwick report "An efficient orientation filter for 
@@ -1177,12 +1192,49 @@ void FreeIMU::setTempCalib(int opt_temp_cal) {
 		gyro_off_z = 0.0;
 	}
 	if(temp_corr_on == 0) {
-		digitalWrite(12,HIGH);
+		//digitalWrite(12,HIGH);
 		initGyros();
-		digitalWrite(12,LOW);
+		//digitalWrite(12,LOW);
 	}
 }
 
+/**                           END OF FREEIMU                           **/
+/************************************************************************/
+/**                           HELP FUNCTIONS                           **/
+
+/**
+ * Compensates the accelerometer readings in the 3D vector acc expressed in the sensor frame for gravity
+ * @param acc the accelerometer readings to compensate for gravity
+ * @param q the quaternion orientation of the sensor board with respect to the world
+*/
+void gravityCompensateAcc(float * acc, float * q) {
+  float g[3];
+  
+  // get expected direction of gravity in the sensor frame
+  g[0] = 2 * (q[1] * q[3] - q[0] * q[2]);
+  g[1] = 2 * (q[0] * q[1] + q[2] * q[3]);
+  g[2] = q[0] * q[0] - q[1] * q[1] - q[2] * q[2] + q[3] * q[3];
+  
+  // compensate accelerometer readings with the expected direction of gravity
+  acc[0] = acc[0] - g[0];
+  acc[1] = acc[1] - g[1];
+  acc[2] = acc[2] - g[2];
+}
+
+/**
+ * Sets the Quaternion to be equal to the product of quaternions {@code q1} and {@code q2}.
+ * 
+ * @param q1
+ *          the first Quaternion
+ * @param q2
+ *          the second Quaternion
+ */
+void Qmultiply(float *  q, float *  q1, float * q2) {
+    q[0] = q1[0] * q2[0] - q1[1] * q2[1] - q1[2] * q2[2] - q1[3] * q2[3];
+    q[1] = q1[0] * q2[1] + q2[0] * q1[1] + q1[2] * q2[3] - q1[3] * q2[2];
+    q[2] = q1[0] * q2[2] + q2[0] * q1[2] - q1[1] * q2[3] + q1[3] * q2[1];
+    q[3] = q1[0] * q2[3] + q2[0] * q1[3] + q1[1] * q2[2] - q1[2] * q2[1];
+}
 
 /**
  * Converts a 3 elements array arr of angles expressed in radians into degrees
@@ -1267,5 +1319,3 @@ float invSqrt(float number) {
   return y;
 }
 */
-
-
