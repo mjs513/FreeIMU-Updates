@@ -52,7 +52,8 @@ PrintWriter output;
 Serial myPort;  // Create object from Serial class
 
 //setting a 1D Kalman filter
-MyKalman pressK = new MyKalman();
+//uncomment if you have removed complimentary altitude filter from library
+//MyKalman pressK = new MyKalman();
 
 //Settup Stop Watch
 StopWatchTimer sw = new StopWatchTimer();
@@ -85,7 +86,6 @@ float heading_avg;
 float heading = 0;
 float oldHeading = 0.0;
 int windSize = 96;
-//MovingAverage HeadingAvg = new MovingAverage(windSize);
 
 //set motiondetect types
 float accnorm,accnorm_var_test;
@@ -114,17 +114,12 @@ float told = 0;
 // Altitude - Accel Complimentary filter setup
 float[] dyn_acc = new float[3];
 float fused_alt;
-Quaternion dyn_acc_q;
-Quaternion q1;
-Quaternion multQ;
-Quaternion dyn_acc_q_earth;
-Quaternion conQ;
-AltitudeComplementary altitudeFilter = new AltitudeComplementary();
 
 // GPS Variables
 float hdop, lat, longt, cog, sog, gpsalt, gpschars;
 float hdop_val, loc_val, gpsalt_val, sog_val, cog_val;
 int HAS_GPS = 0;
+
 // Sphere Variables
 float R = 150;
 int xDetail = 40;
@@ -238,13 +233,6 @@ void setup()
   font12 = createFont("Arial bold",12,false);
   font15 = createFont("Arial bold",15,false);
 
-  //Quaternion library calls for complimentary altitude filter  
-  dyn_acc_q = new Quaternion();
-  q1 = new Quaternion();
-  multQ = new Quaternion();
-  dyn_acc_q_earth = new Quaternion();
-  conQ = new Quaternion();
-
   cp5 = new ControlP5(this);
 
   //sets up value fields for startup options
@@ -265,7 +253,6 @@ void setup()
      .setSize(240,30)
      .setCaptionLabel("Open Rolling Trace Frame")
      ;
-
 
   //setup attitdude indicator
   noStroke();
@@ -322,10 +309,7 @@ void draw() {
   }
 
   fill(#FFFF00);
-  float press1 = pressK.update(press);
-  altitude = ((pow((sea_press / press1), 1/5.257) - 1.0) * (temp + 273.15)) / 0.0065;
-  altitude = altitude + STATIONALTFT/METERS2FT;
-  EstimatedAltitude();
+  fused_alt = altitude + STATIONALTFT/METERS2FT;
   text("Temp: " + temp + "\n" + "Press: " + press + "\n" , 20, VIEW_SIZE_Y - 110);
   textFont(font,24);
   text("ALT:",(VIEW_SIZE_X/2)-75,40); 
@@ -383,19 +367,8 @@ void draw() {
   rect(10, 17, 145, 95, 7);
   angx = Euler[2];
   angy = Euler[1];
-  //angx = ypr[2];
-  //angy = ypr[1];
-  
-  float head1 = iround(heading,1);
-  corr_heading = clamp360(head1+declinationAngle);
-  
-  //HeadingAvg.newNum(corr_heading);
-  //HeadingAvg.newNum(HeadingAvgCorr(corr_heading, oldHeading));
-  //oldHeading = corr_heading;
-  //corr_heading = HeadingAvg.getAvg();
-  //text("Heading " + nfp(((corr_heading)),4,1),400,20);
-  //buildCompass();
-  
+
+  corr_heading = heading;
   rotComp();
   
   textFont(font, 24);
@@ -453,7 +426,7 @@ void draw() {
   if(PrintOutput == 1){
       output.println(acc[0]+","+acc[1]+","+acc[2]+","+gyro[0]+","+gyro[1]+","+gyro[2]+","+
          magn[0]+","+magn[1]+","+magn[2] + "," + temp + "," +
-         dyn_acc[0]+","+dyn_acc[1]+","+dyn_acc[2]+","+dyn_acc_q_earth.x+","+dyn_acc_q_earth.y+","+dyn_acc_q_earth.z+","+
+         dyn_acc[0]+","+dyn_acc[1]+","+dyn_acc[2]+","+
          dt+","+corr_heading+","+ypr[0]+","+ypr[1]+","+ypr[2]+","+Euler[0]+","+Euler[1]+","+Euler[2]+","+
          motionDetect+","+motionDetect_transition+","+fused_alt+","+q[0]+","+q[1]+","+q[2]+","+q[3]+","+
          positionX[0]+","+positionY[0]+","+positionZ[0]+", "+lat+", "+longt+", "+gpsalt);
@@ -478,12 +451,12 @@ float decodeFloat(String inString) {
 
 ////////////////////////////////////////////////////////////////////////
 void serialEvent(Serial p) {
-  if(p.available() >= 17) {
+  if(p.available() >= 18) {
     String inputString = p.readStringUntil('\n');  
     //print(inputString);
     if (inputString != null && inputString.length() > 0) {
       String [] inputStringArr = split(inputString, ",");
-      if(inputStringArr.length >= 17) { // q1,q2,q3,q4,\r\n so we have 5 elements
+      if(inputStringArr.length >= 18) { // q1,q2,q3,q4,\r\n so we have 5 elements
         q[0] = decodeFloat(inputStringArr[0]);
         q[1] = decodeFloat(inputStringArr[1]);
         q[2] = decodeFloat(inputStringArr[2]);
@@ -506,21 +479,23 @@ void serialEvent(Serial p) {
         if(heading < -9990) {
             heading = 0;
         }
+        altitude = decodeFloat(inputStringArr[17]);
+
         
       //read GPS
       if(HAS_GPS == 1){
-          hdop = decodeFloat(inputStringArr[17]);
-          hdop_val = decodeFloat(inputStringArr[18]);
-          lat = decodeFloat(inputStringArr[19]);
-          longt = decodeFloat(inputStringArr[20]);
-          loc_val = decodeFloat(inputStringArr[21]);
-          gpsalt = decodeFloat(inputStringArr[22]);
-          gpsalt_val = decodeFloat(inputStringArr[23]);
-          cog = decodeFloat(inputStringArr[24]);
-          cog_val = decodeFloat(inputStringArr[25]);
-          sog = decodeFloat(inputStringArr[26]);
-          sog_val = decodeFloat(inputStringArr[27]);
-          gpschars = decodeFloat(inputStringArr[28]);    
+          hdop = decodeFloat(inputStringArr[18]);
+          hdop_val = decodeFloat(inputStringArr[19]);
+          lat = decodeFloat(inputStringArr[20]);
+          longt = decodeFloat(inputStringArr[21]);
+          loc_val = decodeFloat(inputStringArr[22]);
+          gpsalt = decodeFloat(inputStringArr[23]);
+          gpsalt_val = decodeFloat(inputStringArr[24]);
+          cog = decodeFloat(inputStringArr[25]);
+          cog_val = decodeFloat(inputStringArr[26]);
+          sog = decodeFloat(inputStringArr[27]);
+          sog_val = decodeFloat(inputStringArr[28]);
+          gpschars = decodeFloat(inputStringArr[29]);    
        }        
       }
     }

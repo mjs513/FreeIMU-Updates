@@ -2,7 +2,17 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Friday, August 22, 2014
+Friday, Sept 2, 2014
+
+09-02-14 - incorporated changes proposed by David Bazilay which incorporates the Altitude Complimentary filter and the Heading calcs that was in the Procressing sketch directly into the library.
+
+Arduino serial sketches were updated to output the heading and altimeter accordingly. As a result of the changes the Processing sketch was simplified and the changes incorporated into the FreeIMU_cube_Odo_Exp_v2 Gui in the experimental folder. 
+
+Additional changes to the FreeIMU_cube_Odo Gui will be made shortly.
+
+My thanks to David for incorporating these changes.
+
+---------------------------------------------------------------
 
 08-22-14 Added same serial options in the Yaw-Pitch-Roll processing sketch as available with the processing GUI.
 

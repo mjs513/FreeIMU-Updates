@@ -33,11 +33,12 @@
 #include "CommunicationUtils.h"
 #include "FreeIMU.h"
 #include "FilteringScheme.h"
+#include "RunningAverage.h"
 
 #define HAS_GPS 0
 
 KalmanFilter kFilters[4];
-int k_index = 4;
+int k_index = 3;
 
 float q[4];
 int raw_values[11];
@@ -165,7 +166,7 @@ void loop() {
       }
     }
     else if(cmd == 'z') {
-      float val_array[17] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+      float val_array[18] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
       uint8_t count = serial_busy_wait();
       for(uint8_t i=0; i<count; i++) {
         my3IMU.getQ(q, val);
@@ -189,6 +190,7 @@ void loop() {
 	
         #if (HAS_MS5611() || HAS_BMP085() || HAS_LPS331())
            // with baro
+           val_array[17] = my3IMU.getEstAltitude();
            val_array[13] = (my3IMU.getBaroTemperature());
            val_array[14] = (my3IMU.getBaroPressure());
         #elif HAS_MPU6050()
@@ -199,7 +201,7 @@ void loop() {
            val_array[13] = my3IMU.rt;
         #endif
 
-        serialPrintFloatArr(val_array,17);
+        serialPrintFloatArr(val_array,18);
         //Serial.print('\n');
         
         #if HAS_GPS
@@ -224,7 +226,7 @@ void loop() {
       }
     } 
     else if(cmd == 'a') {
-      float val_array[17] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+      float val_array[18] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
       uint8_t count = serial_busy_wait();
       for(uint8_t i=0; i<count; i++) {
         my3IMU.getQ(q, val);
@@ -248,6 +250,7 @@ void loop() {
 
         #if (HAS_MS5611() || HAS_BMP085() || HAS_LPS331())
            // with baro
+           val_array[17] = my3IMU.getEstAltitude();
            val_array[13] = (my3IMU.getBaroTemperature());
            val_array[14] = (my3IMU.getBaroPressure());
         #elif HAS_MPU6050()
@@ -257,7 +260,7 @@ void loop() {
         #elif HAS_ITG3200()
            val_array[13] = my3IMU.rt;
         #endif
-        serialPrintFloatArr(val_array, 17);
+        serialPrintFloatArr(val_array, 18);
         //Serial.print('\n');
         
         #if HAS_GPS

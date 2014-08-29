@@ -29,19 +29,17 @@
 #include "CommunicationUtils.h"
 #include "FreeIMU.h"
 #include "FilteringScheme.h"
+#include "RunningAverage.h"
 
 #define Has_LSM303 0
 #define HAS_GPS 0
-
-//KalmanFilter kFilters[4];
-//int k_index = 4;
 
 float q[4];
 int16_t raw_values[11];
 float ypr[3]; // yaw pitch roll
 char str[128];
 float val[11];
-float val_array[17]; 
+float val_array[18]; 
 
 // Set the FreeIMU object and LSM303 Compass
 FreeIMU my3IMU = FreeIMU();
@@ -67,16 +65,8 @@ FreeIMU my3IMU = FreeIMU();
 char cmd, tempCorr;
 
 void setup() {
-  Serial.begin(38400);
+  Serial.begin(115200);
   Wire.begin();
-  
-  //float qVal = 0.125; //Set Q Kalman Filter(process noise) value between 0 and 1
-  //float rVal = 32.; //Set K Kalman Filter (sensor noise)
-  
-  //for(int i = 0; i <= k_index; i++) { //Initialize Kalman Filters for 10 neighbors
-  //KalmanFilter(float q, float r, float p, float intial_value);
-  //  kFilters[i].KalmanInit(qVal,rVal,5.0,0.5);
-  //}
   
   //#if HAS_MPU6050()
   //    my3IMU.RESET();
@@ -84,17 +74,18 @@ void setup() {
 	
   my3IMU.init(true);
 
-  #if Has_LSM303
-     compass.init();
-     compass.enableDefault();
-     /*
-     Calibration values; the default values of +/-32767 for each axis
-     lead to an assumed magnetometer bias of 0. Use the Calibrate example
-     program to determine appropriate values for your particular unit.
-     */
-     compass.m_min = (LSM303::vector<int16_t>){-2815, -3090, -2958};
-     compass.m_max = (LSM303::vector<int16_t>){+2946, +2654, +2734};
-  #endif
+  //this here for ref only.
+  //#if Has_LSM303
+  //   compass.init();
+  //   compass.enableDefault();
+  //   /*
+  //   Calibration values; the default values of +/-32767 for each axis
+  //   lead to an assumed magnetometer bias of 0. Use the Calibrate example
+  //   program to determine appropriate values for your particular unit.
+  //   */
+  //   compass.m_min = (LSM303::vector<int16_t>){-2815, -3090, -2958};
+  //   compass.m_max = (LSM303::vector<int16_t>){+2946, +2654, +2734};
+  //#endif
 
   #if HAS_GPS
     ss.begin(GPSBaud);
@@ -142,10 +133,6 @@ void loop() {
           Serial.print(my3IMU.getBaroTemperature()); Serial.print(",");
           Serial.print(my3IMU.getBaroPressure()); Serial.print(",");
         #endif
-        #if Has_LSM303
-           compass.read();
-           Serial.print(compass.heading());Serial.print(",");
-        #endif
         Serial.print(millis()); Serial.print(",");
         Serial.println("\r\n");
      }
@@ -185,7 +172,7 @@ void loop() {
       }
     }
     else if(cmd == 'z') {
-      float val_array[17] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+      float val_array[18] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
       uint8_t count = serial_busy_wait();
       for(uint8_t i=0; i<count; i++) {
         my3IMU.getQ(q, val);
@@ -206,14 +193,10 @@ void loop() {
         val_array[3] = (q[3]);
         //val_array[15] = millis();
         val_array[16] = val[9];
-        
-        #if Has_LSM303
-           compass.read();
-           val_array[16] = compass.heading();;
-        #endif
 	
         #if (HAS_MS5611() || HAS_BMP085() || HAS_LPS331())
            // with baro
+           val_array[17] = my3IMU.getEstAltitude();
            val_array[13] = (my3IMU.getBaroTemperature());
            val_array[14] = (my3IMU.getBaroPressure());
         #elif HAS_MPU6050()
@@ -224,7 +207,7 @@ void loop() {
            val_array[13] = my3IMU.rt;
         #endif
 
-        serialPrintFloatArr(val_array,17);
+        serialPrintFloatArr(val_array,18);
         //Serial.print('\n');
         
         #if HAS_GPS
@@ -248,70 +231,8 @@ void loop() {
         #endif        
       }
     } 
-/*    else if(cmd == 'a') {
-      float val_array[17] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-      uint8_t count = serial_busy_wait();
-      for(uint8_t i=0; i<count; i++) {
-        my3IMU.getQ(q, val);
-        val_array[15] = my3IMU.sampleFreq;
-        //my3IMU.getValues(val);        
-		val_array[7] = (val[3] * M_PI/180);
-		val_array[8] = (val[4] * M_PI/180);
-		val_array[9] = (val[5] * M_PI/180);
-		val_array[4] = (val[0]);
-		val_array[5] = (val[1]);
-		val_array[6] = (val[2]);
-		val_array[10] = (val[6]);
-		val_array[11] = (val[7]);
-		val_array[12] = (val[8]);
-		val_array[0] = kFilters[0].measureRSSI(q[0]);
-		val_array[1] = kFilters[1].measureRSSI(q[1]);
-		val_array[2] = kFilters[2].measureRSSI(q[2]);
-		val_array[3] = kFilters[3].measureRSSI(q[3]);
-		//val_array[15] = millis();
-		val_array[16] = val[9];
-	
-		#if Has_LSM303
-			compass.read();
-			val_array[16] = compass.heading();
-        #endif
 
-        #if (HAS_MS5611() || HAS_BMP085() || HAS_LPS331())
-           // with baro
-           val_array[13] = (my3IMU.getBaroTemperature());
-           val_array[14] = (my3IMU.getBaroPressure());
-        #elif HAS_MPU6050()
-           val_array[13] = (my3IMU.DTemp/340.) + 35.;
-		#elif HAS_MPU9150()  || HAS_MPU9250()
-           val_array[13] = ((float) my3IMU.DTemp) / 333.87 + 21.0;
-        #elif HAS_ITG3200()
-           val_array[13] = my3IMU.rt;
-        #endif
-        serialPrintFloatArr(val_array, 17);
-        //Serial.print('\n');
-        
-        #if HAS_GPS
-          val_array[0] = (float) gps.hdop.value();
-          val_array[1] = (float) gps.hdop.isValid();
-          val_array[2] = (float) gps.location.lat();
-          val_array[3] = (float) gps.location.lng();
-          val_array[4] = (float) gps.location.isValid();
-          val_array[5] = (float) gps.altitude.meters();
-          val_array[6] = (float) gps.altitude.isValid();
-          val_array[7] = (float) gps.course.deg();
-          val_array[8] = (float) gps.course.isValid();
-          val_array[9] = (float) gps.speed.kmph();
-          val_array[10] = (float) gps.speed.isValid();
-          val_array[11] = (float) gps.charsProcessed();
-          serialPrintFloatArr(val_array,12);
-          Serial.print('\n');
-          smartDelay(20);
-        #else
-          Serial.print('\n');
-        #endif 
-       }
-     }
-    ******************************************************/
+    //******************************************************/
     #ifndef CALIBRATION_H
     else if(cmd == 'c') {
       const uint8_t eepromsize = sizeof(float) * 6 + sizeof(int) * 6;

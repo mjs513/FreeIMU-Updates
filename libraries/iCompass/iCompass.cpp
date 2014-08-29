@@ -5,7 +5,10 @@
 
 // Constructors ////////////////////////////////////////////////////////////////
 
-iCompass::iCompass(void) { float test = 1.0f; }
+iCompass::iCompass(void) : myRA(1) { declinationAngle = 0; maxSamples = 500; float test = 1.0f; samples = 0; myRA.clear(); }
+iCompass::iCompass(float dAngle) : myRA(1) { declinationAngle = dAngle; maxSamples = 500; float test = 1.0f; samples = 0; myRA.clear(); }
+iCompass::iCompass(float dAngle, unsigned int windSize) : myRA(windSize) { declinationAngle = dAngle; maxSamples = 500; float test = 1.0f; samples = 0; myRA.clear(); }
+iCompass::iCompass(float dAngle, unsigned int windSize, unsigned int maxS) : myRA(windSize) { declinationAngle = dAngle; maxSamples = maxS; float test = 1.0f; samples = 0; myRA.clear(); }
 
 
 /*
@@ -38,7 +41,12 @@ and horizontal north is returned.
 */
 float iCompass::iheading(int ix, int iy, int iz, float ax, float ay, float az, float mx, float my, float mz)
 {
-
+    if (samples == maxSamples)
+    {
+      samples = 0;
+      myRA.clear();
+    }
+    
 	vector<int> from = {ix, iy, iz};
     vector<float> m = {mx, my, mz};
     vector<float> a = {ax, ay, az};	
@@ -54,7 +62,20 @@ float iCompass::iheading(int ix, int iy, int iz, float ax, float ay, float az, f
     // compute heading
     float heading = atan2(vector_dot(&E, &from), vector_dot(&N, &from)) * 180 / M_PI;
     if (heading < 0) heading += 360;
-    return heading;
+    
+    if(heading < -9990) {
+        heading = 0;
+    }
+    
+    heading = clamp360(iround(heading,1)+declinationAngle);
+
+    myRA.addValue(heading);
+    myRA.addValue(HeadingAvgCorr(heading, oldHeading));
+    oldHeading = heading;
+    
+    samples++;
+    
+    return myRA.getAverage();
 }
 
 template <typename Ta, typename Tb, typename To> void iCompass::vector_cross(const vector<Ta> *a,const vector<Tb> *b, vector<To> *out)
