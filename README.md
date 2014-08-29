@@ -4,13 +4,13 @@ FreeIMU-Updates
 Change Log
 Friday, Sept 2, 2014
 
-09-02-14 - incorporated changes proposed by David Bazilay which incorporates the Altitude Complimentary filter and the Heading calcs that was in the Procressing sketch directly into the library.
+09-02-14 - incorporated changes proposed by Dan Barzilay which incorporates the Altitude Complimentary filter and the Heading calcs that was in the Procressing sketch directly into the library.
 
 Arduino serial sketches were updated to output the heading and altimeter accordingly. As a result of the changes the Processing sketch was simplified and the changes incorporated into the FreeIMU_cube_Odo_Exp_v2 Gui in the experimental folder. 
 
 Additional changes to the FreeIMU_cube_Odo Gui will be made shortly.
 
-My thanks to David for incorporating these changes.
+My thanks to Dan for incorporating these changes.
 
 ---------------------------------------------------------------
 
@@ -86,8 +86,8 @@ code posted on his X-IO website.
 2. Updating code as temp correction only applicable to MPU-6050 or 9150 at this point.
 3. Clarified GenMPU6050 and DFROBOT defines
 4. Added code for BMP085 altimeter
- 
-02-27-14	Fixed code issues with generic MPU6050 output for raw values. 
+Â 
+02-27-14	Fixed code issues with generic MPU6050 output for raw values.Â 
  
 10-27-2013	1. Modified incorporate temperature correction for gyro and accelerometer
 2. Corrected __AVR__ to __AVR_ATmega128__
@@ -95,14 +95,14 @@ code posted on his X-IO website.
 4. 1D Kalman Filter on q-values in sketch
 	   
 10-29-2013	Corrected temp coefficient array for temp
- 	   
+Â 	   
 11-01-2013	 Added new inverse sqrt code obtained from articles:
 http://pizer.wordpress.com/2008/10/12/fast-inverse-square-root/ and
 http://www.diydrones.com/forum/topics/madgwick-imu-ahrs-and-fast-inverse-square-root
- 	   
+Â 	   
 11-05-13	1. Add code to reset MPU-6050 on start-up, implemented in the Arduino sketch as well as option to manually reset in processing sketch.
 2. Added LPF code line, currently set to MPU60X0_DLPF_BW_42
- 	   
+Â 	   
 11-23-13	1. Changed twoKidef from 0.1 to 0.0f -12-12 => twoKiDef changed from 0f to 0.0025f based on article in DIYDrones
 2. Added bypass caps (0.1 and 0.01 ceramic caps on the power pins of the freeIMU
 2a. Added a 10 uF tantalum on the power bus
@@ -110,22 +110,22 @@ http://www.diydrones.com/forum/topics/madgwick-imu-ahrs-and-fast-inverse-square-
 4. Updated processing sketch to calculate heading and display based on the freescale application note and as implemented:
    http://diydrones.com/profiles/blogs/tiltcompensated-heading
 5. update RESET function to zero out initial values
- 	   
+Â 	   
 12-06-13	1. added LSM303D Polulo board instead of  calculating heading from FreeIMU
 2. added option to turn on/off temp correction, temp_corr_on
 3. added variable to set temperature break where calibration turns off, temp_break, note: temp_break in units directly from MPU-6050
- 	   
+Â 	   
 01-02-14 to
   01-05-14	1. Recalibrated 6050 using Madgewick automated calibration rig - see paper
 2. Corrected temperature calibration coefficients to ensure that gyros are zeroed for whole temp range when at rest - deleted necessary to run zerogyro routine.
 3. Acceleration coefficients adjusted so Ax = 0, Ay = 0 and Az = 1g when at rest
 4. Had to tune Ki to reduce drift - now set to 0.165
 5. Changed Kp to 1.0 - drift almost zero
- 	   
+Â 	   
 01-08-14	1. Completed coding ZARA ZUPT for Zero velocity detemination - added code to the processing sketch
- 	   
+Â 	   
 01-09-14	1. Added a Reset Quaternion matrix only - option 2 in the sketch - to allow reset of matrix after rapid movement.
- 	   
+Â 	   
 1-20-14	Summary of Processing sketch 
 1.	updated to incorporate Altitude-Accelerometer complimentary filter
 2.	motion detection indicator based on Zara-Zupt
