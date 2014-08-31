@@ -1,0 +1,3 @@
+[submodule "l3g-arduino"]
+	path = l3g-arduino
+	url = https://github.com/pololu/l3g-arduino.git
