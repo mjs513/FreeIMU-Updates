@@ -45,7 +45,7 @@ int raw_values[11];
 float ypr[3]; // yaw pitch roll
 char str[128];
 float val[11];
-float val_array[17]; 
+float val_array[18]; 
 
 // Set the FreeIMU object and LSM303 Compass
 FreeIMU my3IMU = FreeIMU();
