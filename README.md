@@ -2,9 +2,21 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Friday, Sept 2, 2014
+Wednesday, Sept 3, 2014
 
-09-02-14 - incorporated changes proposed by Dan Barzilay which incorporates the Altitude Complimentary filter and the Heading calcs that was in the Procressing sketch directly into the library.
+
+09-03-14 - As a result of a conversation with Dan Barzilay did a little more research and determined that using Seb Madgwicks MARG gradient descent filter would provide an improvement to the drifting that I was still seeing. Preliminary tests with the FreeIMU v4 board were promising as well as additional testing with several other boards.  As a result the MadgwickAHRS code was added to FreeIMU library directly from the X-IO website with some minor coding changes to allow you to select either or of the implementations.
+
+Please consider this a better release as still have some additional testing to perform.
+
+See video: http://youtu.be/VCxzleg9KA4
+Refs:
+http://www.hindawi.com/journals/ijdsn/2014/864768/
+http://code.google.com/p/uav-helicoptor-ece4007/wiki/MadgwickAHRS
+
+-----------------------------------------------------------
+
+08-29-14 - incorporated changes proposed by Dan Barzilay which incorporates the Altitude Complimentary filter and the Heading calcs that was in the Procressing sketch directly into the library.
 
 Arduino serial sketches were updated to output the heading and altimeter accordingly. As a result of the changes the Processing sketch was simplified and the changes incorporated into the FreeIMU_cube_Odo_Exp_v2 Gui in the experimental folder. 
 

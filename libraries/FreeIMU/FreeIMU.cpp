@@ -125,6 +125,21 @@ GNU General Public License for more details.
 -------- Created a new Serial Example for when using a Arduino Due - AltSoftSerial does not work for Due.
 -------- Minor correction to Processing sketch
 --------------------------------------------------------------------------
+06-20-14 
+-------- Based on Kris Winer's work on the MPU-9250 and the AK8963 I was able to create 
+-------- a basic AK8963 library modeled after that of the AK8975 library from Jeff Rowberg. 
+-------- This was incorporated into FreeIMU library.
+-------------------------------------------------------------------------
+08-29-14
+-------- incorporated changes proposed by Dan Barzilay which incorporates the Altitude Complimentary 
+-------- filter and the Heading calcs that was in the Procressing sketch directly into the library.
+-------- Arduino serial sketches were updated to output the heading and altimeter accordingly. As a 
+-------- result of the changes the Processing sketch was simplified and the changes incorporated into 
+-------- the FreeIMU_cube_Odo_Exp_v2 Gui in the experimental folder. 
+------------------------------------------------------------------------
+09-03-14
+-------- Initial release:  Implemented the MadgwickAHRS (MARG) filter.  Option available to use either the Mahoney
+-------- AHRS or the MARG from FreeIMU.h.  
 
 */
 
@@ -133,12 +148,17 @@ GNU General Public License for more details.
 #include <stdint.h>
 //#define DEBUG
 #include "FreeIMU.h"
-#include "AHRS.h"
 
 // #include "WireUtils.h"
 #include "DebugUtils.h"
 #include <Filter.h>             // Filter library
 #include <Butter.h>
+
+#if(MARG == 0)
+	#include "AHRS.h"
+#else
+	#include "MadgwickAHRS.h"
+#endif
 
 //#include "vector_math.h"
 
@@ -252,6 +272,7 @@ FreeIMU::FreeIMU() {
   ezInt = 0.0;
   twoKp = twoKpDef;
   twoKi = twoKiDef;
+  beta = betaDef;
   integralFBx = 0.0f,  integralFBy = 0.0f, integralFBz = 0.0f;
   lastUpdate = 0;
   now = 0;
@@ -329,6 +350,7 @@ void FreeIMU::RESET() {
     ezInt = 0.0;
     twoKp = twoKpDef;
     twoKi = twoKiDef;
+   // beta = betaDef;
     integralFBx = 0.0f,  integralFBy = 0.0f, integralFBz = 0.0f;
     //lastUpdate = 0;
     //now = 0;
@@ -345,6 +367,7 @@ void FreeIMU::RESET_Q() {
     ezInt = 0.0;
     twoKp = twoKpDef;
     twoKi = twoKiDef;
+   // beta = betaDef;
     integralFBx = 0.0f,  integralFBy = 0.0f, integralFBz = 0.0f;
     //lastUpdate = 0;
     //now = 0;
@@ -908,7 +931,6 @@ void FreeIMU::initGyros() {
 void FreeIMU::getQ(float * q, float * val) {
   //float val[10];
   getValues(val);
-  
   //DEBUG_PRINT(val[3] * M_PI/180);
   //DEBUG_PRINT(val[4] * M_PI/180);
   //DEBUG_PRINT(val[5] * M_PI/180);
@@ -925,26 +947,53 @@ void FreeIMU::getQ(float * q, float * val) {
   
   // gyro values are expressed in deg/sec, the * M_PI/180 will convert it to radians/sec
   #if IS_9DOM() && not defined(DISABLE_MAGN)
-    #if HAS_AXIS_ALIGNED()
-      AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
-	  val[9] = maghead.iheading(0, 1, 0, val[0], val[1], val[2], val[7], val[6], val[8]);
-	#elif defined(SEN_10724)
-      AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[7], -val[6], val[8]);
-      val[9] = calcMagHeading( q0,  q1,  q2,  q3, val[7], -val[6], val[8]);
-	#elif defined(ARDUIMU_v3)
-      AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], -val[6], -val[7], val[8]);
-      val[9] = calcMagHeading( q0,  q1,  q2,  q3, -val[6], -val[7], val[8]);    
-	#elif defined(GEN_MPU9150) || defined(MPU9250_5611) || defined(GEN_MPU9250)
-      AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[7], val[6], val[8]);
-      //val[9] = calcMagHeading( q0,  q1,  q2, q3, val[7], val[6], val[8]); 
-	  val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[7], val[6], val[8]);
-	#elif defined(Altimu10)
-      AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], -val[2], val[6], val[7], -val[8]);
-	  //val[9] = maghead.iheading(0, 1, 0, val[0], val[1], -val[2], val[7], val[6], -val[8]);
-	  val[9] = compass.heading();
+   #if MARG == 0
+		#if HAS_AXIS_ALIGNED()		
+			AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
+			val[9] = maghead.iheading(0, 1, 0, val[0], val[1], val[2], val[7], val[6], val[8]);
+		#elif defined(SEN_10724)
+			AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[7], -val[6], val[8]);
+			val[9] = calcMagHeading( q0,  q1,  q2,  q3, val[7], -val[6], val[8]);
+		#elif defined(ARDUIMU_v3)
+			AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], -val[6], -val[7], val[8]);
+			val[9] = calcMagHeading( q0,  q1,  q2,  q3, -val[6], -val[7], val[8]);    
+		#elif defined(GEN_MPU9150) || defined(MPU9250_5611) || defined(GEN_MPU9250)
+			AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[7], val[6], val[8]);
+			//val[9] = calcMagHeading( q0,  q1,  q2, q3, val[7], val[6], val[8]); 
+			val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[7], val[6], val[8]);
+		#elif defined(Altimu10)
+			AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], -val[2], val[6], val[7], -val[8]);
+			//val[9] = maghead.iheading(0, 1, 0, val[0], val[1], -val[2], val[7], val[6], -val[8]);
+			val[9] = compass.heading();
+		#endif
 	#endif
+	
+	#if MARG == 1
+		#if HAS_AXIS_ALIGNED()		
+			MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
+			val[9] = maghead.iheading(0, 1, 0, val[0], val[1], val[2], val[7], val[6], val[8]);
+		#elif defined(SEN_10724)
+			MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[7], -val[6], val[8]);
+			val[9] = calcMagHeading( q0,  q1,  q2,  q3, val[7], -val[6], val[8]);
+		#elif defined(ARDUIMU_v3)
+			MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], -val[6], -val[7], val[8]);
+			val[9] = calcMagHeading( q0,  q1,  q2,  q3, -val[6], -val[7], val[8]);    
+		#elif defined(GEN_MPU9150) || defined(MPU9250_5611) || defined(GEN_MPU9250)
+			MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[7], val[6], val[8]);
+			//val[9] = calcMagHeading( q0,  q1,  q2, q3, val[7], val[6], val[8]); 
+			val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[7], val[6], val[8]);
+		#elif defined(Altimu10)
+			MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], -val[2], val[6], val[7], -val[8]);
+			//val[9] = maghead.iheading(0, 1, 0, val[0], val[1], -val[2], val[7], val[6], -val[8]);
+			val[9] = compass.heading();
+		#endif
+	#endif
+	
+  #elif(MARG == 0)
+	AHRSupdateIMU(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2]);
+	val[9] = -9999.0f;
   #else
-    AHRSupdateIMU(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2]);
+	MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], 0, 0, 0);
 	val[9] = -9999.0f;
   #endif
   
@@ -1041,6 +1090,7 @@ const float def_sea_press = 1013.25;
  * Returns the estimated altitude from fusing barometer and accelerometer
  * in a complementary filter.
 */
+#if HAS_MS5611() || HAS_BMP085() || HAS_LPS331()
 float FreeIMU::getEstAltitude() {
   float q1[4]; // quaternion
   float q2[4]; // quaternion
@@ -1072,6 +1122,7 @@ float FreeIMU::getEstAltitude() {
  
   return altComp.update(dyn_acc_earth[3], alt, dt2);
 }
+#endif
 
 /**
  * Returns the Euler angles in radians defined in the Aerospace sequence.

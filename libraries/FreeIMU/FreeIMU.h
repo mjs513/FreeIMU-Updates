@@ -41,7 +41,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define ARDUIMU_v3 //  DIYDrones ArduIMU+ V3 http://store.diydrones.com/ArduIMU_V3_p/kt-arduimu-30.htm or https://www.sparkfun.com/products/11055
 //#define GEN_MPU6050 // Generic MPU6050 breakout board. Compatible with GY-521, SEN-11028 and other MPU6050 wich have the MPU6050 AD0 pin connected to GND.
 //#define DFROBOT  //DFROBOT 10DOF SEN-1040 IMU
-//#define MPU9250_5611  //MPU-91250 IMU with MS5611 Altimeter from eBay
+//#define MPU9250_5611  //MPU-9250 IMU with MS5611 Altimeter from eBay
 //#define GEN_MPU9150
 //#define GEN_MPU9250
 //#define Altimu10  // Pololu AltIMU v10 - 10 DOF IMU - http://www.pololu.com/product/1269
@@ -55,6 +55,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //Number of samples to average in iCompass
 #define WINDOW_SIZE 10 //Set to 1 to turn off the Running Average
+
+// Set filter type: 1 = Madgwick Gradient Descent, 0 - Madgwick implementation of Mahoney DCM
+// in Quaternion form.
+#define MARG 1 
 
 // *** No configuration needed below this line ***
 #define FREEIMU_LIB_VERSION "DEV"
@@ -232,26 +236,33 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #if defined(DFROBOT) 
 	#define twoKpDef  (2.0f * 0.5f)
 	#define twoKiDef  (2.0f * 0.00002f)
+	#define betaDef  0.1f
 #elif defined(FREEIMU_v04)
 	#define twoKpDef  (2.0f * 0.75f)	//works with and without mag enabled
 	#define twoKiDef  (2.0f * 0.1625f)
+	#define betaDef  0.1f
 #elif defined(GEN_MPU6050)
 	#define twoKpDef  (2.0f * 0.5f)
 	#define twoKiDef  (2.0f * 0.25f)
+	#define betaDef	  0.1f		// 2 * proportional gain
 #elif defined(GEN_MPU9150)
 	#define twoKpDef  (2.0f * 0.75f)
 	#define twoKiDef  (2.0f * 0.1f)	
+	#define betaDef	  0.1f		// 2 * proportional gain
 #elif defined(Altimu10)
 	//#define twoKpDef  (2.0f * 1.01f)
 	//#define twoKiDef  (2.0f * 0.00002f)	
 	#define twoKpDef  (2.0f * 2.75f)
-	#define twoKiDef  (2.0f * 0.1625f)	
+	#define twoKiDef  (2.0f * 0.1625f)
+	#define betaDef  0.1f	
 #elif defined(GEN_MPU9250)
 	#define twoKpDef  (2.0f * 0.95f)
 	#define twoKiDef  (2.0f * 0.05f)	
+	#define betaDef	  0.1f		// 2 * proportional gain
 #else
 	#define twoKpDef  (2.0f * 0.5f)
 	#define twoKiDef  (2.0f * 0.1f)
+	#define betaDef  0.1f
 #endif 
 
 #ifndef cbi
@@ -379,8 +390,8 @@ class FreeIMU
 	float sampleFreq; // half the sample period expressed in seconds
 	
   private:
-    void AHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz);
-    void AHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az);
+    //void AHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz);
+    //void AHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az);
     
 	bool  bSPI;
 	float bx, by, bz;
@@ -394,6 +405,16 @@ class FreeIMU
 	unsigned long lastUpdate1, now1;
 	float dt2;
 
+	//Madgwick AHRS Gradient Descent 
+    volatile float beta;				// algorithm gain
+	
+	#if(MARG == 0)
+		void AHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz);
+		void AHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az);
+  	#else
+		void MadgwickAHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz);
+		void MadgwickAHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az);
+	#endif
 };
 
 float invSqrt(float number);

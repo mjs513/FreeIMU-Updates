@@ -280,7 +280,7 @@ void setup()
     myDelay(1000);
   }
   
-  myPort.write("a" + char(burst));
+  myPort.write("z" + char(burst));
   myPort.bufferUntil('\n');
   
   cp5.setAutoDraw(false);
