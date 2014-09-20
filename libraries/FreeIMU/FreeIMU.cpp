@@ -114,7 +114,7 @@ GNU General Public License for more details.
 -------- Added Filter library from ArduIMU (nice addition)
 -------- Reduced size of serial sketch to fit on arduino uno for calibration
 -------- Added azimuth code for heading when magnetometer and accelerometer available by extracting the code segment from the Pololu LSM303D library. Made a library called iCompass so it can be used elsewhere.
--------- In process of modifing code for use with Pololu AltIMU-10 v3.
+-------- In process of modifying code for use with Pololu AltIMU-10 v3.
 ---------------------------------------------------------------------------
 05-17-14
 -------- updated FreeIMU examples to work with current library
@@ -140,6 +140,12 @@ GNU General Public License for more details.
 09-03-14
 -------- Initial release:  Implemented the MadgwickAHRS (MARG) filter.  Option available to use either the Mahoney
 -------- AHRS or the MARG from FreeIMU.h.  
+
+09-19-14
+-------- Set up altitude to accept new sea level pressure from processing as option pxxxxxx, where xxxxxx
+-------- is an the SL pressure in millibars * 100, so 1015.45 would read 101545
+-------- Changed tilt compensation routine: deleting iCompass
+
 
 */
 
@@ -223,12 +229,12 @@ FreeIMU::FreeIMU() {
   
   #if HAS_HMC5883L()
     magn = HMC58X3();
-	maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);
+	//maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);
   #endif
   
   #if HAS_LSM303()
 	compass = LSM303();
-	maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);
+	//maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);	
   #endif
   
   #if HAS_ITG3200()
@@ -242,11 +248,11 @@ FreeIMU::FreeIMU() {
   #elif HAS_MPU9150()
     accgyro = MPU60X0();
 	mag = AK8975();
-	maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);
+	//maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);
   #elif HAS_MPU9250()
     accgyro = MPU60X0();
 	mag = AK8963();
-	maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);  
+	//maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);  
   #endif
     
   #if HAS_MS5611()
@@ -929,7 +935,7 @@ void FreeIMU::initGyros() {
  * @param q the quaternion to populate
 */
 void FreeIMU::getQ(float * q, float * val) {
-  //float val[10];
+  //float val[11];
   getValues(val);
   //DEBUG_PRINT(val[3] * M_PI/180);
   //DEBUG_PRINT(val[4] * M_PI/180);
@@ -950,7 +956,8 @@ void FreeIMU::getQ(float * q, float * val) {
    #if MARG == 0
 		#if HAS_AXIS_ALIGNED()		
 			AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
-			val[9] = maghead.iheading(0, 1, 0, val[0], val[1], val[2], val[7], val[6], val[8]);
+			//val[9] = maghead.iheading(0, 1, 0, val[0], val[1], val[2], val[7], val[6], val[8]);
+			val[9] = calcMagHeading( q0,  q1,  q2,  q3, val[6], val[7], val[8]);
 		#elif defined(SEN_10724)
 			AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[7], -val[6], val[8]);
 			val[9] = calcMagHeading( q0,  q1,  q2,  q3, val[7], -val[6], val[8]);
@@ -958,20 +965,17 @@ void FreeIMU::getQ(float * q, float * val) {
 			AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], -val[6], -val[7], val[8]);
 			val[9] = calcMagHeading( q0,  q1,  q2,  q3, -val[6], -val[7], val[8]);    
 		#elif defined(GEN_MPU9150) || defined(MPU9250_5611) || defined(GEN_MPU9250)
-			AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[7], val[6], val[8]);
-			//val[9] = calcMagHeading( q0,  q1,  q2, q3, val[7], val[6], val[8]); 
-			val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[7], val[6], val[8]);
-		#elif defined(Altimu10)
-			AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], -val[2], val[6], val[7], -val[8]);
-			//val[9] = maghead.iheading(0, 1, 0, val[0], val[1], -val[2], val[7], val[6], -val[8]);
-			val[9] = compass.heading();
+			AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[7], val[6], -val[8]);
+			val[9] = calcMagHeading( q0,  q1,  q2, q3, val[7], val[6], val[8]); 
+			//val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[7], val[6], -val[8]);
 		#endif
 	#endif
 	
 	#if MARG == 1
 		#if HAS_AXIS_ALIGNED()		
 			MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
-			val[9] = maghead.iheading(0, 1, 0, val[0], val[1], val[2], val[7], val[6], val[8]);
+			//val[9] = maghead.iheading(0, 1, 0, val[0], val[1], val[2], val[7], val[6], val[8]);
+			val[9] = calcMagHeading( q0,  q1,  q2,  q3, val[6], val[7], val[8]);
 		#elif defined(SEN_10724)
 			MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[7], -val[6], val[8]);
 			val[9] = calcMagHeading( q0,  q1,  q2,  q3, val[7], -val[6], val[8]);
@@ -979,13 +983,9 @@ void FreeIMU::getQ(float * q, float * val) {
 			MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], -val[6], -val[7], val[8]);
 			val[9] = calcMagHeading( q0,  q1,  q2,  q3, -val[6], -val[7], val[8]);    
 		#elif defined(GEN_MPU9150) || defined(MPU9250_5611) || defined(GEN_MPU9250)
-			MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[7], val[6], val[8]);
-			//val[9] = calcMagHeading( q0,  q1,  q2, q3, val[7], val[6], val[8]); 
-			val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[7], val[6], val[8]);
-		#elif defined(Altimu10)
-			MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], -val[2], val[6], val[7], -val[8]);
-			//val[9] = maghead.iheading(0, 1, 0, val[0], val[1], -val[2], val[7], val[6], -val[8]);
-			val[9] = compass.heading();
+			MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[7], val[6], -val[8]);
+			val[9] = calcMagHeading( q0,  q1,  q2, q3, val[7], val[6], val[8]); 
+			//val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[7], val[6], -val[8]);
 		#endif
 	#endif
 	
@@ -1002,9 +1002,13 @@ void FreeIMU::getQ(float * q, float * val) {
   q[2] = q2;
   q[3] = q3;
   
+  #if HAS_PRESS()
+	val[10] = getEstAltitude(q, val, (1./sampleFreq));
+  #endif
+  
 }
 
-const float def_sea_press = 1013.25;
+float def_sea_press = 1013.25;
 
 #if HAS_MS5611()
 	/**
@@ -1048,30 +1052,42 @@ const float def_sea_press = 1013.25;
 
 	float FreeIMU::getBaroPressure() {
 		baro085.getPressure(&Pressure);
-        float new_press = kPress.measureRSSI(Pressure * 0.01);
-		return(new_press);
+        //float new_press = kPress.measureRSSI(Pressure * 0.01);
+		return(new_press * 0.01);
 	}
 
 	/**
 	* Returns an altitude estimate from baromether readings only using a default sea level pressure
 	*/
 	float FreeIMU::getBaroAlt() {
-		baro085.getAltitude(&Altitude);
-		return Altitude * 0.01;
+		//baro085.getAltitude(&Altitude);
+		//return Altitude * 0.01;
+		return getBaroAlt(def_sea_press);
+	}
+	
+	/**
+	* Returns an altitude estimate from barometer readings only using sea_press as current sea level pressure
+	*/
+	float FreeIMU::getBaroAlt(float sea_press) {
+		float temp = getBaroTemperature();
+		float press = getBaroPressure();
+        float new_press = kPress.measureRSSI(press);
+		return ((pow((sea_press / new_press), 1/5.257) - 1.0) * (temp + 273.15)) / 0.0065;
 	}
 	
 #endif
 
 #if HAS_LPS331()
 
-	// Returns temperature from BMP085 - added by MJS
+	// Returns temperature from LPS331 - added by MJS
 	float FreeIMU::getBaroTemperature() {
 		float temp1 = baro331.readTemperatureC();		
 		return(temp1);
 	}
 
 	float FreeIMU::getBaroPressure() {
-        float new_press = kPress.measureRSSI(baro331.readPressureMillibars());
+        //float new_press = kPress.measureRSSI(baro331.readPressureMillibars());
+		float new_press = baro331.readPressureMillibars();
 		return(new_press);
 	}
 
@@ -1079,9 +1095,19 @@ const float def_sea_press = 1013.25;
 	* Returns an altitude estimate from baromether readings only using a default sea level pressure
 	*/
 	float FreeIMU::getBaroAlt() {        
-        float new_press = kPress.measureRSSI(baro331.readPressureMillibars());
-		float temp3 = baro331.pressureToAltitudeMeters(new_press);
-		return(temp3);
+        //float new_press = kPress.measureRSSI(baro331.readPressureMillibars());
+		//float temp3 = baro331.pressureToAltitudeMeters(def_sea_press);
+		return getBaroAlt(def_sea_press);
+	}
+
+	/**
+	* Returns an altitude estimate from barometer readings only using sea_press as current sea level pressure
+	*/
+	float FreeIMU::getBaroAlt(float sea_press) {
+		float temp = baro331.readTemperatureC();
+		float press = baro331.readPressureMillibars();
+        float new_press = kPress.measureRSSI(press);
+		return ((pow((sea_press / new_press), 1/5.257) - 1.0) * (temp + 273.15)) / 0.0065;
 	}
 	
 #endif
@@ -1090,36 +1116,42 @@ const float def_sea_press = 1013.25;
  * Returns the estimated altitude from fusing barometer and accelerometer
  * in a complementary filter.
 */
-#if HAS_MS5611() || HAS_BMP085() || HAS_LPS331()
-float FreeIMU::getEstAltitude() {
-  float q1[4]; // quaternion
+#if HAS_PRESS()
+float FreeIMU::getEstAltitude(float * q1, float * val, float dt2) {
+  //float q1[4]; // quaternion
   float q2[4]; // quaternion
-  float val[10];
+  //float val[11];
   float dyn_acc[4];
   float dyn_acc_temp[4];
   float dyn_acc_earth[4];
 
-  now1 = micros();
-  dt2 = (now1 - lastUpdate1) / 1000000.0;
-  lastUpdate1 = now1;
+  //now1 = micros();
+  //dt2 = (now1 - lastUpdate1) / 1000000.0;
   
-  getQ(q1, val);
+  //getQ(q1, val);
   
   dyn_acc[0] = 0;
   dyn_acc[1] = val[0];
   dyn_acc[2] = val[1];
   dyn_acc[3] = val[2];
   
+  //gravityCompensateAcc(dyn_acc, q1);
   gravityCompensateAcc(dyn_acc, q1);
   dyn_acc[0] = 0;
   
+  //Qmultiply(dyn_acc_temp, q1, dyn_acc);
   Qmultiply(dyn_acc_temp, q1, dyn_acc);
 
+
+  //q2[1] = -q1[1]; q2[2] = -q1[2]; q2[3] = -q1[3]; q2[0] = q1[0]; //Conjugating
   q2[1] = -q1[1]; q2[2] = -q1[2]; q2[3] = -q1[3]; q2[0] = q1[0]; //Conjugating
   Qmultiply(dyn_acc_earth, dyn_acc_temp, q2);
   
   float alt = getBaroAlt();
- 
+	
+   //lastUpdate1 = now1;
+  //return altComp.update(dyn_acc_earth[3], alt, (1./(sampleFreq*4)));
+
   return altComp.update(dyn_acc_earth[3], alt, dt2);
 }
 #endif
@@ -1133,7 +1165,7 @@ float FreeIMU::getEstAltitude() {
 */
 void FreeIMU::getEulerRad(float * angles) {
   float q[4]; // quaternion
-  float val[10];
+  float val[11];
   
   getQ(q, val);
   angles[0] = atan2(2 * q[1] * q[2] - 2 * q[0] * q[3], 2 * q[0]*q[0] + 2 * q[1] * q[1] - 1); // psi
@@ -1167,7 +1199,7 @@ void FreeIMU::getEuler(float * angles) {
 */
 void FreeIMU::getYawPitchRollRad(float * ypr) {
   float q[4]; // quaternion
-  float val[10];
+  float val[11];
   float gx, gy, gz; // estimated gravity direction
   getQ(q, val);
   
@@ -1231,7 +1263,7 @@ float FreeIMU::calcMagHeading(float q0, float q1, float q2, float q3, float bx, 
   // Tilt compensated Magnetic field Y component:
   Head_Y = by*cos_roll - bz*sin_roll;
   // Magnetic Heading
-  return (atan2(-Head_Y,Head_X)*180./M_PI);
+  return (atan2(-Head_Y,Head_X)*180./M_PI) + MAG_DEC;
  
 }
 
@@ -1252,6 +1284,16 @@ void FreeIMU::setTempCalib(int opt_temp_cal) {
 		initGyros();
 		//digitalWrite(12,LOW);
 	}
+}
+
+/**
+ * Sets sea level pressure
+ * 
+*/
+void FreeIMU::setSeaPress(float sea_press_inp) {
+
+	def_sea_press = sea_press_inp;
+
 }
 
 /**                           END OF FREEIMU                           **/

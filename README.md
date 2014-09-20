@@ -2,8 +2,19 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Wednesday, Sept 3, 2014
+Saturday, Sept 20, 2014
 
+09-20-14
+
+Deleted iCompass and RunningAverage from FreeIMU. Compass averaging is done in the Processing sketch using Yarmartino compass averaging method which is more address issue of discontinuity at 0/360 degrees. Tests on the Altimu10 v3 are much more stable. The processing code was adapted from Christopher Baker's code at  https://github.com/SAIC-ATS/Algorithms.git. Will leave runningaveage library in case anyone wishes to use it for other reasons.
+
+iCompass deleted as tilt compensation was not working properly. Tilt compensation is still done from within FreeIMU.cpp using a different method.
+
+FreeIMU_serial.ino updated to reflect changes to implementation of altidue complimentary filter from within the library as opposed to calling from the serial sketch.
+
+Remaining sketches are in the process of being updated.
+
+09-12-14 - Updated tuning for Altimu10v3, MPU9250 breakout board from Innvense, and FreeIMUv0.4.3.
 
 09-03-14 - As a result of a conversation with Dan Barzilay did a little more research and determined that using Seb Madgwicks MARG gradient descent filter would provide an improvement to the drifting that I was still seeing. Preliminary tests with the FreeIMU v4 board were promising as well as additional testing with several other boards.  As a result the MadgwickAHRS code was added to FreeIMU library directly from the X-IO website with some minor coding changes to allow you to select either or of the implementations.
 

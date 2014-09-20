@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define FREEIMU_v035
 //#define FREEIMU_v035_MS
 //#define FREEIMU_v035_BMP
-#define FREEIMU_v04
+//#define FREEIMU_v04
 
 // 3rd party boards. Please consider donating or buying a FreeIMU board to support this library development.
 //#define SEN_10121 //IMU Digital Combo Board - 6 Degrees of Freedom ITG3200/ADXL345 SEN-10121 http://www.sparkfun.com/products/10121
@@ -44,7 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define MPU9250_5611  //MPU-9250 IMU with MS5611 Altimeter from eBay
 //#define GEN_MPU9150
 //#define GEN_MPU9250
-//#define Altimu10  // Pololu AltIMU v10 - 10 DOF IMU - http://www.pololu.com/product/1269
+#define Altimu10  // Pololu AltIMU v10 - 10 DOF IMU - http://www.pololu.com/product/1269
 //#define GY_88  //GY-88 Sensor Board from eBay
 
 //#define DISABLE_MAGN // Uncomment this line to disable the magnetometer in the sensor fusion algorithm
@@ -54,13 +54,52 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define MAG_DEC -13.1603  //degrees for Flushing, NY
 
 //Number of samples to average in iCompass
-#define WINDOW_SIZE 10 //Set to 1 to turn off the Running Average
+#define WINDOW_SIZE 1 //Set to 1 to turn off the Running Average
 
 // Set filter type: 1 = Madgwick Gradient Descent, 0 - Madgwick implementation of Mahoney DCM
 // in Quaternion form.
-#define MARG 1 
+#define MARG 1
 
+// proportional gain governs rate of convergence to accelerometer/magnetometer
+// integral gain governs rate of convergence of gyroscope biases
+// set up defines for various boards in my inventory, DFROBOT and Freeimu have
+// temperature calibration curves. (3.31.14)
+
+#if defined(DFROBOT) 
+	#define twoKpDef  (2.0f * 0.5f)
+	#define twoKiDef  (2.0f * 0.00002f)
+	#define betaDef  0.1f
+#elif defined(FREEIMU_v04)
+	#define twoKpDef  (2.0f * 0.75f)	//works with and without mag enabled
+	#define twoKiDef  (2.0f * 0.1625f)
+	#define betaDef  0.1f
+#elif defined(GEN_MPU6050)
+	#define twoKpDef  (2.0f * 0.5f)
+	#define twoKiDef  (2.0f * 0.25f)
+	#define betaDef	  0.1f
+#elif defined(GEN_MPU9150)
+	#define twoKpDef  (2.0f * 0.75f)
+	#define twoKiDef  (2.0f * 0.1f)	
+	#define betaDef	  0.01f
+#elif defined(Altimu10)
+	//#define twoKpDef  (2.0f * 1.01f)
+	//#define twoKiDef  (2.0f * 0.00002f)	
+	#define twoKpDef  (2.0f * 2.75f)
+	#define twoKiDef  (2.0f * 0.1625f)
+	#define betaDef  1.1f
+#elif defined(GEN_MPU9250)
+	#define twoKpDef  (2.0f * 1.75f) // was 0.95
+	#define twoKiDef  (2.0f * 0.05f) // was 0.05	
+	#define betaDef	  0.0f
+#else
+	#define twoKpDef  (2.0f * 0.5f)
+	#define twoKiDef  (2.0f * 0.1f)
+	#define betaDef  0.1f
+#endif 
+
+// ***********************************************
 // *** No configuration needed below this line ***
+// ***********************************************
 #define FREEIMU_LIB_VERSION "DEV"
 
 #define FREEIMU_DEVELOPER "Fabio Varesano - varesano.net"
@@ -122,24 +161,41 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 
-#define HAS_ITG3200() (defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) || defined(SEN_10121) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183))
-#define HAS_ADXL345() (defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(SEN_10121) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183))
+#define HAS_ITG3200() (defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) \
+					  || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) \
+					  || defined(FREEIMU_v035_BMP) || defined(SEN_10121) || defined(SEN_10736) \
+					  || defined(SEN_10724) || defined(SEN_10183))
+#define HAS_ADXL345() (defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) \
+					  || defined(FREEIMU_v03) || defined(SEN_10121) || defined(SEN_10736) \
+					  || defined(SEN_10724) || defined(SEN_10183))
 #define HAS_BMA180() (defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP))
 #define HAS_MPU6050() (defined(GY_88) || defined(FREEIMU_v04) || defined(GEN_MPU6050))
 #define HAS_MPU9150() (defined(GEN_MPU9150))
 #define HAS_MPU9250() (defined(MPU9250_5611) || defined(GEN_MPU9250)) 
-#define HAS_MS5611() (defined(MPU9250_5611) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v04))
-#define HAS_BMP085() (defined(GY_88) || defined(DFROBOT))
-#define HAS_HMC5883L() (defined(GY_88) || defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183)  || defined(ARDUIMU_v3))
+#define HAS_HMC5883L() (defined(GY_88) || defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) \
+					   || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) \
+					   || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10736) \
+					   || defined(SEN_10724) || defined(SEN_10183)  || defined(ARDUIMU_v3))
 #define HAS_MPU6000() (defined(ARDUIMU_v3))
 #define HAS_ALTIMU10() (defined(Altimu10))
-#define HAS_LPS331() (defined(Altimu10))
 #define HAS_L3D20() (defined(Altimu10))
 #define HAS_LSM303() (defined(Altimu10))
 
+#define HAS_MS5611() (defined(MPU9250_5611) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v04))
+#define HAS_BMP085() (defined(GY_88) || defined(DFROBOT))
+#define HAS_LPS331() (defined(Altimu10))
+#define HAS_PRESS() (defined(Altimu10) || defined(MPU9250_5611) || defined(FREEIMU_v035_MS) \
+					|| defined(FREEIMU_v04) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) \
+					|| defined(FREEIMU_v035_BMP) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v04) \
+					|| defined(GY_88) || defined(DFROBOT))
+					
 #define IS_6DOM() (defined(SEN_10121) || defined(GEN_MPU6050))
 #define IS_9DOM() (defined(GY_88) || defined(Altimu10) || defined(GEN_MPU9250) || defined(MPU9250_5611) || defined(GEN_MPU9150) || defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183) || defined(ARDUIMU_v3))
-#define HAS_AXIS_ALIGNED() (defined(GY_88) || defined(GEN_MPU6050) || defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10121) || defined(SEN_10736))
+#define HAS_AXIS_ALIGNED() (defined(Altimu10) || defined(GY_88) || defined(GEN_MPU6050) \
+							|| defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) \
+							|| defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) \
+							|| defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10121) \
+							|| defined(SEN_10736))
 
 #include <Wire.h>
 
@@ -179,14 +235,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #include "I2Cdev.h"
   #include "MPU60X0.h"
   #include "AK8975.h"
-  #include "iCompass.h"
+  //#include "iCompass.h"
   #define FIMU_ACCGYRO_ADDR MPU60X0_DEFAULT_ADDRESS
 #elif HAS_MPU9250()
   #include <Wire.h>
   #include "I2Cdev.h"
   #include "MPU60X0.h"
   #include "AK8963.h"
-  #include "iCompass.h"
+  //#include "iCompass.h"
   #define FIMU_ACCGYRO_ADDR MPU60X0_DEFAULT_ADDRESS
 #elif HAS_ALTIMU10()
   #include <Wire.h>
@@ -217,53 +273,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #if HAS_HMC5883L()
   #include <HMC58X3.h>
-  #include "iCompass.h"
+  //#include "iCompass.h"
 #endif
 
 #if HAS_LSM303()
   #include <LSM303.h>
-  #include "iCompass.h"
+  //#include "iCompass.h"
 #endif
 
 #define FIMU_BMA180_DEF_ADDR BMA180_ADDRESS_SDO_LOW
 #define FIMU_ITG3200_DEF_ADDR ITG3200_ADDR_AD0_LOW // AD0 connected to GND
 // HMC5843 address is fixed so don't bother to define it
-
-// proportional gain governs rate of convergence to accelerometer/magnetometer
-// integral gain governs rate of convergence of gyroscope biases
-// set up defines for various boards in my inventory, DFROBOT and Freeimu have
-// temperature calibration curves. (3.31.14)
-#if defined(DFROBOT) 
-	#define twoKpDef  (2.0f * 0.5f)
-	#define twoKiDef  (2.0f * 0.00002f)
-	#define betaDef  0.1f
-#elif defined(FREEIMU_v04)
-	#define twoKpDef  (2.0f * 0.75f)	//works with and without mag enabled
-	#define twoKiDef  (2.0f * 0.1625f)
-	#define betaDef  0.1f
-#elif defined(GEN_MPU6050)
-	#define twoKpDef  (2.0f * 0.5f)
-	#define twoKiDef  (2.0f * 0.25f)
-	#define betaDef	  0.1f		// 2 * proportional gain
-#elif defined(GEN_MPU9150)
-	#define twoKpDef  (2.0f * 0.75f)
-	#define twoKiDef  (2.0f * 0.1f)	
-	#define betaDef	  0.1f		// 2 * proportional gain
-#elif defined(Altimu10)
-	//#define twoKpDef  (2.0f * 1.01f)
-	//#define twoKiDef  (2.0f * 0.00002f)	
-	#define twoKpDef  (2.0f * 2.75f)
-	#define twoKiDef  (2.0f * 0.1625f)
-	#define betaDef  0.1f	
-#elif defined(GEN_MPU9250)
-	#define twoKpDef  (2.0f * 0.95f)
-	#define twoKiDef  (2.0f * 0.05f)	
-	#define betaDef	  0.1f		// 2 * proportional gain
-#else
-	#define twoKpDef  (2.0f * 0.5f)
-	#define twoKiDef  (2.0f * 0.1f)
-	#define betaDef  0.1f
-#endif 
 
 #ifndef cbi
     #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
@@ -306,6 +326,7 @@ class FreeIMU
     void getYawPitchRollRad(float * ypr);
 	float invSqrt(float x);
 	void setTempCalib(int opt_temp_cal);
+	void setSeaPress(float sea_press_inp);
 	float calcMagHeading(float q0, float q1, float q2, float q3, float bx, float by, float bz);
 	void initializeQ(float hdg);
 	
@@ -316,16 +337,19 @@ class FreeIMU
 	  float getBaroPressure();
     #elif HAS_BMP085()
       float getBaroAlt();
+      float getBaroAlt(float sea_press);
 	  float getBaroTemperature();
 	  float getBaroPressure();
 	#elif HAS_LPS331()
       float getBaroAlt();
+      float getBaroAlt(float sea_press);
 	  float getBaroTemperature();
 	  float getBaroPressure();	
     #endif	
     
-	#if HAS_MS5611() || HAS_BMP085() || HAS_LPS331()
-      float getEstAltitude();
+	#if HAS_PRESS()
+      //float getEstAltitude();
+	  float getEstAltitude(float * q, float * val, float dt2);
     #endif
         
     // we make them public so that users can interact directly with device classes
@@ -337,7 +361,7 @@ class FreeIMU
     
     #if HAS_HMC5883L()
       HMC58X3 magn;
-	  iCompass maghead;	
+	  //iCompass maghead;	
     #endif
     
     #if HAS_ITG3200()
@@ -353,7 +377,7 @@ class FreeIMU
 	#elif HAS_MPU9250()
 	  MPU60X0 accgyro;
 	  AK8963 mag;
-	  iCompass maghead;	 	
+	  //iCompass maghead;	 	
     #endif
 
 	#if HAS_L3D20()
@@ -362,7 +386,7 @@ class FreeIMU
 	
 	#if HAS_LSM303()
 	  LSM303 compass;  // accelerometer, magnetometer and heading - same as iCompass
-	  iCompass maghead;
+	  //iCompass maghead;
 	#endif
       
     #if HAS_MS5611()
@@ -373,7 +397,7 @@ class FreeIMU
 	  LPS331 baro331;  
     #endif
     
-    #if HAS_MS5611() || HAS_BMP085() || HAS_LPS331()
+    #if HAS_PRESS()
       KalmanFilter kPress; // Altitude Kalman Filter.
       AltComp altComp; // Altitude Complementary Filter.
     #endif
@@ -383,7 +407,7 @@ class FreeIMU
     int16_t gyro_off_x, gyro_off_y, gyro_off_z;
     int16_t acc_off_x, acc_off_y, acc_off_z, magn_off_x, magn_off_y, magn_off_z;
     float acc_scale_x, acc_scale_y, acc_scale_z, magn_scale_x, magn_scale_y, magn_scale_z;
-	float val[11];
+	float val[12];
 	int8_t nsamples, temp_break, temp_corr_on, instability_fix;
 	int16_t DTemp; 
 	float rt, senTemp, senTemp_break;
@@ -402,8 +426,8 @@ class FreeIMU
     volatile float q0, q1, q2, q3, q3old; 	// quaternion of sensor frame relative to auxiliary frame
     volatile float integralFBx,  integralFBy, integralFBz;
     unsigned long lastUpdate, now; 			// sample period expressed in milliseconds
-	unsigned long lastUpdate1, now1;
-	float dt2;
+	unsigned long lastUpdate1 = 0;
+	unsigned long now1;
 
 	//Madgwick AHRS Gradient Descent 
     volatile float beta;				// algorithm gain

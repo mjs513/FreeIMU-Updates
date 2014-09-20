@@ -137,15 +137,17 @@ float velocityY = 0;
 
 // Texture
 PImage texmap, Aimage, cmpRng, cmpAP;
+PImage Top, Bottom, Right, Left, Front, Back;
 float angx, angy, angz, angyLevelControl;
 
 float S;
 float A;
 
 float sea_press = 1013.25;           //Input local sea level pressure
+String seapresscmd = "99";
 //float declinationAngle = -13.1603;   //Flushing, NY magnetic declination in degrees
 float declinationAngle = 0;
-float STATIONALTFT = 36.0;           //LaGuardia AP measurement height
+float STATIONALTFT = 36.;           //LaGuardia AP measurement height
 float SEA_PRESS  = 1013.25;          //default sea level pressure level in mb
 float KNOWNALT   = 65.0;             //default known altitude, 
 float INHG       = 0.02952998751;    //convert mb to in/Hg constant
@@ -262,7 +264,12 @@ void setup()
   texmap = loadImage("sphere_bckgrnd.png");
   Aimage = loadImage("AttInd.PNG");
   setupSphere(R, xDetail, yDetail);
- 
+
+  //load cube images
+  textureMode(NORMAL);
+  Top = loadImage("Top.png");
+  Bottom = loadImage("Bottom.png");
+  
   //serial port set up
   myPort = new Serial(this, serialPort, 57600);
 
@@ -271,7 +278,7 @@ void setup()
   
   println("Waiting IMU..");
 
-  myDelay(1000);
+  myDelay(2000);
   
   while (myPort.available() == 0) {
     println(myPort.available());
@@ -365,10 +372,19 @@ void draw() {
   noFill();
   stroke(204, 102, 0);
   rect(10, 17, 145, 95, 7);
-  angx = Euler[2];
-  angy = Euler[1];
-
-  corr_heading = heading;
+  //angx = Euler[2];
+  //angy = Euler[1];
+  angx = ypr[2];
+  angy = ypr[1];
+  
+  //Compass averaging
+  //currentAngle = myAtan2(mouseY-height/2, mouseX-width/2) + radians(myNoise); 
+  addItemsToHistoryBuffers(radians(heading));
+  calculateMathematicalAverageOfHistory();
+  calculateYamartinoAverageOfHistory(); 
+  
+  //corr_heading = heading;
+  corr_heading = degrees(yamartinoAverageAngle);
   rotComp();
   
   textFont(font, 24);
@@ -472,7 +488,8 @@ void serialEvent(Serial p) {
 	magn[2] = decodeFloat(inputStringArr[12]);
 	temp = decodeFloat(inputStringArr[13]);
 	press = decodeFloat(inputStringArr[14]);
-        dt = (1./decodeFloat(inputStringArr[15]))/4;
+        //dt = (1./decodeFloat(inputStringArr[15]))/4;
+        dt = (1./decodeFloat(inputStringArr[15]));
         heading = decodeFloat(inputStringArr[16]);
         //dt = tnew - told;
         //told = tnew;
@@ -503,13 +520,13 @@ void serialEvent(Serial p) {
     count = count + 1;
     if(burst == count) { // ask more data when burst completed
       //1 = RESET MPU-6050, 2 = RESET Q Matrix
-      if(key == '2') {
+      if(key == 'q') {
          myPort.clear();
          myPort.write("2");
          sw.start();
          println("pressed 2");
          key = '0';
-      } else if(key == '1') {
+      } else if(key == 'r') {
             myPort.clear();
             myPort.write("1");
             sw.start();
@@ -521,27 +538,35 @@ void serialEvent(Serial p) {
             sw.start();
             println("pressed g");
             key = '0';            
-      } else if(key == 'r') {
+      } else if(key == 'R') {
             myPort.clear();
             ArtHorFlg = 0;
             calib = 1;
             sea_press = 1013.25;
             setup();
       } 
+      
+      if(seapresscmd != "99"){
+         myPort.clear();
+         myPort.write(seapresscmd);
+         seapresscmd =  "99";    
+      }   
+      
       if(calib == 0) {
          myPort.clear();
          myPort.write("f");
          sw.start();
          calib = 99;
-      }
+      }    
       if(calib == 1) {
          myPort.clear();
          myPort.write("t");
          sw.start();
          calib = 99;
-      }      
+      }
+
       myDelay(100);
-      p.write("a" + char(burst));
+      p.write("z" + char(burst));
       count = 0;
     }
   }
@@ -550,51 +575,63 @@ void serialEvent(Serial p) {
 //////////////////////////////////////////////////////////////////////////
 void buildBoxShape() {
   //box(60, 10, 40);
-  noStroke();
+  //noStroke();
+  
+  //Z+ (to the drawing area)   FRONT
   beginShape(QUADS);
-
-  //Z+ (to the drawing area)
   fill(#00ff00);
+  //texture(Top);
   vertex(-30, -5, 20);
   vertex(30, -5, 20);
   vertex(30, 5, 20);
   vertex(-30, 5, 20);
+  endShape();
   
+  beginShape(QUADS);  
   //Z-
   fill(#0000ff);
   vertex(-30, -5, -20);
   vertex(30, -5, -20);
   vertex(30, 5, -20);
   vertex(-30, 5, -20);
+  endShape();
   
+  beginShape(QUADS);  
   //X-
   fill(#ff0000);
   vertex(-30, -5, -20);
   vertex(-30, -5, 20);
   vertex(-30, 5, 20);
   vertex(-30, 5, -20);
+  endShape();
   
-  //X+
+  beginShape(QUADS);  
+  //X+ RIGHT SIDE
   fill(#ffff00);
   vertex(30, -5, -20);
   vertex(30, -5, 20);
   vertex(30, 5, 20);
   vertex(30, 5, -20);
-  
+  endShape();
+    
+  beginShape(QUADS);  
   //Y-
-  fill(#ff00ff);
-  vertex(-30, -5, -20);
-  vertex(30, -5, -20);
-  vertex(30, -5, 20);
-  vertex(-30, -5, 20);
+  //fill(#ff00ff);
+  texture(Top);
+  vertex(-30, -5, -20, 0, 0);
+  vertex(30, -5, -20, 1, 0);
+  vertex(30, -5, 20, 1, 1);
+  vertex(-30, -5, 20, 0, 1);
+  endShape();
   
-  //Y+
-  fill(#00ffff);
-  vertex(-30, 5, -20);
-  vertex(30, 5, -20);
-  vertex(30, 5, 20);
-  vertex(-30, 5, 20);
-  
+  beginShape(QUADS);  
+  //Y+ Bottom
+  //fill(#00ffff);
+  texture(Bottom);
+  vertex(-30, 5, -20, 0, 0);
+  vertex(30, 5, -20, 1, 0);
+  vertex(30, 5, 20, 1, 1);
+  vertex(-30, 5, 20, 0, 1);
   endShape();
 }
 

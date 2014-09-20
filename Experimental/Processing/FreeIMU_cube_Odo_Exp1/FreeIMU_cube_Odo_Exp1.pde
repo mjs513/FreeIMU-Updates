@@ -293,7 +293,7 @@ void setup()
     myDelay(1000);
   }
   
-  myPort.write("a" + char(burst));
+  myPort.write("z" + char(burst));
   myPort.bufferUntil('\n');
   
   cp5.setAutoDraw(false);
@@ -478,12 +478,12 @@ float decodeFloat(String inString) {
 
 ////////////////////////////////////////////////////////////////////////
 void serialEvent(Serial p) {
-  if(p.available() >= 17) {
+  if(p.available() >= 18) {
     String inputString = p.readStringUntil('\n');  
     //print(inputString);
     if (inputString != null && inputString.length() > 0) {
       String [] inputStringArr = split(inputString, ",");
-      if(inputStringArr.length >= 17) { // q1,q2,q3,q4,\r\n so we have 5 elements
+      if(inputStringArr.length >= 18) { // q1,q2,q3,q4,\r\n so we have 5 elements
         q[0] = decodeFloat(inputStringArr[0]);
         q[1] = decodeFloat(inputStringArr[1]);
         q[2] = decodeFloat(inputStringArr[2]);
@@ -566,7 +566,7 @@ void serialEvent(Serial p) {
          calib = 99;
       }      
       myDelay(100);
-      p.write("a" + char(burst));
+      p.write("z" + char(burst));
       count = 0;
     }
   }

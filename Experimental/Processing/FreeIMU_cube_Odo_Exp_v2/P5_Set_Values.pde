@@ -67,5 +67,11 @@ void controlEvent(ControlEvent theEvent) {
   
   }
   //println(calib);
+  if(sea_press !=1013.25) {
+        seapresscmd ="p" + str((int) (sea_press*100));
+   } else {
+        seapresscmd = "99";
+   }
+     
 }
 
