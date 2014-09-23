@@ -1,5 +1,6 @@
 #include <LPS331.h>
 #include <Wire.h>
+#include <Arduino.h>
 
 // Defines ///////////////////////////////////////////////////////////
 
@@ -108,7 +109,7 @@ long LPS331::readPressureRaw(void)
 // reads temperature in degrees C
 float LPS331::readTemperatureC(void)
 {
-  return 42.5 + (float)readTemperatureRaw() / 480;
+  return 42.5 + (float)readTemperatureRaw() / 480.;
 }
 
 // reads temperature in degrees F
@@ -118,7 +119,7 @@ float LPS331::readTemperatureF(void)
 }
 
 // reads temperature and returns raw 16-bit sensor output
-int LPS331::readTemperatureRaw(void)
+int16_t LPS331::readTemperatureRaw(void)
 {
   Wire.beginTransmission(address);
   // assert MSB to enable register address auto-increment
