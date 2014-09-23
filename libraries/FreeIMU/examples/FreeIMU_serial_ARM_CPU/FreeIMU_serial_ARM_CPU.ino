@@ -1,7 +1,7 @@
 #include <AP_Math_freeimu.h>
 #include <Filter.h>    // Filter library
 #include <Butter.h>    // Butterworth filter
-#include <iCompass.h>
+
 
 /**
  * FreeIMU library serial communication protocol
@@ -33,7 +33,6 @@
 #include "CommunicationUtils.h"
 #include "FreeIMU.h"
 #include "FilteringScheme.h"
-#include "RunningAverage.h"
 
 #define HAS_GPS 0
 
@@ -115,6 +114,12 @@ void loop() {
       my3IMU.initGyros();
       my3IMU.setTempCalib(0);
     }
+    else if(cmd=='p'){
+      //set sea level pressure
+      long sea_press = Serial.parseInt();        
+      my3IMU.setSeaPress(sea_press/100.0);
+      //Serial.println(sea_press);
+    }	
     else if(cmd=='r') {
       uint8_t count = serial_busy_wait();
       for(uint8_t i=0; i<count; i++) {
@@ -188,9 +193,9 @@ void loop() {
         //val_array[15] = millis();
         val_array[16] = val[9];
 	
-        #if (HAS_MS5611() || HAS_BMP085() || HAS_LPS331())
+        #if HAS_PRESS()
            // with baro
-           val_array[17] = my3IMU.getEstAltitude();
+           val_array[17] = val[10];
            val_array[13] = (my3IMU.getBaroTemperature());
            val_array[14] = (my3IMU.getBaroPressure());
         #elif HAS_MPU6050()
@@ -248,9 +253,9 @@ void loop() {
 		//val_array[15] = millis();
 		val_array[16] = val[9];
 
-        #if (HAS_MS5611() || HAS_BMP085() || HAS_LPS331())
+        #if HAS_PRESS() 
            // with baro
-           val_array[17] = my3IMU.getEstAltitude();
+           val_array[17] = val[10];
            val_array[13] = (my3IMU.getBaroTemperature());
            val_array[14] = (my3IMU.getBaroPressure());
         #elif HAS_MPU6050()
