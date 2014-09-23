@@ -220,15 +220,18 @@ void LSM303::enableDefault(void)
     writeReg(CTRL2, 0x00);
 
     // 0x57 = 0b01010111
-    // AODR = 0101 (50 Hz ODR); AZEN = AYEN = AXEN = 1 (all axes enabled)
-    writeReg(CTRL1, 0x57);
+    // AODR = 0101 (50 Hz ODR); AZEN = AYEN = AXEN = 1 (all axes enabled) - 0x57
+	// AODR = 0110 (100 Hz ODR); AZEN = AYEN = AXEN = 1 (all axes enabled) - MJS CHANGE
+    writeReg(CTRL1, 0x77);
 
     // Magnetometer
 
     // 0x64 = 0b01100100
     // M_RES = 11 (high resolution mode); M_ODR = 001 (6.25 Hz ODR)
-    writeReg(CTRL5, 0x64);
-
+	// M_RES = 11 (high resolution mode); M_ODR = 101 (100 Hz ODR only available for accel >50hz) MJS
+    //writeReg(CTRL5, 0x64);
+	writeReg(CTRL5, 0x74);
+	
     // 0x20 = 0b00100000
     // MFS = 01 (+/- 4 gauss full scale) - MFS = 00(+/- 2 gauss full scale)
 	// original default was 01 (changed MJS - 5/13/14)
