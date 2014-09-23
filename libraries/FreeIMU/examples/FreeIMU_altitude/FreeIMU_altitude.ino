@@ -33,18 +33,28 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <MS561101BA.h>
 #include <I2Cdev.h>
 #include <MPU60X0.h>
-#include <EEPROM.h>
 #include <L3G.h>
 #include <LPS331.h> 
-#include <iCompass.h>
 
 #include <AP_Math_freeimu.h>
 #include <Filter.h>    // Filter library
 #include <Butter.h>    // Butterworth filter
 
+#include <EEPROM.h>
+#include <Wire.h>
+#include <SPI.h>
+
+//#define DEBUG
+#include "DebugUtils.h"
+#include "CommunicationUtils.h"
+#include "FreeIMU.h"
+#include "FilteringScheme.h"
 
 float val[11];
 
+//define sea level for the day - if too different than standard
+//altitude will be way off
+float sea_levelmb = 1013.25;
 
 // Set the default object
 FreeIMU my3IMU = FreeIMU();
@@ -59,7 +69,7 @@ void setup() {
 }
 
 void loop() {
-  float baro = my3IMU.getBaroAlt();
+  float baro = my3IMU.getBaroAlt(sea_levelmb);
   Serial.print("Baro Alt: ");
   Serial.print(baro);
   Serial.println();

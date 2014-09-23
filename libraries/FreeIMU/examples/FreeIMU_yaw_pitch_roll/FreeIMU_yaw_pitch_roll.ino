@@ -10,7 +10,6 @@
 #include <EEPROM.h>
 #include <L3G.h>
 #include <LPS331.h> 
-#include <iCompass.h>
 
 #include <AP_Math_freeimu.h>
 #include <Filter.h>    // Filter library
@@ -19,6 +18,9 @@
 #include "DebugUtils.h"
 #include "CommunicationUtils.h"
 #include "FreeIMU.h"
+
+#include "FilteringScheme.h"
+
 #include <Wire.h>
 #include <SPI.h>
 

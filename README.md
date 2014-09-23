@@ -2,7 +2,15 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Saturday, Sept 20, 2014
+Monday, Sept 22, 2014
+
+09-22-14
+
+Changed LSM303 library default sampling rate to 100hz for accel and magnetometer to adjust for use with Teensy 3.1
+
+Updated (int) to (int16_t) in lps331 library for getTemperatureRaw.
+
+FreeIMU examples updated accordingly based on compass averaging change.
 
 09-20-14
 

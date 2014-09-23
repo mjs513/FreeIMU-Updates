@@ -23,29 +23,34 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <ADXL345.h>
-#include <bma180.h>
-#include <HMC58X3.h>
-#include <LSM303.h>
-#include <ITG3200.h>
-#include <MS561101BA.h>
-#include <I2Cdev.h>
-#include <MPU60X0.h>
-#include <EEPROM.h>
-#include <L3G.h>
-#include <LPS331.h> 
-#include <iCompass.h>
-
 #include <AP_Math_freeimu.h>
 #include <Filter.h>    // Filter library
 #include <Butter.h>    // Butterworth filter
 
-//#define DEBUG
-#include "DebugUtils.h"
-#include "FreeIMU.h"
+
+#include <ADXL345.h>
+#include <HMC58X3.h>
+#include <LSM303.h>
+#include <ITG3200.h>
+#include <bma180.h>
+#include <MS561101BA.h>
+#include <BMP085.h>
+#include <I2Cdev.h>
+#include <MPU60X0.h>
+#include <AK8975.h>
+#include <AK8963.h>
+#include <L3G.h>
+#include <LPS331.h> 
+
+#include <EEPROM.h>
 #include <Wire.h>
 #include <SPI.h>
 
+//#define DEBUG
+#include "DebugUtils.h"
+#include "CommunicationUtils.h"
+#include "FreeIMU.h"
+#include "FilteringScheme.h"
 
 float val[11];
 
@@ -68,7 +73,7 @@ void loop() {
     Serial.print(val[i], 4);
     Serial.print('\t');
   }
-  #if HAS_MS5611() || HAS_BMP085() || HAS_LPS331()
+  #if HAS_PRESS()
     // with baro - pressure temp
     Serial.print(my3IMU.getBaroTemperature()); Serial.print(",");
     Serial.print('\t');
