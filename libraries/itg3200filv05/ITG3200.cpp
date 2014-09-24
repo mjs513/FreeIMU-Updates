@@ -177,14 +177,14 @@ bool ITG3200::isRawDataReady() {
 
 void ITG3200::readTemp(float *_Temp) {
   readmem(TEMP_OUT,2,_buff);
-  *_Temp = 35 + (((_buff[0] << 8) | _buff[1]) + 13200) / 280.0;    // F=C*9/5+32  
+  *_Temp = 35 + ((( _buff[0] << 8) |  _buff[1]) + 13200) / 280.0;    // F=C*9/5+32  
 }
 
 void ITG3200::readGyroRaw(int *_GyroX, int *_GyroY, int *_GyroZ){
   readmem(GYRO_XOUT, 6, _buff);
-  *_GyroX = (int16_t)((_buff[0] << 8) | _buff[1]);
-  *_GyroY = (int16_t)((_buff[2] << 8) | _buff[3]);
-  *_GyroZ = (int16_t)((_buff[4] << 8) | _buff[5]);
+  *_GyroX = (int16_t)((_buff[0] << 8) | (int16_t) _buff[1]);
+  *_GyroY = (int16_t)((_buff[2] << 8) | (int16_t) _buff[3]);
+  *_GyroZ = (int16_t)((_buff[4] << 8) | (int16_t) _buff[5]);
 }
 
 void ITG3200::readGyroRaw(int *_GyroXYZ){

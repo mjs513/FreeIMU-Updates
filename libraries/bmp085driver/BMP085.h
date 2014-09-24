@@ -30,12 +30,12 @@
 *****************************************************************************/
 #ifndef BMP085_h
 #define BMP085_h
-
-#if defined(ARDUINO) && ARDUINO >= 100
+#include "Arduino.h"
+/*#if defined(ARDUINO) && ARDUINO >= 100
 #include "Arduino.h"
 #else
 #include "WProgram.h"
-#endif
+#endif */
 
 #define BMP085_ADDR                 0x77     //0x77 default I2C address
 #define BUFFER_SIZE                 3
@@ -122,8 +122,8 @@ public:
   
   private:
   
-  int ac1,ac2,ac3,b1,b2,mb,mc,md;               // cal data  
-  unsigned int ac4,ac5,ac6;                     // cal data
+  int16_t ac1,ac2,ac3,b1,b2,mb,mc,md;               // cal data  
+  uint16_t ac4,ac5,ac6;                     // cal data
   long b5, oldEMA;                                      // temperature data
   
   uint8_t _dev_address;

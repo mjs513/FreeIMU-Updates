@@ -41,13 +41,14 @@ BMP085::BMP085() {
   _Pa_Offset = 0;               // 1hPa = 100Pa = 1mbar
   
   oldEMA = 0;
+
 }
 
 void BMP085::init() {  
   init(MODE_STANDARD, 0, true);
 }
 
-void BMP085::init(byte _BMPMode, int32_t _initVal, bool _Unitmeters){     
+void BMP085::init(byte _BMPMode, int32_t _initVal, bool _Unitmeters){ 
   getCalData();               // initialize cal data
   calcTrueTemperature();      // initialize b5
   setMode(_BMPMode);
@@ -198,27 +199,27 @@ void BMP085::dumpCalData() {
 
 void BMP085::getCalData() {
   readmem(CAL_AC1, 2, _buff);
-  ac1 = ((int)_buff[0] <<8 | ((int)_buff[1]));
+  ac1 = ((int16_t)_buff[0] <<8 | ((int16_t)_buff[1]));
   readmem(CAL_AC2, 2, _buff);
-  ac2 = ((int)_buff[0] <<8 | ((int)_buff[1]));
+  ac2 = ((int16_t)_buff[0] <<8 | ((int16_t)_buff[1]));
   readmem(CAL_AC3, 2, _buff);
-  ac3 = ((int)_buff[0] <<8 | ((int)_buff[1]));
+  ac3 = ((int16_t)_buff[0] <<8 | ((int16_t)_buff[1]));
   readmem(CAL_AC4, 2, _buff);
-  ac4 = ((unsigned int)_buff[0] <<8 | ((unsigned int)_buff[1]));
+  ac4 = ((uint16_t)_buff[0] <<8 | ((uint16_t)_buff[1]));
   readmem(CAL_AC5, 2, _buff);
-  ac5 = ((unsigned int)_buff[0] <<8 | ((unsigned int)_buff[1]));
+  ac5 = ((uint16_t)_buff[0] <<8 | ((uint16_t)_buff[1]));
   readmem(CAL_AC6, 2, _buff);
-  ac6 = ((unsigned int)_buff[0] <<8 | ((unsigned int)_buff[1])); 
+  ac6 = ((uint16_t)_buff[0] <<8 | ((uint16_t)_buff[1])); 
   readmem(CAL_B1, 2, _buff);
-  b1 = ((int)_buff[0] <<8 | ((int)_buff[1])); 
+  b1 = ((int16_t)_buff[0] <<8 | ((int16_t)_buff[1])); 
   readmem(CAL_B2, 2, _buff);
-  b2 = ((int)_buff[0] <<8 | ((int)_buff[1])); 
+  b2 = ((int16_t)_buff[0] <<8 | ((int16_t)_buff[1])); 
   readmem(CAL_MB, 2, _buff);
-  mb = ((int)_buff[0] <<8 | ((int)_buff[1]));
+  mb = ((int16_t)_buff[0] <<8 | ((int16_t)_buff[1]));
   readmem(CAL_MC, 2, _buff);
-  mc = ((int)_buff[0] <<8 | ((int)_buff[1]));
+  mc = ((int16_t)_buff[0] <<8 | ((int16_t)_buff[1]));
   readmem(CAL_MD, 2, _buff);
-  md = ((int)_buff[0] <<8 | ((int)_buff[1])); 
+  md = ((int16_t)_buff[0] <<8 | ((int16_t)_buff[1])); 
 }
 
 
