@@ -32,8 +32,6 @@ import processing.opengl.*;
 
 Serial myPort;  // Create object from Serial class
 
-//setting a 1D Kalman filter
-MyKalman pressK = new MyKalman();
 
 //Settup Stop Watch
 StopWatchTimer sw = new StopWatchTimer();
@@ -45,15 +43,9 @@ int p = 0, n = 0;
 
 //LPF
 float filterFactor = 0.05;
-float heading_f = 0.;
 
 //Moving average Heading
 float corr_heading;
-float heading_avg;
-float heading = 0;
-float oldHeading = 0.0;
-int windSize = 96;
-MovingAverage HeadingAvg = new MovingAverage(windSize);
 
 //set motiondetect types
 float accnorm,accnorm_var_test;
@@ -67,7 +59,7 @@ MovingAverage accnorm_var = new MovingAverage(7);
 MovingAverage motion_detect_ma = new MovingAverage(7);
 MovingAverage accnorm_avg = new MovingAverage(5);
 
-final String serialPort = "COM3"; // replace this with your serial port. On windows you will need something like "COM1".
+final String serialPort = "COM4"; // replace this with your serial port. On windows you will need something like "COM1".
 
 float [] q = new float [4];
 float [] acc = new float [3];
@@ -75,25 +67,18 @@ float [] gyro = new float [3];
 float [] magn = new float [3];
 float [] ypr = new float [3];
 float temp; float press; float altitude; 
-float EstAlt;
-float dt;
-float tnew;
-float told = 0;
+float dt, heading;
 
-//
+// Altitude - Accel Complimentary filter setup
 float[] dyn_acc = new float[3];
 float fused_alt;
-Quaternion dyn_acc_q;
-Quaternion q1;
-Quaternion multQ;
-Quaternion dyn_acc_q_earth;
-Quaternion conQ;
-AltitudeComplementary altitudeFilter = new AltitudeComplementary();
 
 float S;
 float A;
 
-float sea_press = 1013.6 ;            //Input local sea level pressure
+String seapresscmd = "99";
+float STATIONALTFT = 36.0;
+float sea_press = 1013.25;            //Input local sea level pressure
 float declinationAngle = -13.1603;   //Flushing, NY magnetic declination in degrees
 float SEA_PRESS  = 1013.25;          //default sea level pressure level in mb
 float KNOWNALT   = 65.0;            //default known altitude, 
@@ -126,6 +111,7 @@ float [] positionZ = new float [2];
 long direction; 
 float sstatex; float sstatey;
 
+int calib = 1;
 int cube_odo = 0;
 //-------------------------------------
 
@@ -145,11 +131,6 @@ void setup()
 {
   size(VIEW_SIZE_X, VIEW_SIZE_Y, OPENGL);
 
-  dyn_acc_q = new Quaternion();
-  q1 = new Quaternion();
-  multQ = new Quaternion();
-  dyn_acc_q_earth = new Quaternion();
-  conQ = new Quaternion();
   
   myPort = new Serial(this, serialPort, 57600);
   myDelay(1000);
@@ -163,7 +144,7 @@ void setup()
   myDelay(1000);
   while (myPort.available() == 0) {
     myPort.write("v");
-    myPort.write("1");
+    myPort.write("g");
     myDelay(1000);
     sw.start();
   }
@@ -208,24 +189,62 @@ void serialEvent(Serial p) {
 	magn[2] = decodeFloat(inputStringArr[12]);
 	temp = decodeFloat(inputStringArr[13]);
 	press = decodeFloat(inputStringArr[14]);
-        tnew = decodeFloat(inputStringArr[15]);
+        dt = (1./decodeFloat(inputStringArr[15]));
         heading = decodeFloat(inputStringArr[16]);
-        dt = tnew - told;
-        told = tnew;
-        //getYawPitchRollRad();
+        if(heading < -9990) {
+            heading = 0;
+        }
+        altitude = decodeFloat(inputStringArr[17]);
+
       }
     }
     count = count + 1;
     if(burst == count) { // ask more data when burst completed
-      if(key == '2') {
+      //1 = RESET MPU-6050, 2 = RESET Q Matrix
+      if(key == 'q') {
+         myPort.clear();
          myPort.write("2");
+         sw.start();
          println("pressed 2");
          key = '0';
-      } else if(key == '1') {
+      } else if(key == 'r') {
+            myPort.clear();
             myPort.write("1");
+            sw.start();
             println("pressed 1");
             key = '0';
+      } else if(key == 'g') {
+            myPort.clear();
+            myPort.write("g");
+            sw.start();
+            println("pressed g");
+            key = '0';            
+      } else if(key == 'R') {
+            myPort.clear();
+            calib = 0;
+            sea_press = 1013.25;
+            setup();
+      } 
+      
+      if(seapresscmd != "99"){
+         myPort.clear();
+         myPort.write(seapresscmd);
+         seapresscmd =  "99";    
+      }   
+      
+      if(calib == 0) {
+         myPort.clear();
+         myPort.write("f");
+         sw.start();
+         calib = 99;
+      }    
+      if(calib == 1) {
+         myPort.clear();
+         myPort.write("t");
+         sw.start();
+         calib = 99;
       }
+
       myDelay(100);
       p.write("z" + char(burst));
       count = 0;
@@ -317,10 +336,7 @@ void draw() {
     text("Point FreeIMU's X axis to your monitor then press \"h\"", 20, VIEW_SIZE_Y - 30);
   }
 
-  float press1 = pressK.update(press);
-  altitude = ((pow((sea_press / press1), 1/5.257) - 1.0) * (temp + 273.15)) / 0.0065;
-  altitude = altitude + 36/METERS2FT;
-  EstimatedAltitude();
+  fused_alt = altitude + STATIONALTFT/METERS2FT;
 
   text("Temp: " + temp + "\n" + "Press: " + press + "\n" + "   Alt: " + nfp((fused_alt),3,2), 20, VIEW_SIZE_Y - 110);
   text("DeltaT: " + dt, 180, VIEW_SIZE_Y - 110);
@@ -330,11 +346,15 @@ void draw() {
   text("Q:\n" + q[0] + "\n" + q[1] + "\n" + q[2] + "\n" + q[3], 20, 20);
   text("Euler Angles:\nYaw (psi)  : " + nfp(degrees(Euler[0]),3,2) + "\nPitch (theta): " + nfp(degrees(Euler[1]),3,2) + "\nRoll (phi)  : " + nfp(degrees(Euler[2]),3,2), 200, 20);
 
-  float head1 = iround(heading,1);
-  corr_heading = clamp360(head1+declinationAngle);
-  HeadingAvg.newNum(HeadingAvgCorr(corr_heading, oldHeading));
-  //oldHeading = corr_heading;
-  corr_heading = HeadingAvg.getAvg();
+  //Compass averaging
+  //currentAngle = myAtan2(mouseY-height/2, mouseX-width/2) + radians(myNoise); 
+  addItemsToHistoryBuffers(radians(heading));
+  calculateMathematicalAverageOfHistory();
+  calculateYamartinoAverageOfHistory(); 
+  
+  //corr_heading = heading;
+  corr_heading = degrees(yamartinoAverageAngle);
+  
   text("Heading " + nfp(((corr_heading)),4,1),400,20); 
 
   text( "Elapsed Time: " + sw.hour() + ":" + sw.minute() + ":" + sw.second(), 500, 40);
@@ -475,22 +495,6 @@ float HeadingAvgCorr(float newx, float oldx) {
     return newx;
 }
 
-//============================================================
-void EstimatedAltitude() {
-  
-  gravityCompensateDynAcc();
-  dyn_acc_q.x = dyn_acc[0];
-  dyn_acc_q.y = dyn_acc[1];  
-  dyn_acc_q.z = dyn_acc[2];
-  dyn_acc_q.w = 0;
-  q1.x = q[1]; q1.y = q[2]; q1.z = q[3]; q1.w = q[0];
-  multQ = Quaternion.multiply(q1, dyn_acc_q);
-  //conQ = Quaternion.conjugate(q1);
-  conQ.x = -q1.x; conQ.y = -q1.y; conQ.z = -q1.z; conQ.w = q1.w;
-  dyn_acc_q_earth = Quaternion.multiply(multQ, conQ);
-  fused_alt = altitudeFilter.update(dyn_acc_q_earth.z, altitude, dt);
-  
-}
 //==============================================================
 //SMA filter
 // Use the next value and calculate the 
