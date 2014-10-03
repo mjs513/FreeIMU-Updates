@@ -38,14 +38,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define SEN_10736 //9 Degrees of Freedom - Razor IMU SEN-10736 http://www.sparkfun.com/products/10736/
 //#define SEN_10724 //9 Degrees of Freedom - Sensor Stick SEN-10724 http://www.sparkfun.com/products/10724
 //#define SEN_10183 //9 Degrees of Freedom - Sensor Stick  SEN-10183 http://www.sparkfun.com/products/10183
-//#define ARDUIMU_v3 //  DIYDrones ArduIMU+ V3 http://store.diydrones.com/ArduIMU_V3_p/kt-arduimu-30.htm or https://www.sparkfun.com/products/11055
+#define ARDUIMU_v3 //  DIYDrones ArduIMU+ V3 http://store.diydrones.com/ArduIMU_V3_p/kt-arduimu-30.htm or https://www.sparkfun.com/products/11055
 //#define GEN_MPU6050 // Generic MPU6050 breakout board. Compatible with GY-521, SEN-11028 and other MPU6050 wich have the MPU6050 AD0 pin connected to GND.
 //#define DFROBOT  //DFROBOT 10DOF SEN-1040 IMU
 //#define MPU9250_5611  //MPU-9250 IMU with MS5611 Altimeter from eBay
 //#define GEN_MPU9150
 //#define GEN_MPU9250
-#define Altimu10  // Pololu AltIMU v10 - 10 DOF IMU - http://www.pololu.com/product/1269
+//#define Altimu10  // Pololu AltIMU v10 - 10 DOF IMU - http://www.pololu.com/product/1269
 //#define GY_88  //GY-88 Sensor Board from eBay
+//#define GY_87  //GY-87 Sensor Board from eBay, NOTE: Pressusre sensor is BMP180 but BMP085 library should work
+
 
 //#define DISABLE_MAGN // Uncomment this line to disable the magnetometer in the sensor fusion algorithm
 
@@ -96,6 +98,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	#define twoKiDef  (2.0f * 0.1f)
 	#define betaDef  0.1f
 #endif 
+
+//
+// Other Options
+//
+  #define temp_break  -1000	  //original temp_break = -4300;
+  #define senTemp_break  32
+  #define temp_corr_on_default  0
+  #define nsamples 75
+  #define instability_fix 1
 
 // ***********************************************
 // *** No configuration needed below this line ***
@@ -158,6 +169,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #define FREEIMU_ID "AltIMU-v10"  
 #elif defined(GY_88)
   #define FREEIMU_ID "GY-88 Sensor Board"  
+#elif defined(GY_87)
+  #define FREEIMU_ID "GY-87 Sensor Board" 
 #endif
 
 
@@ -169,10 +182,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 					  || defined(FREEIMU_v03) || defined(SEN_10121) || defined(SEN_10736) \
 					  || defined(SEN_10724) || defined(SEN_10183))
 #define HAS_BMA180() (defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP))
-#define HAS_MPU6050() (defined(GY_88) || defined(FREEIMU_v04) || defined(GEN_MPU6050))
+#define HAS_MPU6050() (defined(GY_87) ||defined(GY_88) || defined(FREEIMU_v04) || defined(GEN_MPU6050))
 #define HAS_MPU9150() (defined(GEN_MPU9150))
 #define HAS_MPU9250() (defined(MPU9250_5611) || defined(GEN_MPU9250)) 
-#define HAS_HMC5883L() (defined(GY_88) || defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) \
+#define HAS_HMC5883L() (defined(GY_87) ||defined(GY_88) || defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) \
 					   || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) \
 					   || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10736) \
 					   || defined(SEN_10724) || defined(SEN_10183)  || defined(ARDUIMU_v3))
@@ -182,20 +195,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define HAS_LSM303() (defined(Altimu10))
 
 #define HAS_MS5611() (defined(MPU9250_5611) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v04))
-#define HAS_BMP085() (defined(GY_88) || defined(DFROBOT))
+#define HAS_BMP085() (defined(GY_88) || defined(GY_88) || defined(DFROBOT))
 #define HAS_LPS331() (defined(Altimu10))
 #define HAS_PRESS() (defined(Altimu10) || defined(MPU9250_5611) || defined(FREEIMU_v035_MS) \
 					|| defined(FREEIMU_v04) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) \
 					|| defined(FREEIMU_v035_BMP) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v04) \
-					|| defined(GY_88) || defined(DFROBOT))
+					|| defined(GY_87) ||defined(GY_88) || defined(DFROBOT))
 					
 #define IS_6DOM() (defined(SEN_10121) || defined(GEN_MPU6050))
-#define IS_9DOM() (defined(GY_88) || defined(Altimu10) || defined(GEN_MPU9250) || defined(MPU9250_5611) || defined(GEN_MPU9150) || defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183) || defined(ARDUIMU_v3))
+#define IS_9DOM() (defined(GY_87) ||defined(GY_88) || defined(Altimu10) || defined(GEN_MPU9250) || defined(MPU9250_5611) || defined(GEN_MPU9150) || defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183) || defined(ARDUIMU_v3))
 #define HAS_AXIS_ALIGNED() (defined(Altimu10) || defined(GY_88) || defined(GEN_MPU6050) \
 							|| defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) \
 							|| defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) \
 							|| defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10121) \
-							|| defined(SEN_10736))
+							|| defined(SEN_10736) || defined(GY_87))
 
 #include <Wire.h>
 
@@ -408,9 +421,9 @@ class FreeIMU
     int16_t acc_off_x, acc_off_y, acc_off_z, magn_off_x, magn_off_y, magn_off_z;
     float acc_scale_x, acc_scale_y, acc_scale_z, magn_scale_x, magn_scale_y, magn_scale_z;
 	float val[12];
-	int8_t nsamples, temp_break, temp_corr_on, instability_fix;
-	int16_t DTemp; 
-	float rt, senTemp, senTemp_break;
+	//int8_t nsamples, temp_break, instability_fix, senTemp_break;
+	int16_t DTemp, temp_corr_on; 
+	float rt, senTemp;
 	float sampleFreq; // half the sample period expressed in seconds
 	
   private:

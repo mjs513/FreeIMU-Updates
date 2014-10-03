@@ -217,9 +217,13 @@ void LSM303::enableDefault(void)
 
     // 0x57 = 0b01010111
     // AFS = 0 (+/- 2 g full scale)
+	// 0b 00 (362 Hz anti-alias BW), [000:+/- 2g, 001: +/- 4g, 010: +/- 6g, 011: +/- 8g, 100: +/- 16g AFS], 
+	// 0, 0 (self test disabled), 0 (4 wire interface)
+	// 0x08:+/- 4g, 0x10: +/- 6g, 0x18: +/- 8g, 0x20: +/- 16g 
     writeReg(CTRL2, 0x00);
 
-    // 0x57 = 0b01010111
+    
+	// 0x57 = 0b01010111
     // AODR = 0101 (50 Hz ODR); AZEN = AYEN = AXEN = 1 (all axes enabled) - 0x57
 	// AODR = 0110 (100 Hz ODR); AZEN = AYEN = AXEN = 1 (all axes enabled) - MJS CHANGE
     writeReg(CTRL1, 0x77);
@@ -234,6 +238,7 @@ void LSM303::enableDefault(void)
 	
     // 0x20 = 0b00100000
     // MFS = 01 (+/- 4 gauss full scale) - MFS = 00(+/- 2 gauss full scale)
+	// MFS = 10 (+/- 8 gauss full scale) - MFS = 11(+/- 12 gauss full scale)
 	// original default was 01 (changed MJS - 5/13/14)
     writeReg(CTRL6, 0x00);
 
@@ -247,20 +252,34 @@ void LSM303::enableDefault(void)
 
     // 0x08 = 0b00001000
     // FS = 00 (+/- 2 g full scale); HR = 1 (high resolution enable)
-    writeAccReg(CTRL_REG4_A, 0x08);
+    // FS = 0x10 (+/- 4 g), 0x20: +/- 2 g, 0x30: +/- 16 g 
+	writeAccReg(CTRL_REG4_A, 0x08);
 
     // 0x47 = 0b01000111
     // ODR = 0100 (50 Hz ODR); LPen = 0 (normal mode); Zen = Yen = Xen = 1 (all axes enabled)
-    writeAccReg(CTRL_REG1_A, 0x47);
+	// ODR = 0110 (100 Hz 0DR)
+    writeAccReg(CTRL_REG1_A, 0x67);
 
     // Magnetometer
 
     // 0x0C = 0b00001100
     // DO = 011 (7.5 Hz ODR)
-    writeMagReg(CRA_REG_M, 0x0C);
+	// DO = 110 (75 Hz ODR), 0x18
+    writeMagReg(CRA_REG_M, 0x18);
 
     // 0x20 = 0b00100000
     // GN = 001 (+/- 1.3 gauss full scale)
+	//
+	//	GN2 GN1 GN0	Sensor input
+	//				field range     Gain X, Y, and Z      Gain Z		Output range
+	//				[Gauss]			  [LSB/Gauss]		[LSB/Gauss]
+	//	0	 0	 1	 ±1.3				 1100				 980
+	//	0	 1	 0	 ±1.9				 855				 760
+	//	0	 1	 1	 ±2.5				 670				 600		0xF800–0x07FF
+	//	1	 0	 0	 ±4.0				 450				 400		(-2048 to +2047)
+	//	1	 0	 1	 ±4.7				 400				 355
+	//	1	 1	 0	 ±5.6				 330				 295
+	//	1	 1	 1	 ±8.1				 230				 205
     writeMagReg(CRB_REG_M, 0x20);
 
     // 0x00 = 0b00000000
@@ -294,6 +313,7 @@ void LSM303::enableDefault(void)
     writeMagReg(MR_REG_M, 0x00);
   }
 }
+
 
 // Writes an accelerometer register
 void LSM303::writeAccReg(regAddr reg, byte value)

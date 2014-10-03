@@ -198,8 +198,6 @@ enum Mscale {
 };
 
 
-//used for BMP085
-long Temperature = 0, Pressure = 0, Altitude = 0;
 
 //Setup accelerometer filter
 butter50hz2_0 mfilter_accx;
@@ -283,12 +281,11 @@ FreeIMU::FreeIMU() {
   lastUpdate = 0;
   now = 0;
 
-  nsamples = 75;
-  temp_break = -1000;	  //original temp_break = -4300;
-  senTemp_break = 32.;
-  temp_corr_on = 1;
-  nsamples = 75;
-  instability_fix = 1;
+  //temp_break = -1000;	  //original temp_break = -4300;
+  //senTemp_break = 32.;
+  temp_corr_on = temp_corr_on_default;
+  //nsamples = 75;
+  //instability_fix = 1;
   
   //initialize gyro offsets
   gyro_off_x = 0.;
@@ -425,13 +422,14 @@ void FreeIMU::RESET_Q() {
     // init ADXL345
     acc.init(acc_addr);
 	acc.set_bw(ADXL345_BW_100);
+	acc.setRangeSetting(2);
   #elif HAS_BMA180()
     // init BMA180
     acc.setAddress(acc_addr);
     acc.SoftReset();
     acc.enableWrite();
     acc.SetFilter(acc.F10HZ);
-    acc.setGSensitivty(acc.G15);
+    acc.setGSensitivty(acc.G2); 
     acc.SetSMPSkip();
     acc.SetISRMode();
     acc.disableWrite();
@@ -455,6 +453,7 @@ void FreeIMU::RESET_Q() {
 	accgyro.setI2CMasterModeEnabled(0);
 	accgyro.setI2CBypassEnabled(1);
 	accgyro.setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);
+	accgyro.setFullScaleAccelRange(MPU60X0_ACCEL_FS_2);
 	delay(5);
 	delay(30);
   #elif HAS_MPU9150()
@@ -469,6 +468,7 @@ void FreeIMU::RESET_Q() {
 	accgyro.setI2CMasterModeEnabled(0);
 	accgyro.setI2CBypassEnabled(1);
 	accgyro.setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);
+	accgyro.setFullScaleAccelRange(MPU60X0_ACCEL_FS_2);
 	delay(100);
 	//initialize magnetometer
 	mag = AK8975(false, AK8975_DEFAULT_ADDRESS);
@@ -481,6 +481,7 @@ void FreeIMU::RESET_Q() {
 	accgyro.setI2CMasterModeEnabled(0);
 	accgyro.setI2CBypassEnabled(1);
 	accgyro.setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);
+	accgyro.setFullScaleAccelRange(MPU60X0_ACCEL_FS_2);
 	delay(100);
 	//initialize magnetometer
 	mag = AK8963(false, AK8963_DEFAULT_ADDRESS);
@@ -490,6 +491,7 @@ void FreeIMU::RESET_Q() {
 	accgyro = MPU60X0(true, accgyro_addr);
 	accgyro.initialize();
 	accgyro.setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);
+	accgyro.setFullScaleAccelRange(MPU60X0_ACCEL_FS_2);
 	delay(5);
   #endif 
   
@@ -525,6 +527,55 @@ void FreeIMU::RESET_Q() {
   #if HAS_LSM303()
 	compass.init();
     compass.enableDefault();
+	
+	Byte deviceType = compass. getDeviceType();
+
+	if(deviceType == 4) {	// LSM303D
+		// Accelerometer
+		//0x00:+/-2g,  0x08:+/- 4g,  0x10: +/- 6g, 0x18: +/- 8g,  0x20: +/- 16g
+		writeReg(LSM303::CTRL2, 0x00);
+
+		// Magnetometer
+    	// MFS = 01 (+/- 4 gauss full scale),  MFS = 00(+/- 2 gauss full scale)
+		// MFS = 10 (+/- 8 gauss full scale),  MFS = 11(+/- 12 gauss full scale)
+		writeReg(LSM303::CTRL6, 0x00);
+	}
+	else if(deviceType == 2) {  // LSM303DLHC
+		// Accelerometer
+		// FS = 00  (+/- 2 g full scale); HR = 1 (high resolution enable)
+		//                                  FS HR
+		//    equates to 0b00 00  1    00 0
+    	// FS = 0x01  (+/- 4 g),  0x10: +/- 8 g, 0x11: +/- 16 g 
+		//  or: 0x08, 0x18, 0x28, 0x38 respectfully
+		writeAccReg(LSM303::CTRL_REG4_A, 0x08);
+	
+		// Magnetometer Settings
+		// ±1.3ga	(0x20)
+		// ±1.9ga	(0x40)
+		// ±2.5ga	(0x60)
+		// ±4.0ga	(0x80)	
+		// ±4.7ga	(0xA0)	
+		// ±5.6ga	(0xC0)
+		// ±8.1ga	(0xE0)	
+	writeMagReg(LSM303::CRB_REG_M, 0x20);
+	}
+	else if(deviceType == 0 || deviceType == 1) {  // LSM303DLH or LSM303DLM
+	// Accelerometer
+	// 0x00 = 0b00000000
+	// FS = 00 (+/- 2 g full scale), 01 (+/- 4g), 11} (+/- 8g)
+	// 0x00, 0x01, 0x03 respectfully
+    	writeAccReg(LSM303::CTRL_REG4_A, 0x00);
+
+	// Magnetometer Settings
+	// ±1.3ga	(0x20)
+	// ±1.9ga	(0x40)
+	// ±2.5ga	(0x60)
+	// ±4.0ga	(0x80)	
+	// ±4.7ga	(0xA0)	
+	// ±5.6ga	(0xC0)
+	// ±8.1ga	(0xE0)	
+	writeMagReg(CRB_REG_M, 0x20);
+	}
   #endif
   
   #if HAS_LPS331()
@@ -925,6 +976,8 @@ void FreeIMU::initGyros() {
 	gyro_off_z = gyro_offset[0].z;
 	
 	//digitalWrite(12,LOW);
+	
+	
 
 }
 
@@ -1042,7 +1095,9 @@ float def_sea_press = 1013.25;
 #endif
 
 #if HAS_BMP085()
-
+	//used for BMP085
+	long Temperature = 0, Pressure = 0, Altitude = 0;
+	
 	// Returns temperature from BMP085 - added by MJS
 	float FreeIMU::getBaroTemperature() {
 		baro085.getTemperature(&Temperature);
@@ -1052,8 +1107,9 @@ float def_sea_press = 1013.25;
 
 	float FreeIMU::getBaroPressure() {
 		baro085.getPressure(&Pressure);
+		float temp3 = Pressure * 0.01;
         //float new_press = kPress.measureRSSI(Pressure * 0.01);
-		return(new_press * 0.01);
+		return(temp3);
 	}
 
 	/**

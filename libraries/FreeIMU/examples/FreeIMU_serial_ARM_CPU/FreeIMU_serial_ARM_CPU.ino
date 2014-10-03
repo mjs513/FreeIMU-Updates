@@ -35,6 +35,7 @@
 #include "FilteringScheme.h"
 
 #define HAS_GPS 0
+#define BaudRate 57600
 
 KalmanFilter kFilters[4];
 int k_index = 3;
@@ -61,7 +62,7 @@ FreeIMU my3IMU = FreeIMU();
 char cmd, tempCorr;
 
 void setup() {
-  Serial.begin(57600);
+  Serial.begin(BaudRate);
   Wire.begin();
   
   float qVal = 0.125; //Set Q Kalman Filter(process noise) value between 0 and 1

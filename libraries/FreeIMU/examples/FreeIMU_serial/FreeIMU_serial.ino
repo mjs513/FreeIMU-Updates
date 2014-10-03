@@ -32,6 +32,7 @@
 //#include "RunningAverage.h"
 
 #define HAS_GPS 0
+#define BaudRate 57600
 
 KalmanFilter kFilters[4];
 int k_index = 3;
