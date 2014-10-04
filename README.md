@@ -4,6 +4,8 @@ FreeIMU-Updates
 Change Log
 Monday, Sept 22, 2014
 
+10-03-14 Updated FreeIMU.cpp to allow easier access to change accelerometer/gyro/magneter default range settings to match description in wiki page
+
 09-22-14
 
 Changed LSM303 library default sampling rate to 100hz for accel and magnetometer to adjust for use with Teensy 3.1
