@@ -226,7 +226,7 @@ void LSM303::enableDefault(void)
 	// 0x57 = 0b01010111
     // AODR = 0101 (50 Hz ODR); AZEN = AYEN = AXEN = 1 (all axes enabled) - 0x57
 	// AODR = 0110 (100 Hz ODR); AZEN = AYEN = AXEN = 1 (all axes enabled) - MJS CHANGE
-    writeReg(CTRL1, 0x77);
+    writeReg(CTRL1, 0x57);
 
     // Magnetometer
 
@@ -234,7 +234,7 @@ void LSM303::enableDefault(void)
     // M_RES = 11 (high resolution mode); M_ODR = 001 (6.25 Hz ODR)
 	// M_RES = 11 (high resolution mode); M_ODR = 101 (100 Hz ODR only available for accel >50hz) MJS
     //writeReg(CTRL5, 0x64);
-	writeReg(CTRL5, 0x74);
+	writeReg(CTRL5, 0x64);
 	
     // 0x20 = 0b00100000
     // MFS = 01 (+/- 4 gauss full scale) - MFS = 00(+/- 2 gauss full scale)
@@ -258,14 +258,14 @@ void LSM303::enableDefault(void)
     // 0x47 = 0b01000111
     // ODR = 0100 (50 Hz ODR); LPen = 0 (normal mode); Zen = Yen = Xen = 1 (all axes enabled)
 	// ODR = 0110 (100 Hz 0DR)
-    writeAccReg(CTRL_REG1_A, 0x67);
+    writeAccReg(CTRL_REG1_A, 0x57);
 
     // Magnetometer
 
     // 0x0C = 0b00001100
     // DO = 011 (7.5 Hz ODR)
 	// DO = 110 (75 Hz ODR), 0x18
-    writeMagReg(CRA_REG_M, 0x18);
+    writeMagReg(CRA_REG_M, 0x0C);
 
     // 0x20 = 0b00100000
     // GN = 001 (+/- 1.3 gauss full scale)
@@ -313,7 +313,6 @@ void LSM303::enableDefault(void)
     writeMagReg(MR_REG_M, 0x00);
   }
 }
-
 
 // Writes an accelerometer register
 void LSM303::writeAccReg(regAddr reg, byte value)
