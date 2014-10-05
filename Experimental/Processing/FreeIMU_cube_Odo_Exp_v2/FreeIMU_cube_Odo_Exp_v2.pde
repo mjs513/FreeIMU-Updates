@@ -520,7 +520,7 @@ void serialEvent(Serial p) {
     count = count + 1;
     if(burst == count) { // ask more data when burst completed
       //1 = RESET MPU-6050, 2 = RESET Q Matrix
-      if(key == 'q') {
+      if(key == '2') {
          myPort.clear();
          myPort.write("2");
          sw.start();
