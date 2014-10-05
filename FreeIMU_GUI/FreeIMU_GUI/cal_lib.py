@@ -27,7 +27,8 @@ from numpy import linalg
 
 
 def calibrate(x, y, z):
-  H = numpy.array([x, y, z, -y**2, -z**2, numpy.ones([len(x), 1])])
+  //H = numpy.array([x, y, z, -y**2, -z**2, numpy.ones([len(x), 1])])
+  H = numpy.array([x, y, z, -y**2, -z**2, numpy.ones([len(x)])])
   H = numpy.transpose(H)
   w = x**2
   
