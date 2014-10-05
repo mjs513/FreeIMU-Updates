@@ -521,33 +521,37 @@ void FreeIMU::RESET_Q() {
   //ALTIMU SENSOR INIT
   #if HAS_L3D20()
 	gyro.init();
-	gyro.enableDefault();
+	//gyro.enableDefault();
+	//						Sensitivity
+	//+/-245:        0x00	8.75	
+	//+/-500:        0x10	17.5
+	//+/- 2000:      0x20	70
+	gyro.writeReg(0x23, 0x20);  
   #endif
   
   #if HAS_LSM303()
 	compass.init();
     compass.enableDefault();
-	
-	Byte deviceType = compass. getDeviceType();
+	deviceType = compass.getDeviceType();
 
-	if(deviceType == 4) {	// LSM303D
+	if((int16_t) deviceType == 3) {	// LSM303D
 		// Accelerometer
 		//0x00:+/-2g,  0x08:+/- 4g,  0x10: +/- 6g, 0x18: +/- 8g,  0x20: +/- 16g
-		writeReg(LSM303::CTRL2, 0x00);
+		compass.writeReg(LSM303::CTRL2, 0x00);
 
 		// Magnetometer
     	// MFS = 01 (+/- 4 gauss full scale),  MFS = 00(+/- 2 gauss full scale)
 		// MFS = 10 (+/- 8 gauss full scale),  MFS = 11(+/- 12 gauss full scale)
-		writeReg(LSM303::CTRL6, 0x00);
+		compass.writeReg(LSM303::CTRL6, 0x00);
 	}
-	else if(deviceType == 2) {  // LSM303DLHC
+	else if((int16_t) deviceType == 2) {  // LSM303DLHC
 		// Accelerometer
 		// FS = 00  (+/- 2 g full scale); HR = 1 (high resolution enable)
 		//                                  FS HR
 		//    equates to 0b00 00  1    00 0
     	// FS = 0x01  (+/- 4 g),  0x10: +/- 8 g, 0x11: +/- 16 g 
 		//  or: 0x08, 0x18, 0x28, 0x38 respectfully
-		writeAccReg(LSM303::CTRL_REG4_A, 0x08);
+		compass.writeAccReg(LSM303::CTRL_REG4_A, 0x08);
 	
 		// Magnetometer Settings
 		// ±1.3ga	(0x20)
@@ -557,25 +561,26 @@ void FreeIMU::RESET_Q() {
 		// ±4.7ga	(0xA0)	
 		// ±5.6ga	(0xC0)
 		// ±8.1ga	(0xE0)	
-	writeMagReg(LSM303::CRB_REG_M, 0x20);
+		compass.writeMagReg(LSM303::CRB_REG_M, 0x20);
 	}
-	else if(deviceType == 0 || deviceType == 1) {  // LSM303DLH or LSM303DLM
-	// Accelerometer
-	// 0x00 = 0b00000000
-	// FS = 00 (+/- 2 g full scale), 01 (+/- 4g), 11} (+/- 8g)
-	// 0x00, 0x01, 0x03 respectfully
-    	writeAccReg(LSM303::CTRL_REG4_A, 0x00);
+	else if((int16_t) deviceType == 0 || (int16_t) deviceType == 1) {  // LSM303DLH or LSM303DLM
+		// Accelerometer
+		// 0x00 = 0b00000000
+		// FS = 00 (+/- 2 g full scale), 01 (+/- 4g), 11} (+/- 8g)
+		// 0x00, 0x01, 0x03 respectfully
+    	compass.writeAccReg(LSM303::CTRL_REG4_A, 0x00);
 
-	// Magnetometer Settings
-	// ±1.3ga	(0x20)
-	// ±1.9ga	(0x40)
-	// ±2.5ga	(0x60)
-	// ±4.0ga	(0x80)	
-	// ±4.7ga	(0xA0)	
-	// ±5.6ga	(0xC0)
-	// ±8.1ga	(0xE0)	
-	writeMagReg(CRB_REG_M, 0x20);
-	}
+		// Magnetometer Settings
+		// ±1.3ga	(0x20)
+		// ±1.9ga	(0x40)
+		// ±2.5ga	(0x60)
+		// ±4.0ga	(0x80)	
+		// ±4.7ga	(0xA0)	
+		// ±5.6ga	(0xC0)
+		// ±8.1ga	(0xE0)	
+		compass.writeMagReg(LSM303::CRB_REG_M, 0x20);
+	}	
+
   #endif
   
   #if HAS_LPS331()
@@ -725,7 +730,7 @@ void FreeIMU::getValues(float * values) {
   float acgyro_corr[9] = {0.,0.,0.,0.,0.,0.,0.,0.,0.};
   uint8_t i;
 
-  #if HAS_ITG3200()
+  #if HAS_ITG3200()  //assumes adxl3345
     int accval[3];
     acc.readAccel(&accval[0], &accval[1], &accval[2]);
 	accval[0] = mfilter_accx.filter((float) accval[0]);
@@ -750,9 +755,9 @@ void FreeIMU::getValues(float * values) {
 	values[1] = (float) accval[1] - acgyro_corr[1];
 	values[2] = (float) accval[2] - acgyro_corr[2];
 		
-	values[3] = values[3] - gyro_off_x;
-	values[4] = values[4] - gyro_off_y;
-	values[5] = values[5] - gyro_off_z;
+	values[3] = (values[3] - gyro_off_x)/14.375f;
+	values[4] = (values[4] - gyro_off_y)/14.375f;
+	values[5] = (values[5] - gyro_off_z)/14.375f;
 
   #elif HAS_ALTIMU10()
 	gyro.read();
@@ -770,7 +775,7 @@ void FreeIMU::getValues(float * values) {
     values[7] = (float) compass.m.y; 
     values[8] = (float) compass.m.z;
 	
-	values[3] = (values[3] - gyro_off_x) / 70.0f;  //Sensitivity set at 70 for +/-2000 deg/sec
+	values[3] = (values[3] - gyro_off_x) / 70.0f;  //Sensitivity set at 70 for +/-2000 deg/sec, L3GD20H
 	values[4] = (values[4] - gyro_off_y) / 70.0f;
 	values[5] = (values[5] - gyro_off_z) / 70.0f;
 	
@@ -825,13 +830,14 @@ void FreeIMU::getValues(float * values) {
 		values[4] = (float) accgyroval[4] - gyro_off_y;
 		values[5] = (float) accgyroval[5] - gyro_off_z;
 	  }
+	  
     for( i = 0; i<6; i++) {
       if( i < 3 ) {
         values[i] = (float) accgyroval[i] - acgyro_corr[i];
       }
       else {
         //values[i] = ((float) accgyroval[i] - acgyro_corr[i])/ 16.4f; // NOTE: this depends on the sensitivity chosen
-		values[i] = values[i] / 16.4f; // NOTE: this depends on the sensitivity chosen, this is for 6050
+		values[i] = values[i] / 16.4f;   //for 6050 etc
 	  }
     }	
   #endif
