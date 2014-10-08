@@ -50,6 +50,7 @@ ControlFrame cf;
 PrintWriter output;
 
 Serial myPort;  // Create object from Serial class
+int BaudRate=115200;
 
 //setting a 1D Kalman filter
 //uncomment if you have removed complimentary altitude filter from library
@@ -225,7 +226,7 @@ void setup()
   skpath = sketchPath("") + "/";
 
   // Create a new file in the sketch directory
-  output = createWriter("IMUData2a.txt"); 
+  output = createWriter("IMU9250-MARG1.txt"); 
   
   // The font must be located in the sketch's "data" directory to load successfully
   font = loadFont("CourierNew36.vlw"); 
@@ -271,7 +272,7 @@ void setup()
   Bottom = loadImage("Bottom.png");
   
   //serial port set up
-  myPort = new Serial(this, serialPort, 57600);
+  myPort = new Serial(this, serialPort, BaudRate);
 
   //elapsed time start call
   sw.start();
@@ -440,7 +441,8 @@ void draw() {
   //text("px:  " + positionX[0] + "\n" + "py:  " +positionY[0] + "\n" + "pz:  " + positionZ[0],(width/2) - 150, (height/2)-100);
 
   if(PrintOutput == 1){
-      output.println(acc[0]+","+acc[1]+","+acc[2]+","+gyro[0]+","+gyro[1]+","+gyro[2]+","+
+      output.println(sw.hour() + "," + sw.minute() + "," + sw.second() + ","+
+         acc[0]+","+acc[1]+","+acc[2]+","+gyro[0]+","+gyro[1]+","+gyro[2]+","+
          magn[0]+","+magn[1]+","+magn[2] + "," + temp + "," +
          dyn_acc[0]+","+dyn_acc[1]+","+dyn_acc[2]+","+
          dt+","+corr_heading+","+ypr[0]+","+ypr[1]+","+ypr[2]+","+Euler[0]+","+Euler[1]+","+Euler[2]+","+
