@@ -146,6 +146,27 @@ GNU General Public License for more details.
 -------- is an the SL pressure in millibars * 100, so 1015.45 would read 101545
 -------- Changed tilt compensation routine: deleting iCompass
 
+09-20-14
+-------- Deleted iCompass and RunningAverage from FreeIMU. Compass averaging is done in the Processing 
+-------- sketch using Yarmartino compass averaging method which is more address issue of discontinuity 
+-------- at 0/360 degrees. 
+-------- Tests on the Altimu10 v3 are much more stable. The processing code was adapted from 
+-------- Christopher Baker's code at  https://github.com/SAIC-ATS/Algorithms.git. Will leave 
+-------- runningaveage library in case anyone wishes to use it for other reasons.
+-------- iCompass deleted as tilt compensation was not working properly. Tilt compensation is still 
+-------- done from within FreeIMU.cpp using a different method.
+-------- FreeIMU_serial.ino updated to reflect changes to implementation of altitude complimentary 
+-------- filter from within the library as opposed to calling from the serial sketch.
+
+09-22-14
+-------- Changed LSM303 library default sampling rate to 100hz for accel and magnetometer to adjust 
+-------- for use with Teensy 3.1
+-------- Updated (int) to (int16_t) in lps331 library for getTemperatureRaw.
+-------- FreeIMU examples updated accordingly based on compass averaging change.
+
+10-03-14 
+-------- Updated FreeIMU.cpp to allow easier access to change accelerometer/gyro/magneter default
+-------- range settings to match description in wiki page
 
 */
 
@@ -193,11 +214,9 @@ GNU General Public License for more details.
 #endif
 
 enum Mscale {
-  MFS_14BITS = 0, // 0.6 mG per LSB
-  MFS_16BITS = 1     // 0.15 mG per LSB
+  MFS_14BITS = 0, 	// 0.6 mG per LSB
+  MFS_16BITS = 1    // 0.15 mG per LSB
 };
-
-
 
 //Setup accelerometer filter
 butter50hz2_0 mfilter_accx;
@@ -227,12 +246,12 @@ FreeIMU::FreeIMU() {
   
   #if HAS_HMC5883L()
     magn = HMC58X3();
-	//maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);
+	maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);
   #endif
   
   #if HAS_LSM303()
 	compass = LSM303();
-	//maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);	
+	maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);	
   #endif
   
   #if HAS_ITG3200()
@@ -246,22 +265,26 @@ FreeIMU::FreeIMU() {
   #elif HAS_MPU9150()
     accgyro = MPU60X0();
 	mag = AK8975();
-	//maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);
+	maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);
   #elif HAS_MPU9250()
     accgyro = MPU60X0();
 	mag = AK8963();
-	//maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);  
+	maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);  
   #endif
     
   #if HAS_MS5611()
-    baro = MS561101BA();
+	#if HAS_APM25()
+		baro = AP_Baro_MS5611();
+	#else
+		baro = MS561101BA();
+	#endif
   #elif HAS_BMP085()
     baro085 = BMP085();
   #elif HAS_LPS331()
     baro331 = LPS331();
   #endif
   
-  #if HAS_MS5611() || HAS_BMP085() || HAS_LPS331()
+  #if ( HAS_MS5611() || HAS_BMP085() || HAS_LPS331() )
     kPress.KalmanInit(0.0000005,0.01,1.0,0);
   #endif
   
@@ -322,6 +345,11 @@ void FreeIMU::init() {
 	init(FIMU_ACC_ADDR, FIMU_ITG3200_DEF_ADDR, false);
   #elif HAS_ALTIMU10()
     init0(false);
+  #elif HAS_APM25()
+	//As per APM standard code, stop the barometer from holding the SPI bus
+	pinMode(40, OUTPUT);
+    digitalWrite(40, HIGH);
+	init(53, false);
   #else
 	init(FIMU_ACCGYRO_ADDR, false);
   #endif
@@ -332,13 +360,18 @@ void FreeIMU::init(bool fastmode) {
 	init(FIMU_ACC_ADDR, FIMU_ITG3200_DEF_ADDR, fastmode);
   #elif HAS_ALTIMU10()
     init0(fastmode);
+  #elif HAS_APM25()
+	//As per APM standard code, stop the barometer from holding the SPI bus
+	pinMode(40, OUTPUT);
+    digitalWrite(40, HIGH);
+	init(53, fastmode);
   #else
 	init(FIMU_ACCGYRO_ADDR, fastmode);
   #endif
 }
 
 void FreeIMU::RESET() {
-	#if HAS_MPU6050()
+	#if (HAS_MPU6050() || HAS_MPU6000() || HAS_MPU9150() || HAS_MPU9250)
 		accgyro.reset();
 	#endif
 	
@@ -509,7 +542,15 @@ void FreeIMU::RESET_Q() {
   
   
   #if HAS_MS5611()
-    baro.init(FIMU_BARO_ADDR);
+	#if HAS_APM25()
+		pinMode(63, OUTPUT);
+		digitalWrite(63, HIGH);
+		SPI.begin();
+		SPI.setClockDivider(SPI_CLOCK_DIV32); // 500khz for debugging, increase later
+		baro.init();		
+	#else
+		baro.init(FIMU_BARO_ADDR);
+	#endif
   #endif
 
   #if HAS_BMP085()
@@ -1036,8 +1077,9 @@ void FreeIMU::getQ(float * q, float * val) {
 	#if MARG == 1
 		#if HAS_AXIS_ALIGNED()		
 			MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
-			//val[9] = maghead.iheading(0, 1, 0, val[0], val[1], val[2], val[7], val[6], val[8]);
-			val[9] = calcMagHeading( q0,  q1,  q2,  q3, val[6], val[7], val[8]);
+			val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[6], val[7], val[8]);
+			//val[9] = calcMagHeading( q0,  q1,  q2,  q3, val[6], val[7], val[8]);
+			//val[9] = calcMagHeading( q0,  q1,  q2,  q3, val[6], val[7], val[8]);
 		#elif defined(SEN_10724)
 			MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[7], -val[6], val[8]);
 			val[9] = calcMagHeading( q0,  q1,  q2,  q3, val[7], -val[6], val[8]);
@@ -1072,7 +1114,7 @@ void FreeIMU::getQ(float * q, float * val) {
 
 float def_sea_press = 1013.25;
 
-#if HAS_MS5611()
+#if HAS_MS5611() && !HAS_APM25()
 	/**
 	* Returns an altitude estimate from barometer readings only using sea_press as current sea level pressure
 	*/
@@ -1103,7 +1145,41 @@ float def_sea_press = 1013.25;
 
 #endif
 
-#if HAS_BMP085()
+#if HAS_MS5611() && HAS_APM25()
+	/**
+	* Returns an altitude estimate from barometer readings only using sea_press as current sea level pressure
+	*/
+	float FreeIMU::getBaroAlt(float sea_press) {
+		//baro.read();
+		float temp = baro.get_temperature()/100.0f;
+		float press = baro.get_pressure()/100.0f;
+        float new_press = kPress.measureRSSI(press);
+		return ((pow((sea_press / new_press), 1/5.257) - 1.0) * (temp + 273.15)) / 0.0065;
+	}
+
+	// Returns temperature from MS5611 - added by MJS
+	float FreeIMU::getBaroTemperature() {
+		baro.read();
+		float temp1 = baro.get_temperature()/100.0f;
+		return(temp1);
+	}
+
+	float FreeIMU::getBaroPressure() {
+		baro.read();
+		float temp2 = baro.get_pressure()/100.0f;
+		return(temp2);
+	}
+
+	/**
+	* Returns an altitude estimate from baromether readings only using a default sea level pressure
+	*/
+	float FreeIMU::getBaroAlt() {
+		return getBaroAlt(def_sea_press);
+	}
+
+#endif
+
+#if HAS_BMP085() && !HAS_APM25()
 	//used for BMP085
 	long Temperature = 0, Pressure = 0, Altitude = 0;
 	
@@ -1276,6 +1352,34 @@ void FreeIMU::getYawPitchRollRad(float * ypr) {
   ypr[1] = atan(gx / sqrt(gy*gy + gz*gz));
   ypr[2] = atan(gy / sqrt(gx*gx + gz*gz));
 }
+
+/**
+ * Returns the yaw pitch and roll angles, respectively defined as the angles in radians between
+ * the Earth North and the IMU X axis (yaw), the Earth ground plane and the IMU X axis (pitch)
+ * and the Earth ground plane and the IMU Y axis.
+ * 
+ * @note This is not an Euler representation: the rotations aren't consecutive rotations but only
+ * angles from Earth and the IMU. For Euler representation Yaw, Pitch and Roll see FreeIMU::getEuler
+ * 
+ * @param ypr three floats array which will be populated by Yaw, Pitch and Roll angles in radians
+*/
+void FreeIMU::getYawPitchRollRadAHRS(float * ypr, float * q) {
+  //float q[4]; // quaternion
+  //float val[11];
+  float gx, gy, gz; // estimated gravity direction
+  //getQ(q, val);
+  
+  gx = 2 * (q[1]*q[3] - q[0]*q[2]);
+  gy = 2 * (q[0]*q[1] + q[2]*q[3]);
+  gz = q[0]*q[0] - q[1]*q[1] - q[2]*q[2] + q[3]*q[3];
+  
+  ypr[0] = atan2(2 * q[1] * q[2] - 2 * q[0] * q[3], 2 * q[0]*q[0] + 2 * q[1] * q[1] - 1);
+  ypr[1] = atan(gx / sqrt(gy*gy + gz*gz));
+  ypr[2] = atan(gy / sqrt(gx*gx + gz*gz));
+}
+
+
+
 
 /**
  * Returns the yaw pitch and roll angles, respectively defined as the angles in degrees between

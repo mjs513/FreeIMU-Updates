@@ -33,6 +33,7 @@
 #include "CommunicationUtils.h"
 #include "FreeIMU.h"
 #include "FilteringScheme.h"
+#include "RunningAverage.h"
 
 #define HAS_GPS 0
 #define BaudRate 57600

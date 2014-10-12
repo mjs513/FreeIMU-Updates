@@ -1,7 +1,8 @@
 #include <AP_Math_freeimu.h>
 #include <Filter.h>    // Filter library
 #include <Butter.h>    // Butterworth filter
-//#include <iCompass.h>
+#include <iCompass.h>
+
 /**
  * FreeIMU library serial communication protocol
 */
@@ -29,7 +30,7 @@
 #include "CommunicationUtils.h"
 #include "FreeIMU.h"
 #include "FilteringScheme.h"
-//#include "RunningAverage.h"
+#include "RunningAverage.h"
 
 #define HAS_GPS 0
 #define BaudRate 57600
