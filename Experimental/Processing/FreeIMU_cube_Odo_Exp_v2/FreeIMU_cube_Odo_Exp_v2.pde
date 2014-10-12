@@ -50,7 +50,10 @@ ControlFrame cf;
 PrintWriter output;
 
 Serial myPort;  // Create object from Serial class
-int BaudRate=115200;
+
+final String serialPort = "COM4"; // replace this with your serial port. On windows you will need something like "COM1".
+int BaudRate=57600;
+String File_Name = "IMU9250-MARG1.txt";
 
 //setting a 1D Kalman filter
 //uncomment if you have removed complimentary altitude filter from library
@@ -98,8 +101,6 @@ MovingAverage accnorm_test_avg = new MovingAverage(5);
 MovingAverage accnorm_var = new MovingAverage(7);
 MovingAverage motion_detect_ma = new MovingAverage(7);
 MovingAverage accnorm_avg = new MovingAverage(5);
-
-final String serialPort = "COM4"; // replace this with your serial port. On windows you will need something like "COM1".
 
 float [] q = new float [4];
 float [] acc = new float [3];
@@ -226,7 +227,7 @@ void setup()
   skpath = sketchPath("") + "/";
 
   // Create a new file in the sketch directory
-  output = createWriter("IMU9250-MARG1.txt"); 
+  output = createWriter(File_Name); 
   
   // The font must be located in the sketch's "data" directory to load successfully
   font = loadFont("CourierNew36.vlw"); 
@@ -378,6 +379,8 @@ void draw() {
   angx = ypr[2];
   angy = ypr[1];
   
+  //heading = degrees(ypr[0]);
+  //if( heading < 0 ) heading += 360.0; // convert negative to positive angles
   //Compass averaging
   //currentAngle = myAtan2(mouseY-height/2, mouseX-width/2) + radians(myNoise); 
   addItemsToHistoryBuffers(radians(heading));
