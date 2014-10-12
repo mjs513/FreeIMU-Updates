@@ -2,7 +2,10 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Monday, Sept 22, 2014
+Sunday, Oct 12, 2014
+
+
+10-12-14 Updated library for support to APM 2.5 (Arduimu).  This change should also work on the APM 2.6 board as well.  MS5611 SPI library added from Ardupilot library (saved alot of time - thanks guys).  Put back iCompass module for aligned axis.  Had typo - now fixed so put it back in.
 
 10-03-14 Updated FreeIMU.cpp to allow easier access to change accelerometer/gyro/magneter default range settings to match description in wiki page
 

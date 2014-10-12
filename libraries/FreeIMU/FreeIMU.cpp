@@ -1059,8 +1059,8 @@ void FreeIMU::getQ(float * q, float * val) {
    #if MARG == 0
 		#if HAS_AXIS_ALIGNED()		
 			AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
-			//val[9] = maghead.iheading(0, 1, 0, val[0], val[1], val[2], val[7], val[6], val[8]);
-			val[9] = calcMagHeading( q0,  q1,  q2,  q3, val[6], val[7], val[8]);
+			val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[6], val[7], val[8]);
+			//val[9] = calcMagHeading( q0,  q1,  q2,  q3, val[6], val[7], val[8]);
 		#elif defined(SEN_10724)
 			AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[7], -val[6], val[8]);
 			val[9] = calcMagHeading( q0,  q1,  q2,  q3, val[7], -val[6], val[8]);
