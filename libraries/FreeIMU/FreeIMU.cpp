@@ -642,7 +642,7 @@ void FreeIMU::RESET_Q() {
 	calLoad();
   #endif
   
-  //getQ_simple(NULL);
+  getQ_simple(NULL);
 }
 
 #ifndef CALIBRATION_H

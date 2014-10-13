@@ -1,7 +1,7 @@
 #include <AP_Math_freeimu.h>
 #include <Filter.h>    // Filter library
 #include <Butter.h>    // Butterworth filter
-
+#include <iCompass.h>
 
 /**
  * FreeIMU library serial communication protocol

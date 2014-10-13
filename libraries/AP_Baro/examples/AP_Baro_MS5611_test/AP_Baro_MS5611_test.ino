@@ -1,3 +1,8 @@
+//*****************************************************************************
+//**
+//** This code is based on the example code in the original AP_Baro library
+//**
+//*****************************************************************************
 
 #include <stdint.h>
 //#include <FastSerial.h>
