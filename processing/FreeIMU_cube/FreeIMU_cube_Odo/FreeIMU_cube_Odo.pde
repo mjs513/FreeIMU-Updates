@@ -32,6 +32,8 @@ import processing.opengl.*;
 
 Serial myPort;  // Create object from Serial class
 
+final String serialPort = "COM4"; // replace this with your serial port. On windows you will need something like "COM1".
+int BaudRate=57600;
 
 //Settup Stop Watch
 StopWatchTimer sw = new StopWatchTimer();
@@ -58,8 +60,6 @@ MovingAverage accnorm_test_avg = new MovingAverage(5);
 MovingAverage accnorm_var = new MovingAverage(7);
 MovingAverage motion_detect_ma = new MovingAverage(7);
 MovingAverage accnorm_avg = new MovingAverage(5);
-
-final String serialPort = "COM4"; // replace this with your serial port. On windows you will need something like "COM1".
 
 float [] q = new float [4];
 float [] acc = new float [3];
@@ -132,7 +132,7 @@ void setup()
   size(VIEW_SIZE_X, VIEW_SIZE_Y, OPENGL);
 
   
-  myPort = new Serial(this, serialPort, 57600);
+  myPort = new Serial(this, serialPort, BaudRate);
   myDelay(1000);
   
   // The font must be located in the sketch's "data" directory to load successfully
@@ -144,11 +144,11 @@ void setup()
   myDelay(1000);
   while (myPort.available() == 0) {
     myPort.write("v");
-    myPort.write("g");
     myDelay(1000);
     sw.start();
   }
   //println(myPort.readStringUntil('\n'));
+  myPort.write("f");
   myPort.write("z" + char(burst));
   myPort.bufferUntil('\n');
 }
