@@ -1,7 +1,7 @@
 #include <AP_Math_freeimu.h>
 #include <Filter.h>    // Filter library
 #include <Butter.h>    // Butterworth filter
-
+#include <iCompass.h>
 
 #include <ADXL345.h>
 #include <HMC58X3.h>
@@ -16,6 +16,7 @@
 #include <AK8963.h>
 #include <L3G.h>
 #include <LPS331.h> 
+#include <AP_Baro_MS5611.h>
 
 #include <EEPROM.h>
 #include <Wire.h>
@@ -26,6 +27,7 @@
 #include "CommunicationUtils.h"
 #include "FreeIMU.h"
 #include "FilteringScheme.h"
+#include "RunningAverage.h"
 
 int raw_values[11];
 char str[512];

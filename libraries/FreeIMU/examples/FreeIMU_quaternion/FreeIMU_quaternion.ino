@@ -10,6 +10,8 @@
 #include <EEPROM.h>
 #include <L3G.h>
 #include <LPS331.h> 
+#include <AP_Baro_MS5611.h>
+#include "RunningAverage.h"
 #include <iCompass.h>
 
 #include <AP_Math_freeimu.h>
@@ -25,6 +27,7 @@
 #include "CommunicationUtils.h"
 #include "FreeIMU.h"
 #include "FilteringScheme.h"
+
 
 float q[4], val[11];
 

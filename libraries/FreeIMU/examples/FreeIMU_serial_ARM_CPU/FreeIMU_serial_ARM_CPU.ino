@@ -20,6 +20,7 @@
 #include <AK8963.h>
 #include <L3G.h>
 #include <LPS331.h> 
+#include <AP_Baro_MS5611.h>
 
 #include <Wire.h>
 #include <SPI.h>
