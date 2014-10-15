@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define FREEIMU_v035
 //#define FREEIMU_v035_MS
 //#define FREEIMU_v035_BMP
-#define FREEIMU_v04
+//#define FREEIMU_v04
 
 // 3rd party boards. Please consider donating or buying a FreeIMU board to support this library development.
 //#define SEN_10121 //IMU Digital Combo Board - 6 Degrees of Freedom ITG3200/ADXL345 SEN-10121 http://www.sparkfun.com/products/10121
@@ -43,11 +43,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define DFROBOT  //DFROBOT 10DOF SEN-1040 IMU
 //#define MPU9250_5611  //MPU-9250 IMU with MS5611 Altimeter from eBay
 //#define GEN_MPU9150
-//#define GEN_MPU9250
+//#define GEN_MPU9250  // Use for Invensense MPU-9250 breakout board
 //#define Altimu10  // Pololu AltIMU v10 - 10 DOF IMU - http://www.pololu.com/product/1269
 //#define GY_88  //GY-88 Sensor Board from eBay
 //#define GY_87  //GY-87 Sensor Board from eBay, NOTE: Pressusre sensor is BMP180 but BMP085 library should work
-//#define APM_2_5  //  DIYDrones ArduIMU
+#define APM_2_5  //  DIYDrones ArduIMU
 
 //#define DISABLE_MAGN // Uncomment this line to disable the magnetometer in the sensor fusion algorithm
 
@@ -74,7 +74,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #elif defined(FREEIMU_v04)
 	#define twoKpDef  (2.0f * 0.75f)	//works with and without mag enabled
 	#define twoKiDef  (2.0f * 0.1625f)
-	#define betaDef  0.085f	
+	#define betaDef  0.085f
 #elif defined(GEN_MPU6050)
 	#define twoKpDef  (2.0f * 0.5f)
 	#define twoKiDef  (2.0f * 0.25f)
@@ -88,11 +88,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	//#define twoKiDef  (2.0f * 0.00002f)	
 	#define twoKpDef  (2.0f * 2.75f)
 	#define twoKiDef  (2.0f * 0.1625f)
-	#define betaDef  1.1f
+	#define betaDef  2.0f
 #elif defined(GEN_MPU9250)
 	#define twoKpDef  (2.0f * 1.75f) // was 0.95
 	#define twoKiDef  (2.0f * 0.05f) // was 0.05	
-	#define betaDef	  0.05f
+	#define betaDef	  0.065f
+#elif defined(APM_2_5)
+	#define twoKpDef  (2.0f * 0.5f)
+	#define twoKiDef  (2.0f * 0.25f)
+	#define betaDef	  0.085f	
 #else
 	#define twoKpDef  (2.0f * 0.5f)
 	#define twoKiDef  (2.0f * 0.1f)
@@ -216,7 +220,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 							|| defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) \
 							|| defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) \
 							|| defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10121) \
-							|| defined(SEN_10736) || defined(GY_87) || defined(APM_2_5))
+							|| defined(SEN_10736) || defined(GY_87) )
 
 #include <Wire.h>
 

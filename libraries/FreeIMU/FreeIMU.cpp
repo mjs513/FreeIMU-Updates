@@ -495,10 +495,11 @@ void FreeIMU::RESET_Q() {
 	accgyro = MPU60X0(false, accgyro_addr);
 	#if HAS_MPU9250()
 		accgyro.initialize9250();
+		accgyro.setDLPFMode(MPU60X0_DLPF_BW_98);
 	#else
 		accgyro.initialize();
+		accgyro.setDLPFMode(MPU60X0_DLPF_BW_20);
 	#endif
-	accgyro.setDLPFMode(MPU60X0_DLPF_BW_20); 
 	accgyro.setI2CMasterModeEnabled(0);
 	accgyro.setI2CBypassEnabled(1);
 	accgyro.setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);
@@ -546,7 +547,7 @@ void FreeIMU::RESET_Q() {
 		pinMode(63, OUTPUT);
 		digitalWrite(63, HIGH);
 		SPI.begin();
-		SPI.setClockDivider(SPI_CLOCK_DIV32); // 500khz for debugging, increase later
+		SPI.setClockDivider(SPI_CLOCK_DIV16); // 32 = 500khz for debugging, increase later
 		baro.init();		
 	#else
 		baro.init(FIMU_BARO_ADDR);
@@ -1064,13 +1065,17 @@ void FreeIMU::getQ(float * q, float * val) {
 		#elif defined(SEN_10724)
 			AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[7], -val[6], val[8]);
 			val[9] = calcMagHeading( q0,  q1,  q2,  q3, val[7], -val[6], val[8]);
-		#elif defined(ARDUIMU_v3)
+		#elif defined(ARDUIMU_v3) || defined(APM_2_5)
 			AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], -val[6], -val[7], val[8]);
-			val[9] = calcMagHeading( q0,  q1,  q2,  q3, -val[6], -val[7], val[8]);    
+			//val[9] = calcMagHeading( q0,  q1,  q2,  q3, -val[6], -val[7], val[8]);  
+			val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], -val[6], -val[7], val[8]);
 		#elif defined(GEN_MPU9150) || defined(MPU9250_5611) || defined(GEN_MPU9250)
 			AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[7], val[6], -val[8]);
-			val[9] = calcMagHeading( q0,  q1,  q2, q3, val[7], val[6], val[8]); 
-			//val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[7], val[6], -val[8]);
+			//val[9] = calcMagHeading( q0,  q1,  q2, q3, val[7], val[6], val[8]); 
+			val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[7], val[6], -val[8]);
+		#elif defined(APM_2_5)	
+			MadgwickAHRSupdate(val[4] * M_PI/180, -val[3] * M_PI/180, val[5] * M_PI/180, val[1], -val[0], val[2], -val[7], val[6], val[8]);
+			val[9] = maghead.iheading(1, 0, 0, val[1], -val[0], val[2], -val[7], -val[6], val[8]);
 		#endif
 	#endif
 	
@@ -1083,16 +1088,20 @@ void FreeIMU::getQ(float * q, float * val) {
 		#elif defined(SEN_10724)
 			MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[7], -val[6], val[8]);
 			val[9] = calcMagHeading( q0,  q1,  q2,  q3, val[7], -val[6], val[8]);
-		#elif defined(ARDUIMU_v3)
+		#elif defined(ARDUIMU_v3) 
 			MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], -val[6], -val[7], val[8]);
-			val[9] = calcMagHeading( q0,  q1,  q2,  q3, -val[6], -val[7], val[8]);    
+			//val[9] = calcMagHeading( q0,  q1,  q2,  q3, -val[6], -val[7], val[8]); 
+			val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], -val[6], -val[7], val[8]);
 		#elif defined(GEN_MPU9150) || defined(MPU9250_5611) || defined(GEN_MPU9250)
 			MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[7], val[6], -val[8]);
-			val[9] = calcMagHeading( q0,  q1,  q2, q3, val[7], val[6], val[8]); 
-			//val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[7], val[6], -val[8]);
+			//val[9] = calcMagHeading( q0,  q1,  q2, q3, val[7], val[6], val[8]); 
+			val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[7], val[6], -val[8]);
+		#elif defined(APM_2_5)	
+			MadgwickAHRSupdate(val[4] * M_PI/180, -val[3] * M_PI/180, val[5] * M_PI/180, val[1], -val[0], val[2], -val[7], val[6], val[8]);
+			val[9] = maghead.iheading(1, 0, 0, val[1], -val[0], val[2], -val[7], -val[6], val[8]);
 		#endif
 	#endif
-	
+
   #elif(MARG == 0)
 	AHRSupdateIMU(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2]);
 	val[9] = -9999.0f;
@@ -1467,7 +1476,7 @@ void FreeIMU::setSeaPress(float sea_press_inp) {
 void FreeIMU::getQ_simple(float* q)
 {
 #if HAS_HMC5883L()
-  float values[9];
+  float values[10];
   getValues(values);
   
   float pitch = atan2(values[0], sqrt(values[1]*values[1]+values[2]*values[2]));
