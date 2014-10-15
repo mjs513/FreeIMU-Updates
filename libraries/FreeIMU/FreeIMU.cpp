@@ -1075,7 +1075,7 @@ void FreeIMU::getQ(float * q, float * val) {
 			val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[7], val[6], -val[8]);
 		#elif defined(APM_2_5)	
 			MadgwickAHRSupdate(val[4] * M_PI/180, -val[3] * M_PI/180, val[5] * M_PI/180, val[1], -val[0], val[2], -val[7], val[6], val[8]);
-			val[9] = maghead.iheading(1, 0, 0, val[1], -val[0], val[2], -val[7], -val[6], val[8]);
+			val[9] = maghead.iheading(1, 0, 0, val[1], -val[0], val[2], -val[7], val[6], val[8]);
 		#endif
 	#endif
 	
@@ -1098,7 +1098,7 @@ void FreeIMU::getQ(float * q, float * val) {
 			val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[7], val[6], -val[8]);
 		#elif defined(APM_2_5)	
 			MadgwickAHRSupdate(val[4] * M_PI/180, -val[3] * M_PI/180, val[5] * M_PI/180, val[1], -val[0], val[2], -val[7], val[6], val[8]);
-			val[9] = maghead.iheading(1, 0, 0, val[1], -val[0], val[2], -val[7], -val[6], val[8]);
+			val[9] = maghead.iheading(1, 0, 0, val[1], -val[0], val[2], -val[7], val[6], val[8]);
 		#endif
 	#endif
 

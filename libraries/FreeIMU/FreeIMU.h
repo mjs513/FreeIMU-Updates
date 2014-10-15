@@ -47,7 +47,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define Altimu10  // Pololu AltIMU v10 - 10 DOF IMU - http://www.pololu.com/product/1269
 //#define GY_88  //GY-88 Sensor Board from eBay
 //#define GY_87  //GY-87 Sensor Board from eBay, NOTE: Pressusre sensor is BMP180 but BMP085 library should work
-#define APM_2_5  //  DIYDrones ArduIMU
+#define APM_2_5  //  APM 2.5.2 (EBAY)
 
 //#define DISABLE_MAGN // Uncomment this line to disable the magnetometer in the sensor fusion algorithm
 
@@ -96,7 +96,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #elif defined(APM_2_5)
 	#define twoKpDef  (2.0f * 0.5f)
 	#define twoKiDef  (2.0f * 0.25f)
-	#define betaDef	  0.085f	
+	#define betaDef	  0.015f	
 #else
 	#define twoKpDef  (2.0f * 0.5f)
 	#define twoKiDef  (2.0f * 0.1f)
@@ -176,7 +176,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #elif defined(GY_87)
   #define FREEIMU_ID "GY-87 Sensor Board" 
 #elif defined(APM_2_5)
-  #define FREEIMU_ID "DIY Drones APM 2.5" 
+  #define FREEIMU_ID "APM 2.5.2 (EBAY)" 
 #endif
 
 
