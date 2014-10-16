@@ -249,6 +249,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #include <Wire.h>
   #include "I2Cdev.h"
   #include "MPU60X0.h"
+  //MPU Address Select 
+  //Use following define if MPU60X0 address is set to 0x69
+  //otherwise the default address is used = 0x68
+  //uncomment following line and comment out successor line
+  //#define FIMU_ACCGYRO_ADDR MPU60X0_ADDRESS_AD0_HIGH
   #define FIMU_ACCGYRO_ADDR MPU60X0_DEFAULT_ADDRESS
 #elif HAS_MPU6000()
   #include <SPI.h>
@@ -261,6 +266,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #include "MPU60X0.h"
   #include "AK8975.h"
   #include "iCompass.h"
+  //MPU Address Select 
+  //Use following define if MPU60X0 address is set to 0x69
+  //otherwise the default address is used = 0x68
+  //uncomment following line and comment out successor line
+  //#define FIMU_ACCGYRO_ADDR MPU60X0_ADDRESS_AD0_HIGH
   #define FIMU_ACCGYRO_ADDR MPU60X0_DEFAULT_ADDRESS
 #elif HAS_MPU9250()
   #include <Wire.h>
@@ -268,6 +278,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #include "MPU60X0.h"
   #include "AK8963.h"
   #include "iCompass.h"
+  //MPU Address Select 
+  //Use following define if MPU60X0 address is set to 0x69
+  //otherwise the default address is used = 0x68
+  //uncomment following line and comment out successor line
+  //#define FIMU_ACCGYRO_ADDR MPU60X0_ADDRESS_AD0_HIGH
   #define FIMU_ACCGYRO_ADDR MPU60X0_DEFAULT_ADDRESS
 #elif HAS_ALTIMU10()
   #include <Wire.h>
