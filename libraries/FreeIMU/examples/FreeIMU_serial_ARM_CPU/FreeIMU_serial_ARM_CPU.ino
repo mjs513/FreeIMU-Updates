@@ -38,6 +38,7 @@
 
 #define HAS_GPS 0
 #define BaudRate 57600
+static const unsigned long GPSBaud = 38400;
 
 KalmanFilter kFilters[4];
 int k_index = 3;
@@ -54,7 +55,6 @@ FreeIMU my3IMU = FreeIMU();
 
 #if HAS_GPS
   #include <TinyGPS++.h>
-  static const unsigned long GPSBaud = 57600;
   // The TinyGPS++ object
   TinyGPSPlus gps;
   // The serial connection to the GPS device
