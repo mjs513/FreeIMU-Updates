@@ -51,9 +51,10 @@ PrintWriter output;
 
 Serial myPort;  // Create object from Serial class
 
-final String serialPort = "COM4"; // replace this with your serial port. On windows you will need something like "COM1".
+final String serialPort = "COM3"; // replace this with your serial port. On windows you will need something like "COM1".
 int BaudRate=57600;
 String File_Name = "IMU9250-MARG1.txt";
+int HAS_GPS = 1;
 
 //setting a 1D Kalman filter
 //uncomment if you have removed complimentary altitude filter from library
@@ -120,7 +121,6 @@ float fused_alt;
 // GPS Variables
 float hdop, lat, longt, cog, sog, gpsalt, gpschars;
 float hdop_val, loc_val, gpsalt_val, sog_val, cog_val;
-int HAS_GPS = 0;
 
 // Sphere Variables
 float R = 150;
@@ -252,11 +252,11 @@ void setup()
      .setCaptionLabel("Open Rolling Trace Frame")
      ;
   //add button to open gps trace window
-  cp5.addButton("GPStrace")
-     .setPosition(500,420)
-     .setSize(240,30)
-     .setCaptionLabel("Open Rolling Trace Frame")
-     ;
+  //cp5.addButton("GPStrace")
+  //   .setPosition(500,420)
+  //   .setSize(240,30)
+  //   .setCaptionLabel("Open Rolling Trace Frame")
+  //   ;
 
   //setup attitdude indicator
   noStroke();
