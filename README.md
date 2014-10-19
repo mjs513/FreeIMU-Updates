@@ -2,7 +2,12 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Monday, Oct 13, 2014
+Sunday, Oct 19, 2014
+
+10-19-14
+Several updates/corrections made to library: Fixed APM 2.5 axis alignment, deleted a 3g library that was not there, more tweaks to beta terms, uploaded missing TinyGPS++ library and moved Baudrate setting to beginning of sketches.
+
+Incorporated MPL3115A2 pressure sensor support by Mario Cannistra (https://github.com/mariocannistra) as well as an example using a MPU-9250 using the MPL3115A2.
 
 
 10-12-14 Updated library for support to APM 2.5 (Arduimu).  This change should also work on the APM 2.6 board as well.  MS5611 SPI library added from Ardupilot library (saved alot of time - thanks guys).  Put back iCompass module for aligned axis.  Had typo - now fixed so put it back in.

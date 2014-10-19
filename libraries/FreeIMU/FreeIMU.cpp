@@ -282,9 +282,11 @@ FreeIMU::FreeIMU() {
     baro085 = BMP085();
   #elif HAS_LPS331()
     baro331 = LPS331();
+  #elif HAS_MPL3115A2()
+    baro3115 = MPL3115A2();
   #endif
   
-  #if ( HAS_MS5611() || HAS_BMP085() || HAS_LPS331() )
+  #if HAS_PRESS()
     kPress.KalmanInit(0.0000005,0.01,1.0,0);
   #endif
   
@@ -554,6 +556,16 @@ void FreeIMU::RESET_Q() {
 	#endif
   #endif
 
+  #if HAS_MPL3115A2()
+    baro3115.begin();
+	baro3115.setModeBarometer(); // Measure pressure in Pascals from 20 to 110 kPa
+	// Set the # of samples from 1 to 128. See datasheet.
+	// Integer values between 0 < n < 7 give oversample ratios 2^n and 
+	// sampling intervals of 0=6 ms , 1=10, 2=18, 3=34, 4=66, 5=130, 6=258, and 7=512 
+	baro3115.setOversampleRate(4); // Set Oversample to the recommended 128 --> 512ms
+	baro3115.enableEventFlags(); // Enable all three pressure and temp event flags 
+  #endif  
+  
   #if HAS_BMP085()
 	// 19.8 meters for my location, true = using meter units
     // this initialization is useful if current altitude is known,
@@ -1092,7 +1104,7 @@ void FreeIMU::getQ(float * q, float * val) {
 			MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], -val[6], -val[7], val[8]);
 			//val[9] = calcMagHeading( q0,  q1,  q2,  q3, -val[6], -val[7], val[8]); 
 			val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], -val[6], -val[7], val[8]);
-		#elif defined(GEN_MPU9150) || defined(MPU9250_5611) || defined(GEN_MPU9250)
+		#elif defined(GEN_MPU9150) || defined(MPU9250_5611) || defined(GEN_MPU9250) || defined(Mario)
 			MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[7], val[6], -val[8]);
 			//val[9] = calcMagHeading( q0,  q1,  q2, q3, val[7], val[6], val[8]); 
 			val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[7], val[6], -val[8]);
@@ -1188,7 +1200,7 @@ float def_sea_press = 1013.25;
 
 #endif
 
-#if HAS_BMP085() && !HAS_APM25()
+#if HAS_BMP085()
 	//used for BMP085
 	long Temperature = 0, Pressure = 0, Altitude = 0;
 	
@@ -1261,6 +1273,44 @@ float def_sea_press = 1013.25;
 	}
 	
 #endif
+
+#if HAS_MPL3115A2()
+	// Returns temperature, pressure and altitude from MPL3115A2
+	// added by https://github.com/mariocannistra
+	
+	float FreeIMU::getBaroTemperature() {
+		float temp1 = baro3115.readTemp();
+		// also available in °F float temp1 = baro3115.readTempF();
+		return(temp1);
+	}
+
+	float FreeIMU::getBaroPressure() {
+		// 1 kPa = 10 hPa = 1000 Pa
+		// 100 Pascals = 1 hPa = 1 mb
+		// sensor output is in Pa
+		// need to convert Pascals to millibars:
+		float new_press = baro3115.readPressure() / 100 ;
+		return(new_press);
+	}
+
+	/**
+	* Returns an altitude estimate from baromether readings only using a default sea level pressure
+	*/
+	float FreeIMU::getBaroAlt() {
+		return getBaroAlt(def_sea_press);
+	}
+
+	/**
+	* Returns an altitude estimate from barometer readings only using sea_press as current sea level pressure
+	*/
+	float FreeIMU::getBaroAlt(float sea_press) {
+		float temp = baro3115.readTemp();
+		float press = baro3115.readPressure() / 100.;
+        float new_press = kPress.measureRSSI(press);
+		return ((pow((sea_press / new_press), 1/5.257) - 1.0) * (temp + 273.15)) / 0.0065;
+	}	
+#endif
+
 
 /**
  * Returns the estimated altitude from fusing barometer and accelerometer

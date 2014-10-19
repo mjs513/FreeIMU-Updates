@@ -47,7 +47,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define Altimu10  // Pololu AltIMU v10 - 10 DOF IMU - http://www.pololu.com/product/1269
 //#define GY_88  //GY-88 Sensor Board from eBay
 //#define GY_87  //GY-87 Sensor Board from eBay, NOTE: Pressusre sensor is BMP180 but BMP085 library should work
-#define APM_2_5  //  APM 2.5.2 (EBAY)
+#define Mario   // MPU-9150 plus Altitude/Pressure Sensor Breakout - MPL3115A2  https://www.sparkfun.com/products/11084
+//#define APM_2_5  //  APM 2.5.2 (EBAY)
 
 //#define DISABLE_MAGN // Uncomment this line to disable the magnetometer in the sensor fusion algorithm
 
@@ -177,6 +178,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #define FREEIMU_ID "GY-87 Sensor Board" 
 #elif defined(APM_2_5)
   #define FREEIMU_ID "APM 2.5.2 (EBAY)" 
+#elif  defined(Mario)
+  #define FREEIMU_ID "MPU-9150 plus MPL3115A2" 
 #endif
 
 
@@ -189,8 +192,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 					  || defined(SEN_10724) || defined(SEN_10183))
 #define HAS_BMA180() (defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP))
 #define HAS_MPU6050() (defined(GY_87) ||defined(GY_88) || defined(FREEIMU_v04) || defined(GEN_MPU6050))
-#define HAS_MPU9150() (defined(GEN_MPU9150))
-#define HAS_MPU9250() (defined(MPU9250_5611) || defined(GEN_MPU9250)) 
+#define HAS_MPU9150() (defined(GEN_MPU9150) )
+#define HAS_MPU9250() (defined(MPU9250_5611) || defined(GEN_MPU9250)  || defined(Mario)) 
 #define HAS_HMC5883L() (defined(GY_87) ||defined(GY_88) || defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) \
 					   || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) \
 					   || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10736) \
@@ -205,17 +208,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define HAS_MS5611() (defined(MPU9250_5611) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v04) || defined(APM_2_5))
 #define HAS_BMP085() (defined(GY_88) || defined(GY_88) || defined(DFROBOT))
 #define HAS_LPS331() (defined(Altimu10))
+#define HAS_MPL3115A2() defined(Mario)
 #define HAS_PRESS() (defined(Altimu10) || defined(MPU9250_5611) || defined(FREEIMU_v035_MS) \
 					|| defined(FREEIMU_v04) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) \
 					|| defined(FREEIMU_v035_BMP) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v04) \
-					|| defined(GY_87) ||defined(GY_88) || defined(DFROBOT) || defined(APM_2_5))
+					|| defined(GY_87) ||defined(GY_88) || defined(DFROBOT) || defined(APM_2_5) \
+					|| defined(Mario) )
 					
 #define IS_6DOM() (defined(SEN_10121) || defined(GEN_MPU6050))
 #define IS_9DOM() (defined(GY_87) ||defined(GY_88) || defined(Altimu10) || defined(GEN_MPU9250) || defined(MPU9250_5611) \
 				   || defined(GEN_MPU9150) || defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) \
 				   || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) \
 				   || defined(FREEIMU_v04) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183) \
-				   || defined(ARDUIMU_v3)  || defined(APM_2_5) )
+				   || defined(ARDUIMU_v3)  || defined(APM_2_5) || defined(Mario) )
 #define HAS_AXIS_ALIGNED() (defined(Altimu10) || defined(GY_88) || defined(GEN_MPU6050) \
 							|| defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) \
 							|| defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) \
@@ -300,9 +305,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #endif
 #elif HAS_LPS331()
   #include <LPS331.h>
+#elif HAS_MPL3115A2()
+  #include <MPL3115A2.h>
 #endif
 
-#if HAS_MS5611() || HAS_BMP085() || HAS_LPS331()
+#if HAS_PRESS()
   #include <FilteringScheme.h>
   #include <AltitudeComplementary.h>
 #endif
@@ -389,7 +396,12 @@ class FreeIMU
       float getBaroAlt();
       float getBaroAlt(float sea_press);
 	  float getBaroTemperature();
-	  float getBaroPressure();	
+	  float getBaroPressure();
+	#elif HAS_MPL3115A2()
+      float getBaroAlt();
+      float getBaroAlt(float sea_press);
+	  float getBaroTemperature();
+	  float getBaroPressure();	  
     #endif	
     
 	#if HAS_PRESS()
@@ -443,7 +455,9 @@ class FreeIMU
     #elif HAS_BMP085()
       BMP085 baro085;
 	#elif HAS_LPS331()
-	  LPS331 baro331;  
+	  LPS331 baro331;
+	#elif HAS_MPL3115A2()
+	  MPL3115A2 baro3115;	  
     #endif
     
     #if HAS_PRESS()
