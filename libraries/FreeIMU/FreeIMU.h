@@ -96,7 +96,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #elif defined(APM_2_5)
 	#define twoKpDef  (2.0f * 0.5f)
 	#define twoKiDef  (2.0f * 0.25f)
-	#define betaDef	  0.015f	
+	#define betaDef	  0.015f	//was 0.015
 #else
 	#define twoKpDef  (2.0f * 0.5f)
 	#define twoKiDef  (2.0f * 0.1f)
