@@ -104,17 +104,20 @@ public class ControlFrame extends PApplet {
   
   class eq4 implements ILine2DEquation{
     public double computePoint(double x,int pos) {
-      return (double)degrees(Euler[0]);
+      //return (double)degrees(Euler[0]);
+      return (double)degrees(ypr[0]);
     }    
   }
   class eq5 implements ILine2DEquation{
     public double computePoint(double x,int pos) {
-      return (double)degrees(Euler[1]);
+      //return (double)degrees(Euler[1]);
+      return (double)degrees(ypr[1]);
     }    
   }
   class eq6 implements ILine2DEquation{
     public double computePoint(double x,int pos) {
-      return (double)degrees(Euler[2]);
+      //return (double)degrees(Euler[2]);
+      return (double)degrees(ypr[2]);
     }    
   }
 
