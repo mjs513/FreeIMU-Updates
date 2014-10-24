@@ -41,13 +41,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define ARDUIMU_v3 //  DIYDrones ArduIMU+ V3 http://store.diydrones.com/ArduIMU_V3_p/kt-arduimu-30.htm or https://www.sparkfun.com/products/11055
 //#define GEN_MPU6050 // Generic MPU6050 breakout board. Compatible with GY-521, SEN-11028 and other MPU6050 wich have the MPU6050 AD0 pin connected to GND.
 //#define DFROBOT  //DFROBOT 10DOF SEN-1040 IMU
-//#define MPU9250_5611  //MPU-9250 IMU with MS5611 Altimeter from eBay
+#define MPU9250_5611  //MPU-9250 IMU with MS5611 Altimeter from eBay
 //#define GEN_MPU9150
 //#define GEN_MPU9250  // Use for Invensense MPU-9250 breakout board
 //#define Altimu10  // Pololu AltIMU v10 - 10 DOF IMU - http://www.pololu.com/product/1269
 //#define GY_88  //GY-88 Sensor Board from eBay
 //#define GY_87  //GY-87 Sensor Board from eBay, NOTE: Pressusre sensor is BMP180 but BMP085 library should work
-#define Mario   // MPU-9150 plus Altitude/Pressure Sensor Breakout - MPL3115A2  https://www.sparkfun.com/products/11084
+//#define Mario   // MPU-9150 plus Altitude/Pressure Sensor Breakout - MPL3115A2  https://www.sparkfun.com/products/11084
 //#define APM_2_5  //  APM 2.5.2 (EBAY)
 
 //#define DISABLE_MAGN // Uncomment this line to disable the magnetometer in the sensor fusion algorithm
@@ -61,7 +61,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // Set filter type: 1 = Madgwick Gradient Descent, 0 - Madgwick implementation of Mahoney DCM
 // in Quaternion form.
-#define MARG 1
+#define MARG 0
 
 // proportional gain governs rate of convergence to accelerometer/magnetometer
 // integral gain governs rate of convergence of gyroscope biases
@@ -93,7 +93,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #elif defined(GEN_MPU9250)
 	#define twoKpDef  (2.0f * 1.75f) // was 0.95
 	#define twoKiDef  (2.0f * 0.05f) // was 0.05	
-	#define betaDef	  0.065f
+	#define betaDef	  0.015f
 #elif defined(APM_2_5)
 	#define twoKpDef  (2.0f * 0.5f)
 	#define twoKiDef  (2.0f * 0.25f)
@@ -464,7 +464,9 @@ class FreeIMU
       KalmanFilter kPress; // Altitude Kalman Filter.
       AltComp altComp; // Altitude Complementary Filter.
     #endif
-      
+     
+	//Global Variables
+	 
     int* raw_acc, raw_gyro, raw_magn;
     // calibration parameters
     int16_t gyro_off_x, gyro_off_y, gyro_off_z;
@@ -476,6 +478,12 @@ class FreeIMU
 	float rt, senTemp;
 	float sampleFreq; // half the sample period expressed in seconds
 	byte deviceType;
+	
+	#define gyroMeasError 3.14159265358979 * (5.0f / 180.0f) 	// gyroscope measurement error in rad/s (shown as 5 deg/s)
+	#define gyroMeasDrift 3.14159265358979 * (0.2f / 180.0f) 	// gyroscope measurement error in rad/s/s (shown as 0.2f deg/s/s)
+	#define beta1 sqrt(3.0f / 4.0f) * gyroMeasError 			// compute beta
+	#define zeta sqrt(3.0f / 4.0f) * gyroMeasDrift 			// compute zeta
+
 	
   private:
     //void AHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz);
@@ -495,13 +503,23 @@ class FreeIMU
 
 	//Madgwick AHRS Gradient Descent 
     volatile float beta;				// algorithm gain
+
+	//Following lines defines Madgwicks Grad Descent Algorithm from his original paper
+	// Global system variables
+	float SEq_1 = 1, SEq_2 = 0, SEq_3 = 0, SEq_4 = 0; 	// estimated orientation quaternion elements with initial conditions
+	float b_x = 1, b_z = 0; 				// reference direction of flux in earth frame
+	float w_bx = 0, w_by = 0, w_bz = 0; // estimate gyroscope biases error
 	
 	#if(MARG == 0)
 		void AHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz);
 		void AHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az);
-  	#else
+  	#elif(MARG == 1)
 		void MadgwickAHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz);
 		void MadgwickAHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az);
+	#else
+		void MARGUpdateFilter(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz)
+		void MARGUpdateFilterIMU(float gx, float gy, float gz, float ax, float ay, float az)
+
 	#endif
 };
 

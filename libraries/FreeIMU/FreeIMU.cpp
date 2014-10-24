@@ -163,7 +163,6 @@ GNU General Public License for more details.
 -------- for use with Teensy 3.1
 -------- Updated (int) to (int16_t) in lps331 library for getTemperatureRaw.
 -------- FreeIMU examples updated accordingly based on compass averaging change.
-
 10-03-14 
 -------- Updated FreeIMU.cpp to allow easier access to change accelerometer/gyro/magneter default
 -------- range settings to match description in wiki page
@@ -183,8 +182,10 @@ GNU General Public License for more details.
 
 #if(MARG == 0)
 	#include "AHRS.h"
-#else
+#elif(MARG == 1)
 	#include "MadgwickAHRS.h"
+#else
+	#include "MARGUpdateFilter.h"
 #endif
 
 //#include "vector_math.h"
@@ -655,7 +656,7 @@ void FreeIMU::RESET_Q() {
 	calLoad();
   #endif
   
-  getQ_simple(NULL);
+  //getQ_simple(NULL);
 }
 
 #ifndef CALIBRATION_H
@@ -1001,7 +1002,7 @@ void FreeIMU::initGyros() {
             if (j == 0) {
                 best_diff[k] = diff_norm[k];
                 best_avg[k] = gyro_avg[k];
-            } else if (gyro_diff[k].length() < ToRad(0.1f)) {
+            } else if (gyro_diff[k].length() < ToRad(0.05f)) {
                 // we want the average to be within 0.1 bit, which is 0.04 degrees/s
                 last_average[k] = (gyro_avg[k] * 0.5f) + (last_average[k] * 0.5f);
                 gyro_offset[k] = last_average[k];            
@@ -1114,12 +1115,40 @@ void FreeIMU::getQ(float * q, float * val) {
 		#endif
 	#endif
 
-  #elif(MARG == 0)
-	AHRSupdateIMU(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2]);
-	val[9] = -9999.0f;
+	#if MARG == 3
+		#if HAS_AXIS_ALIGNED()		
+			MARGUpdateFilter(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
+			val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[6], val[7], val[8]);
+			//val[9] = calcMagHeading( q0,  q1,  q2,  q3, val[6], val[7], val[8]);
+			//val[9] = calcMagHeading( q0,  q1,  q2,  q3, val[6], val[7], val[8]);
+		#elif defined(SEN_10724)
+			MARGUpdateFilter(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[7], -val[6], val[8]);
+			val[9] = calcMagHeading( q0,  q1,  q2,  q3, val[7], -val[6], val[8]);
+		#elif defined(ARDUIMU_v3) 
+			MARGUpdateFilter(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], -val[6], -val[7], val[8]);
+			//val[9] = calcMagHeading( q0,  q1,  q2,  q3, -val[6], -val[7], val[8]); 
+			val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], -val[6], -val[7], val[8]);
+		#elif defined(GEN_MPU9150) || defined(MPU9250_5611) || defined(GEN_MPU9250) || defined(Mario)
+			MARGUpdateFilter(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[7], val[6], -val[8]);
+			//val[9] = calcMagHeading( q0,  q1,  q2, q3, val[7], val[6], val[8]); 
+			val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[7], val[6], -val[8]);
+		#elif defined(APM_2_5)	
+			MARGUpdateFilter(val[4] * M_PI/180, -val[3] * M_PI/180, val[5] * M_PI/180, val[1], -val[0], val[2], -val[7], val[6], val[8]);
+			val[9] = maghead.iheading(1, 0, 0, val[1], -val[0], val[2], -val[7], val[6], val[8]);
+		#endif
+	#endif
+	
   #else
-	MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], 0, 0, 0);
-	val[9] = -9999.0f;
+	#if(MARG == 0)
+		AHRSupdateIMU(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2]);
+		val[9] = -9999.0f;
+	#elif(MARG == 1)
+		MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], 0, 0, 0);
+		val[9] = -9999.0f;
+	#else
+		MARGUpdateFilterIMU(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2]);
+		val[9] = -9999.0f;  
+	#endif
   #endif
   
   q[0] = q0;
@@ -1525,9 +1554,12 @@ void FreeIMU::setSeaPress(float sea_press_inp) {
 
 void FreeIMU::getQ_simple(float* q)
 {
-#if HAS_HMC5883L()
-  float values[10];
-  getValues(values);
+	
+	#if HAS_HMC5883L() || HAS_MPU9250()
+		float values[10];
+		for(uint8_t i = 0; i<32; i++){
+			getValues(values);
+		}
   
   float pitch = atan2(values[0], sqrt(values[1]*values[1]+values[2]*values[2]));
   float roll = -atan2(values[1], sqrt(values[0]*values[0]+values[2]*values[2]));

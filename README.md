@@ -2,7 +2,10 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Sunday, Oct 19, 2014
+Friday, Oct 24, 2014
+
+10-24-14
+Implemented a third version of the Madgwick filter (Gradient Descent). This version is directly from his original paper.  Beta and Zeta have been left at their default values in the paper.
 
 10-19-14
 Several updates/corrections made to library: Fixed APM 2.5 axis alignment, deleted a 3g library that was not there, more tweaks to beta terms, uploaded missing TinyGPS++ library and moved Baudrate setting to beginning of sketches.
