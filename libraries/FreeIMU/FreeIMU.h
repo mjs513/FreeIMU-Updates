@@ -60,8 +60,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define WINDOW_SIZE 1 //Set to 1 to turn off the Running Average
 
 // Set filter type: 1 = Madgwick Gradient Descent, 0 - Madgwick implementation of Mahoney DCM
-// in Quaternion form.
-#define MARG 0
+// in Quaternion form, 3 = Madwick Original Paper AHRS
+#define MARG 3
 
 // proportional gain governs rate of convergence to accelerometer/magnetometer
 // integral gain governs rate of convergence of gyroscope biases
@@ -90,7 +90,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	#define twoKpDef  (2.0f * 2.75f)
 	#define twoKiDef  (2.0f * 0.1625f)
 	#define betaDef  2.0f
-#elif defined(GEN_MPU9250)
+#elif defined(GEN_MPU9250) || defined(MPU9250_5611)
 	#define twoKpDef  (2.0f * 1.75f) // was 0.95
 	#define twoKiDef  (2.0f * 0.05f) // was 0.05	
 	#define betaDef	  0.015f
@@ -193,7 +193,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define HAS_BMA180() (defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP))
 #define HAS_MPU6050() (defined(GY_87) ||defined(GY_88) || defined(FREEIMU_v04) || defined(GEN_MPU6050))
 #define HAS_MPU9150() (defined(GEN_MPU9150) )
-#define HAS_MPU9250() (defined(MPU9250_5611) || defined(GEN_MPU9250)  || defined(Mario)) 
+#define HAS_MPU9250() (defined(MPU9250_5611) || defined(GEN_MPU9250)  || defined(Mario) || defined(MPU9250_5611)) 
 #define HAS_HMC5883L() (defined(GY_87) ||defined(GY_88) || defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) \
 					   || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) \
 					   || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10736) \
@@ -205,7 +205,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define HAS_L3D20() (defined(Altimu10))
 #define HAS_LSM303() (defined(Altimu10))
 
-#define HAS_MS5611() (defined(MPU9250_5611) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v04) || defined(APM_2_5))
+#define HAS_MS5611() (defined(MPU9250_5611) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v04) \
+					 || defined(APM_2_5))
 #define HAS_BMP085() (defined(GY_88) || defined(GY_88) || defined(DFROBOT))
 #define HAS_LPS331() (defined(Altimu10))
 #define HAS_MPL3115A2() defined(Mario)
@@ -517,9 +518,8 @@ class FreeIMU
 		void MadgwickAHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz);
 		void MadgwickAHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az);
 	#else
-		void MARGUpdateFilter(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz)
-		void MARGUpdateFilterIMU(float gx, float gy, float gz, float ax, float ay, float az)
-
+		void MARGUpdateFilter(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz);
+		void MARGUpdateFilterIMU(float gx, float gy, float gz, float ax, float ay, float az);
 	#endif
 };
 

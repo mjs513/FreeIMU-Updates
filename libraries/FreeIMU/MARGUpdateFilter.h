@@ -23,11 +23,13 @@ void FreeIMU::MARGUpdateFilter(float w_x, float w_y, float w_z, float a_x, float
     float norm; // vector norm
     float SEqDot_omega_1, SEqDot_omega_2, SEqDot_omega_3, SEqDot_omega_4; // quaternion rate from gyroscopes elements
     float f_1, f_2, f_3, f_4, f_5, f_6; // objective function elements
-    float J_11or24, J_12or23, J_13or22, J_14or21, J_32, J_33, // objective function Jacobian elements
-    J_41, J_42, J_43, J_44, J_51, J_52, J_53, J_54, J_61, J_62, J_63, J_64; //
+    float J_11or24, J_12or23, J_13or22, J_14or21, J_32, J_33,    // objective function Jacobian elements
+		  J_41, J_42, J_43, J_44, J_51, J_52, J_53, J_54, J_61, J_62, J_63, J_64; //
     float SEqHatDot_1, SEqHatDot_2, SEqHatDot_3, SEqHatDot_4; // estimated direction of the gyroscope error
     float w_err_x, w_err_y, w_err_z; // estimated direction of the gyroscope error (angular)
     float h_x, h_y, h_z; // computed flux in the earth frame
+	float deltat = 1/sampleFreq;
+	
 	//float a_x, a_y, a_z; 					// accelerometer measurements
 	//float w_x, w_y, w_z; 					// gyroscope measurements in rad/s
 	//float m_x, m_y, m_z; 					// magnetometer measurements
@@ -165,7 +167,7 @@ void FreeIMU::MARGUpdateFilter(float w_x, float w_y, float w_z, float a_x, float
 	q3 = SEq_4;
 }
 
-void FreeIMU::MARGUpdateFilter(float w_x, float w_y, float w_z, float a_x, float a_y, float a_z)
+void FreeIMU::MARGUpdateFilterIMU(float w_x, float w_y, float w_z, float a_x, float a_y, float a_z)
 {
 	// Local system variables
 	float norm; // vector norm
@@ -183,6 +185,8 @@ void FreeIMU::MARGUpdateFilter(float w_x, float w_y, float w_z, float a_x, float
 	float twoSEq_2 = 2.0f * SEq_2;
 	float twoSEq_3 = 2.0f * SEq_3;
 
+	float deltat = 1/sampleFreq;
+	
 	// Normalise the accelerometer measurement
 	norm = sqrt(a_x * a_x + a_y * a_y + a_z * a_z);
 	a_x /= norm;

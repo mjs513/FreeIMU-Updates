@@ -840,11 +840,11 @@ void FreeIMU::getValues(float * values) {
   #else  // MPU6050
     int16_t accgyroval[9];
 	#if HAS_MPU9150() || HAS_MPU9250()
+		mag.getHeading(&accgyroval[6], &accgyroval[7], &accgyroval[8]);	
+		delay(10);
 		accgyro.getMotion6(&accgyroval[0], &accgyroval[1], &accgyroval[2], 
 						   &accgyroval[3], &accgyroval[4], &accgyroval[5]);	   
 		// read raw heading measurements from device
-		mag.getHeading(&accgyroval[6], &accgyroval[7], &accgyroval[8]);	
-		delay(10);
 		
 		accgyroval[0] = mfilter_accx.filter((float) accgyroval[0]);
 		accgyroval[1] = mfilter_accy.filter((float) accgyroval[1]);
