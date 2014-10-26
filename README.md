@@ -2,7 +2,10 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Friday, Oct 24, 2014
+Saturday, Oct 25, 2014
+
+10-25-14
+Fixed severaly bugs that would cause the new AHRS filter to crash on compile. Jitting is still there and its a lot of fun watching the algorithm work with the default settings for the MPU9250.  Have fun tweaking the settings.
 
 10-24-14
 Implemented a third version of the Madgwick filter (Gradient Descent). This version is directly from his original paper.  Beta and Zeta have been left at their default values in the paper.
