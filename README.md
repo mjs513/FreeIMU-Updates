@@ -2,7 +2,10 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Saturday, Oct 25, 2014
+Tuesday, Nov 4, 2014
+
+11-04-14
+Minor update. Moved motion detect algorithm to FreeIMU library proper.  Created FreeIMU_cube_Odo_Exp_v3.pde to take motion detect from library.
 
 10-25-14
 Fixed severaly bugs that would cause the new AHRS filter to crash on compile. Jitting is still there and its a lot of fun watching the algorithm work with the default settings for the MPU9250.  Have fun tweaking the settings.
