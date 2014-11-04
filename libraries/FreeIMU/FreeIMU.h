@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define FREEIMU_v035
 //#define FREEIMU_v035_MS
 //#define FREEIMU_v035_BMP
-//#define FREEIMU_v04
+#define FREEIMU_v04
 
 // 3rd party boards. Please consider donating or buying a FreeIMU board to support this library development.
 //#define SEN_10121 //IMU Digital Combo Board - 6 Degrees of Freedom ITG3200/ADXL345 SEN-10121 http://www.sparkfun.com/products/10121
@@ -41,7 +41,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define ARDUIMU_v3 //  DIYDrones ArduIMU+ V3 http://store.diydrones.com/ArduIMU_V3_p/kt-arduimu-30.htm or https://www.sparkfun.com/products/11055
 //#define GEN_MPU6050 // Generic MPU6050 breakout board. Compatible with GY-521, SEN-11028 and other MPU6050 wich have the MPU6050 AD0 pin connected to GND.
 //#define DFROBOT  //DFROBOT 10DOF SEN-1040 IMU
-#define MPU9250_5611  //MPU-9250 IMU with MS5611 Altimeter from eBay
+//#define MPU9250_5611  //MPU-9250 IMU with MS5611 Altimeter from eBay
 //#define GEN_MPU9150
 //#define GEN_MPU9250  // Use for Invensense MPU-9250 breakout board
 //#define Altimu10  // Pololu AltIMU v10 - 10 DOF IMU - http://www.pololu.com/product/1269
@@ -167,7 +167,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #elif defined(GEN_MPU9150)
   #define FREEIMU_ID "GEN MPU-9150"  
 #elif defined(MPU9250_5611)
-  #define FREEIMU_ID "MPU9150_5611"
+  #define FREEIMU_ID "MPU9250_5611"
 #elif defined(GEN_MPU9250)
   #define FREEIMU_ID "GEN MPU-9250"
 #elif defined(Altimu10)
@@ -232,6 +232,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "Arduino.h"
 #include "calibration.h"
+#include <MovingAvarageFilter.h>
 
 #ifndef CALIBRATION_H
 	#include <EEPROM.h>
@@ -382,6 +383,7 @@ class FreeIMU
 	void setSeaPress(float sea_press_inp);
 	float calcMagHeading(float q0, float q1, float q2, float q3, float bx, float by, float bz);
 	void getQ_simple(float* q);
+	void MotionDetect(float * val);
 	
     #if HAS_MS5611()
       float getBaroAlt();
@@ -480,12 +482,11 @@ class FreeIMU
 	float sampleFreq; // half the sample period expressed in seconds
 	byte deviceType;
 	
-	#define gyroMeasError 3.14159265358979 * (5.0f / 180.0f) 	// gyroscope measurement error in rad/s (shown as 5 deg/s)
-	#define gyroMeasDrift 3.14159265358979 * (0.2f / 180.0f) 	// gyroscope measurement error in rad/s/s (shown as 0.2f deg/s/s)
+	#define gyroMeasError 3.14159265358979 * (.50f / 180.0f) 	// gyroscope measurement error in rad/s (shown as 5 deg/s)
+	#define gyroMeasDrift 3.14159265358979 * (0.02f / 180.0f) 	// gyroscope measurement error in rad/s/s (shown as 0.2f deg/s/s)
 	#define beta1 sqrt(3.0f / 4.0f) * gyroMeasError 			// compute beta
-	#define zeta sqrt(3.0f / 4.0f) * gyroMeasDrift 			// compute zeta
+	#define zeta sqrt(3.0f / 4.0f) * gyroMeasDrift 				// compute zeta
 
-	
   private:
     //void AHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz);
     //void AHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az);
@@ -501,7 +502,7 @@ class FreeIMU
     unsigned long lastUpdate, now; 			// sample period expressed in milliseconds
 	unsigned long lastUpdate1 = 0;
 	unsigned long now1;
-
+	
 	//Madgwick AHRS Gradient Descent 
     volatile float beta;				// algorithm gain
 

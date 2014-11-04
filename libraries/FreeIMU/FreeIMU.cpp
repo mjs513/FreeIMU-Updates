@@ -171,7 +171,7 @@ GNU General Public License for more details.
 
 #include "Arduino.h"
 #include <inttypes.h>
-#include <stdint.h>
+
 //#define DEBUG
 #include "FreeIMU.h"
 
@@ -222,7 +222,7 @@ enum Mscale {
 //Setup accelerometer filter
 butter50hz2_0 mfilter_accx;
 butter50hz2_0 mfilter_accy;
-butter50hz2_0 mfilter_accz;		
+butter50hz2_0 mfilter_accz;
 
 #if HAS_MPU9150() || HAS_MPU9250()
 	//Set up Butterworth Filter for 9150 mag - more noisy than HMC5883L
@@ -230,6 +230,12 @@ butter50hz2_0 mfilter_accz;
 	butter50hz2_0 mfilter_my;
 	butter50hz2_0 mfilter_mz;
 #endif
+
+//Setup Motion Detect Averages
+MovingAvarageFilter accnorm_avg(5);
+MovingAvarageFilter accnorm_test_avg(7);
+MovingAvarageFilter accnorm_var(7);	
+MovingAvarageFilter motion_detect_ma(7);
 
 //Set-up constants for gyro calibration
 uint8_t num_gyros = 1;
@@ -934,7 +940,7 @@ void FreeIMU::getValues(float * values) {
 void FreeIMU::zeroGyro() {
   const int totSamples = nsamples;
   int raw[11];
-  float values[10];
+  float values[11]; 
   float tmpOffsets[] = {0,0,0};
   
   for (int i = 0; i < totSamples; i++){
@@ -1147,9 +1153,12 @@ void FreeIMU::getQ(float * q, float * val) {
 		val[9] = -9999.0f;
 	#else
 		MARGUpdateFilterIMU(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2]);
-		val[9] = -9999.0f;  
+		val[9] = -9999.0f;
+		
 	#endif
   #endif
+  
+  MotionDetect( val );
   
   q[0] = q0;
   q[1] = q1;
@@ -1556,7 +1565,7 @@ void FreeIMU::getQ_simple(float* q)
 {
 	
 	#if HAS_HMC5883L() || HAS_MPU9250()
-		float values[10];
+		float values[11];
 		for(uint8_t i = 0; i<32; i++){
 			getValues(values);
 		}
@@ -1590,6 +1599,99 @@ void FreeIMU::getQ_simple(float* q)
 	  q[3] = q3;
   }
 #endif
+}
+
+void FreeIMU::MotionDetect(float * val) {
+	
+	float gyro[3];
+	float accnorm;
+	int accnorm_test, accnorm_var_test, omegax, omegay, omegaz, omega_test, motionDetect;
+	
+	gyro[0] = val[3] * M_PI/180;
+	gyro[1] = val[4] * M_PI/180;
+	gyro[2] = val[5] * M_PI/180;
+	
+    /*###################################################################
+    #
+    #   acceleration squared euclidean norm analysis
+	#   
+	#   some test values previously used:
+	#       if((accnorm >=0.96) && (accnorm <= 0.99)){
+	#										<= 0.995
+    #
+    ################################################################### */
+    accnorm = (val[0]*val[0]+val[1]*val[1]+val[2]*val[2]);
+    if((accnorm >=0.94) && (accnorm <= 1.03)){  
+        accnorm_test = 0;
+    } else {
+        accnorm_test = 1; }
+    
+	/** take average of 5 to 10 points  **/
+    float accnormavg = accnorm_avg.process(accnorm);
+    float accnormtestavg = accnorm_test_avg.process(accnorm_test);
+
+    /*####################################################################
+    #
+    #   squared norm analysis to determine suddenly changes signal
+    #
+    ##################################################################### */
+    //accnorm_var.process(sq(accnorm-accnorm_avg.getAvg()));
+	// was 0.0005
+    if(accnorm_var.process(sq(accnorm-accnormavg)) < 0.0005) {
+        accnorm_var_test = 0;
+    } else {
+        accnorm_var_test = 1; }
+
+    /*###################################################################
+    #
+    #   angular rate analysis in order to disregard linear acceleration
+    #
+	#   other test values used: 0, 0.00215, 0.00215
+    ################################################################### */
+    if ((gyro[0] >=-0.005) && (gyro[0] <= 0.005)) {
+        omegax = 0;
+    } else {
+        omegax = 1; }
+        
+    if((gyro[1] >= -0.005) && (gyro[1] <= 0.005)) {
+        omegay = 0;
+    } else {
+        omegay = 1; }
+        
+    if((gyro[2] >= -0.005) && (gyro[2] <= 0.005)) {
+        omegaz = 0;
+    } else {
+        omegaz = 1; }
+        
+    if ((omegax+omegay+omegaz) > 0) {
+        omega_test = 1;
+    } else {
+        omega_test = 0; }
+
+
+    /* 
+	###################################################################
+    #
+    # combined movement detector
+    #
+    #################################################################### 
+	*/
+    if ((accnormtestavg + omega_test + accnorm_var_test) > 0) {
+        motionDetect = 1;
+    } else {
+        motionDetect = 0; }
+
+    /* 
+	################################################################## 
+	*/   
+    
+    //motion_detect_ma.process(motionDetect);
+    
+    if(motion_detect_ma.process(motionDetect) > 0.5) {
+		val[11] = 1.0f;
+    } else {
+		val[11] = 0.0f;
+	}
 }
 
 
