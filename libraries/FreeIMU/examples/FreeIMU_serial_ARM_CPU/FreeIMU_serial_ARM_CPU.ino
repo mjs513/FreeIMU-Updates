@@ -2,6 +2,7 @@
 #include <Filter.h>    // Filter library
 #include <Butter.h>    // Butterworth filter
 #include <iCompass.h>
+#include <MovingAvarageFilter.h>
 
 /**
  * FreeIMU library serial communication protocol
@@ -12,7 +13,7 @@
 #include <LSM303.h>
 #include <ITG3200.h>
 #include <bma180.h>
-#include <MS561101BA.h>
+#include <MS561101BA.h> //Comment out for APM 2.5
 #include <BMP085.h>
 #include <I2Cdev.h>
 #include <MPU60X0.h>
@@ -20,7 +21,7 @@
 #include <AK8963.h>
 #include <L3G.h>
 #include <LPS331.h> 
-#include <AP_Baro_MS5611.h>
+//#include <AP_Baro_MS5611.h>  //Uncomment for APM2.5
 
 #include <Wire.h>
 #include <SPI.h>
@@ -47,8 +48,8 @@ float q[4];
 int raw_values[11];
 float ypr[3]; // yaw pitch roll
 char str[128];
-float val[11];
-float val_array[18]; 
+float val[12];
+float val_array[19]; 
 
 // Set the FreeIMU object and LSM303 Compass
 FreeIMU my3IMU = FreeIMU();
@@ -174,7 +175,7 @@ void loop() {
       }
     }
     else if(cmd == 'z') {
-      float val_array[18] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+      float val_array[19] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
       uint8_t count = serial_busy_wait();
       for(uint8_t i=0; i<count; i++) {
         my3IMU.getQ(q, val);
@@ -195,7 +196,8 @@ void loop() {
         val_array[3] = (q[3]);
         //val_array[15] = millis();
         val_array[16] = val[9];
-	
+        val_array[18] = val[11];
+        
         #if HAS_PRESS()
            // with baro
            val_array[17] = val[10];
@@ -209,7 +211,7 @@ void loop() {
            val_array[13] = my3IMU.rt;
         #endif
 
-        serialPrintFloatArr(val_array,18);
+        serialPrintFloatArr(val_array,19);
         //Serial.print('\n');
         
         #if HAS_GPS
@@ -234,7 +236,7 @@ void loop() {
       }
     } 
     else if(cmd == 'a') {
-      float val_array[18] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+      float val_array[19] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
       uint8_t count = serial_busy_wait();
       for(uint8_t i=0; i<count; i++) {
         my3IMU.getQ(q, val);
@@ -255,7 +257,8 @@ void loop() {
 		val_array[3] = kFilters[3].measureRSSI(q[3]);
 		//val_array[15] = millis();
 		val_array[16] = val[9];
-
+        val_array[18] = val[11];
+                
         #if HAS_PRESS() 
            // with baro
            val_array[17] = val[10];
@@ -268,7 +271,7 @@ void loop() {
         #elif HAS_ITG3200()
            val_array[13] = my3IMU.rt;
         #endif
-        serialPrintFloatArr(val_array, 18);
+        serialPrintFloatArr(val_array, 19);
         //Serial.print('\n');
         
         #if HAS_GPS
