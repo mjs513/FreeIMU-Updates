@@ -444,7 +444,7 @@ void FreeIMU::RESET_Q() {
     cbi(PORTD, 1);
   #endif
 
-  #if defined(__AVR_ATmega128) // only valid on AVR, not on 32bit platforms (eg: Arduino 2, Teensy 3.0)
+  #if defined(__AVR_ATmega128) || defined( __AVR_ATmega2560__ ) // only valid on AVR, not on 32bit platforms (eg: Arduino 2, Teensy 3.0)
     if(fastmode) { // switch to 400KHz I2C - eheheh
       TWBR = ((F_CPU / 400000L) - 16) / 2; // see twi_init in Wire/utility/twi.c
     }
@@ -457,6 +457,10 @@ void FreeIMU::RESET_Q() {
         I2C0_F = 0x45;  // Teensy 3.0 at 24 MHz
         I2C0_FLT = 1;
       #endif
+    }
+  #elif defined(__SAM3X8E__) //Arduino Due
+	 if(fastmode) { // switch to 400KHz I2C - eheheh
+      TWBR = ((F_CPU / 400000L) - 16) / 2; 
     }
   #endif
   
@@ -661,6 +665,8 @@ void FreeIMU::RESET_Q() {
 	// load calibration from eeprom
 	calLoad();
   #endif
+  
+  RESET_Q();
   
   //getQ_simple(NULL);
 }

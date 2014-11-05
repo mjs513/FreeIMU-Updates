@@ -130,6 +130,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #define FREEIMU_FREQ "48 MHz" 
 #elif F_CPU == 72000000L
   #define FREEIMU_FREQ "48 MHz" 
+#elif F_CPU == 84000000L
+  #define FREEIMU_FREQ "84 MHz"   
 #else
   #define FREEIMU_FREQ "Not Defined"  
 #endif

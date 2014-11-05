@@ -2,7 +2,10 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Tuesday, Nov 4, 2014
+Wednesday, Nov 5, 2014
+
+11-05-14
+Thanks goes to duguyiqiu for pointing out that the Arduino Due Freq was not printing correctly. As a result I found that the legacy code did not address the I2C bus speed for the Due or the Mega 2560 to 400hz.  This is fixed with this update.
 
 11-04-14
 Minor update. Moved motion detect algorithm to FreeIMU library proper.  Created FreeIMU_cube_Odo_Exp_v3.pde to take motion detect from library.
