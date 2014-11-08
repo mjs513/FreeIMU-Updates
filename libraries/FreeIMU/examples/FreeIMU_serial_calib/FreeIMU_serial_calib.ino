@@ -31,6 +31,7 @@
 #include "FreeIMU.h"
 #include "FilteringScheme.h"
 #include "RunningAverage.h"
+#include <MovingAvarageFilter.h>
 
 #define Has_LSM303 0
 #define HAS_GPS 0

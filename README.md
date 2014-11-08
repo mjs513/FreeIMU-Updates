@@ -2,7 +2,10 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Wednesday, Nov 5, 2014
+Saturday, Nov 8, 2014
+
+11-08-14
+Fixed getQ_simple function to calculate quaternions correctly from yaw, pitch and roll. Modified the function so it can be used to improve convergence when IMU transitions from motion to zero motion.  Updated examples to include moving average filter. Serial sketch serial_ARM_cpu can be used universally and output motion detect to the v3 processing sketch in the experimental folder. Still have to make changes to a couple of the other sketches.
 
 11-05-14
 Thanks goes to duguyiqiu for pointing out that the Arduino Due Freq was not printing correctly. As a result I found that the legacy code did not address the I2C bus speed for the Due or the Mega 2560 to 400hz.  This is fixed with this update.

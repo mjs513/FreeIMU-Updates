@@ -166,6 +166,42 @@ GNU General Public License for more details.
 10-03-14 
 -------- Updated FreeIMU.cpp to allow easier access to change accelerometer/gyro/magneter default
 -------- range settings to match description in wiki page
+10-12-14 
+-------- Updated library for support to APM 2.5 (Arduimu).  This change should also work on the 
+-------- APM 2.6 board as well.  MS5611 SPI library added from Ardupilot library (saved alot of 
+-------- time - thanks guys).  Put back iCompass module for aligned axis.  Had typo - now fixed 
+-------- so put it back in.
+--------
+-------- This SPI code for the MS5611 is based on the example sketch by JP B, "APM 2.6 and 
+-------- MPU6000 gyro - any custom firmware out there for this?" found at
+-------- https://groups.google.com/forum/#!topic/diyrovers/thIohPCNyZA. Also see 
+--------  http://forum.arduino.cc/index.php?PHPSESSID=6mia4mslt5dalc1fi4ad8rl2g1&topic=125623.0
+10-19-14
+-------- Several updates/corrections made to library: Fixed APM 2.5 axis alignment, deleted a 
+-------- 3g library that was not there, more tweaks to beta terms, uploaded missing TinyGPS++ 
+-------- library and moved Baudrate setting to beginning of sketches.
+--------
+-------- Incorporated MPL3115A2 pressure sensor support by Mario Cannistra 
+-------- (https://github.com/mariocannistra) as well as an example using a MPU-9250 
+-------- using the MPL3115A2.
+10-24-14
+-------- Implemented a third version of the Madgwick filter (Gradient Descent). This version 
+-------- is directly from his original paper.  Beta and Zeta have been left at their default 
+-------- values in the paper.
+10-25-14
+-------- Fixed several bugs that would cause the new AHRS filter to crash on compile.
+-------- Jitting is still there and its a lot of fun watching the algorithm work with the 
+-------- default settings for the MPU9250.  Have fun tweaking the settings.
+11-04-14
+-------- Minor update. Moved motion detect algorithm to FreeIMU library proper.  Created 
+-------- FreeIMU_cube_Odo_Exp_v3.pde to take motion detect from library.
+11-05-14
+-------- Thanks goes to duguyiqiu for pointing out that the Arduino Due Freq was not printing 
+-------- correctly. As a result I found that the legacy code did not address the I2C bus speed 
+-------- for the Due or the Mega 2560 to 400hz.  This is fixed with this update.
+11-08-14
+-------- Fixed getQ_simple (q's not correctly identified), added a motion transition test and
+-------- and called getQ_simple to get convergence on yaw faster (used heading)
 
 */
 
@@ -1165,6 +1201,14 @@ void FreeIMU::getQ(float * q, float * val) {
   #endif
   
   MotionDetect( val );
+
+  #if HAS_AXIS_ALIGNED() && IS_9DOM() && not defined(DISABLE_MAGN)
+	if(val[11] - motiondetect_old < 0) {  
+		getQ_simple(q, val);
+	}
+  #endif
+  
+  motiondetect_old = val[11];
   
   q[0] = q0;
   q[1] = q1;
@@ -1567,21 +1611,19 @@ void FreeIMU::setSeaPress(float sea_press_inp) {
 
 }
 
-void FreeIMU::getQ_simple(float* q)
+void FreeIMU::getQ_simple(float * q, float * val)
 {
-	
-	#if HAS_HMC5883L() || HAS_MPU9250()
-		float values[11];
-		for(uint8_t i = 0; i<32; i++){
-			getValues(values);
-		}
+ 
+  float yaw;
+  float pitch = atan2(val[0], sqrt(val[1]*val[1]+val[2]*val[2]));
+  float roll = -atan2(val[1], sqrt(val[0]*val[0]+val[2]*val[2]));
   
-  float pitch = atan2(values[0], sqrt(values[1]*values[1]+values[2]*values[2]));
-  float roll = -atan2(values[1], sqrt(values[0]*values[0]+values[2]*values[2]));
+  yaw = val[9] - MAG_DEC;
   
-  float xh = values[6]*cos(pitch)+values[7]*sin(roll)*sin(pitch)-values[8]*cos(roll)*sin(pitch);
-  float yh = values[7]*cos(roll)+values[8]*sin(roll);
-  float yaw = atan2(yh, xh);
+  if(val[9] > 180.) {	yaw = (yaw - 360.) * M_PI/180;
+   } else {
+    yaw = yaw * M_PI/180;
+   }
   
   float rollOver2 = roll * 0.5f;
   float sinRollOver2 = (float)sin(rollOver2);
@@ -1593,10 +1635,10 @@ void FreeIMU::getQ_simple(float* q)
   float sinYawOver2 = (float)sin(yawOver2);
   float cosYawOver2 = (float)cos(yawOver2);
 
-  q0 = cosYawOver2 * sinPitchOver2 * cosRollOver2 + sinYawOver2 * cosPitchOver2 * sinRollOver2;
-  q1 = sinYawOver2 * cosPitchOver2 * cosRollOver2 - cosYawOver2 * sinPitchOver2 * sinRollOver2;
-  q2 = - cosYawOver2 * cosPitchOver2 * cosRollOver2 - sinYawOver2 * sinPitchOver2 * sinRollOver2;
-  q3 = cosYawOver2 * cosPitchOver2 * sinRollOver2 - sinYawOver2 * sinPitchOver2 * cosRollOver2;
+  q1 = cosYawOver2 * cosPitchOver2 * sinRollOver2 - sinYawOver2 * sinPitchOver2 * cosRollOver2;
+  q0 = cosYawOver2 * cosPitchOver2 * cosRollOver2 + sinYawOver2 * sinPitchOver2 * sinRollOver2;
+  q2 = sinYawOver2 * cosPitchOver2 * cosRollOver2 - cosYawOver2 * sinPitchOver2 * sinRollOver2;
+  q3 = cosYawOver2 * sinPitchOver2 * cosRollOver2 + sinYawOver2 * cosPitchOver2 * sinRollOver2;
   
   if (q!=NULL){
 	  q[0] = q0;
@@ -1604,7 +1646,7 @@ void FreeIMU::getQ_simple(float* q)
 	  q[2] = q2;
 	  q[3] = q3;
   }
-#endif
+
 }
 
 void FreeIMU::MotionDetect(float * val) {

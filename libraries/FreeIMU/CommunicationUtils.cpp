@@ -36,7 +36,6 @@ void writeArr(void * varr, uint8_t arr_length, uint8_t type_bytes) {
 void writeVar(void * val, uint8_t type_bytes) {
   byte * addr=(byte *)(val);
   for(uint8_t i=0; i<type_bytes; i++) { 
-    //Serial1.write(addr[i]);
     Serial.write(addr[i]);
   }
 }

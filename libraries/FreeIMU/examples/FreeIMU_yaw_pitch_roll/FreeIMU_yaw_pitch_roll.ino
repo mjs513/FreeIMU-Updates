@@ -32,7 +32,7 @@
 #include "FreeIMU.h"
 #include "FilteringScheme.h"
 #include "RunningAverage.h"
-
+#include <MovingAvarageFilter.h>
 
 int raw_values[11];
 //char str[512];

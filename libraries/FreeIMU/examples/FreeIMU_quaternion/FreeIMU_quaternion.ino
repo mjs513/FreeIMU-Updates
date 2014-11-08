@@ -27,7 +27,7 @@
 #include "CommunicationUtils.h"
 #include "FreeIMU.h"
 #include "FilteringScheme.h"
-
+#include <MovingAvarageFilter.h>
 
 float q[4], val[11];
 

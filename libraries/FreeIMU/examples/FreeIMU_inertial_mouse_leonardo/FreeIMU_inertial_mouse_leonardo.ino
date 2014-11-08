@@ -24,6 +24,8 @@
 #include <AP_Math_freeimu.h>
 #include <Filter.h>    // Filter library
 #include <Butter.h>    // Butterworth filter
+#include <RunningAverage.h>
+#include <MovingAvarageFilter.h>
 
 //#define DEBUG
 #include "DebugUtils.h"

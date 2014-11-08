@@ -11,6 +11,8 @@
 #include "DebugUtils.h"
 #include "CommunicationUtils.h"
 #include "FreeIMU.h"
+#include <MovingAvarageFilter.h>
+#include "RunningAverage.h"
 #include <Wire.h>
 #include <SPI.h>
 

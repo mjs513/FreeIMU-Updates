@@ -53,6 +53,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "FreeIMU.h"
 #include "FilteringScheme.h"
 #include "RunningAverage.h"
+#include <MovingAvarageFilter.h>
 
 float val[11];
 

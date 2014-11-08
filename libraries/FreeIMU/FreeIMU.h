@@ -384,7 +384,7 @@ class FreeIMU
 	void setTempCalib(int opt_temp_cal);
 	void setSeaPress(float sea_press_inp);
 	float calcMagHeading(float q0, float q1, float q2, float q3, float bx, float by, float bz);
-	void getQ_simple(float* q);
+	void getQ_simple(float* q, float * val);
 	void MotionDetect(float * val);
 	
     #if HAS_MS5611()
@@ -477,12 +477,13 @@ class FreeIMU
     int16_t gyro_off_x, gyro_off_y, gyro_off_z;
     int16_t acc_off_x, acc_off_y, acc_off_z, magn_off_x, magn_off_y, magn_off_z;
     float acc_scale_x, acc_scale_y, acc_scale_z, magn_scale_x, magn_scale_y, magn_scale_z;
-	float val[12];
+	float val[12], motiondetect_old;
 	//int8_t nsamples, temp_break, instability_fix, senTemp_break;
 	int16_t DTemp, temp_corr_on; 
 	float rt, senTemp;
 	float sampleFreq; // half the sample period expressed in seconds
 	byte deviceType;
+	int zeroMotioncount = 0;
 	
 	#define gyroMeasError 3.14159265358979 * (.50f / 180.0f) 	// gyroscope measurement error in rad/s (shown as 5 deg/s)
 	#define gyroMeasDrift 3.14159265358979 * (0.02f / 180.0f) 	// gyroscope measurement error in rad/s/s (shown as 0.2f deg/s/s)
