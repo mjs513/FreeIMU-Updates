@@ -73,8 +73,15 @@ void MPU60X0::initialize() {
 		delay(100);
 		switchSPIEnabled(true);
 		delay(1);
+		setClockSource(MPU60X0_CLOCK_PLL_ZGYRO);
+		delay(1);
+	} else {
+		switchSPIEnabled(false);
+		setClockSource(MPU60X0_CLOCK_PLL_XGYRO);
 	}
-    setClockSource(MPU60X0_CLOCK_PLL_XGYRO);
+    //setClockSource(MPU60X0_CLOCK_PLL_XGYRO);
+	// ArduIMU code states that the z-axis gryo is better so lets give it a try
+	// put it SPI test since only APM 2.5 uses SPI
     setFullScaleGyroRange(MPU60X0_GYRO_FS_250);
     setFullScaleAccelRange(MPU60X0_ACCEL_FS_2);
     setSleepEnabled(false); // thanks to Jack Elston for pointing this one out!
@@ -94,9 +101,10 @@ void MPU60X0::initialize9250() {
 		delay(100);
 		switchSPIEnabled(true);
 		delay(1);
+	} else {
+		switchSPIEnabled(false);
 	}
 	reset();
-	//setAuxVDDIOLevel(1);
 	setStandbyDisable();
 	setSleepEnabled(false); // thanks to Jack Elston for pointing this one out!
     setClockSource(MPU60X0_CLOCK_PLL_XGYRO);

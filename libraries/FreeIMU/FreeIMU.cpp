@@ -202,7 +202,12 @@ GNU General Public License for more details.
 11-08-14
 -------- Fixed getQ_simple (q's not correctly identified), added a motion transition test and
 -------- and called getQ_simple to get convergence on yaw faster (used heading)
-
+11-12-14
+-------- Incorporated central definition of sensor order & signs for MARG calls in FreeIMU.hPa
+-------- getQ_simple now works for all 9dof sensors whether sensors are aligned or not.
+11-13-14
+-------- Setup a gyro_sensitivity variable defined at the same time you set up your gryo
+-------- Made a minor change to the MPU60X0.cpp library for MPU6000 SPI
 */
 
 #include "Arduino.h"
@@ -256,16 +261,21 @@ enum Mscale {
 };
 
 //Setup accelerometer filter
-butter50hz2_0 mfilter_accx;
-butter50hz2_0 mfilter_accy;
-butter50hz2_0 mfilter_accz;
+//butter50hz2_0 mfilter_accx;
+//butter50hz2_0 mfilter_accy;
+//butter50hz2_0 mfilter_accz;
+butter10hz0_3 mfilter_accx;
+butter10hz0_3 mfilter_accy;
+butter10hz0_3 mfilter_accz;
 
-#if HAS_MPU9150() || HAS_MPU9250()
+//#if HAS_MPU9150() || HAS_MPU9250()
 	//Set up Butterworth Filter for 9150 mag - more noisy than HMC5883L
-	butter50hz2_0 mfilter_mx;
-	butter50hz2_0 mfilter_my;
-	butter50hz2_0 mfilter_mz;
-#endif
+	//was butter50hz2_0, new values base on Mario Cannistrà suggestion
+	//he also used same filter on the gryo's which I am not using rigth now
+	butter100hz2_0  mfilter_mx;
+	butter100hz2_0  mfilter_my;
+	butter100hz2_0  mfilter_mz;
+//#endif
 
 //Setup Motion Detect Averages
 MovingAvarageFilter accnorm_avg(5);
@@ -467,7 +477,8 @@ void FreeIMU::RESET_Q() {
 #endif
   delay(5);
 
-    // disable internal pullups of the ATMEGA which Wire enable by default
+  
+  // disable internal pullups of the ATMEGA which Wire enable by default
   #if defined(__AVR_ATmega168__) || defined(__AVR_ATmega8__) || defined(__AVR_ATmega328P__)
     // deactivate internal pull-ups for twi
     // as per note from atmega8 manual pg167
@@ -525,9 +536,19 @@ void FreeIMU::RESET_Q() {
 	delay(1000);
 	// calibrate the ITG3200
 	gyro.zeroCalibrate(128,5);
+	gyro_sensitivity = 14.375f;
   #endif
   
-  
+ /* 
+ * For Invensense MPUs:
+ *
+ * FS_SEL | Full Scale Range   | LSB Sensitivity
+ * -------+--------------------+----------------
+ * 0      | +/- 250 degrees/s  | 131 LSB/deg/s
+ * 1      | +/- 500 degrees/s  | 65.5 LSB/deg/s
+ * 2      | +/- 1000 degrees/s | 32.8 LSB/deg/s
+ * 3      | +/- 2000 degrees/s | 16.4 LSB/deg/s
+ */
   #if HAS_MPU6050()
 	accgyro = MPU60X0(false, accgyro_addr);
 	accgyro.initialize();
@@ -537,6 +558,7 @@ void FreeIMU::RESET_Q() {
 	accgyro.setRate(0x13);			//Sets sample rate to 8000/1+7 = 1000Hz
 	accgyro.setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);
 	accgyro.setFullScaleAccelRange(MPU60X0_ACCEL_FS_2);
+	gyro_sensitivity = 16.4f;
 	delay(5);
 	delay(30);
   #elif HAS_MPU9150()
@@ -553,6 +575,7 @@ void FreeIMU::RESET_Q() {
 	accgyro.setI2CBypassEnabled(1);
 	accgyro.setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);
 	accgyro.setFullScaleAccelRange(MPU60X0_ACCEL_FS_2);
+	gyro_sensitivity = 16.4f;
 	delay(100);
 	//initialize magnetometer
 	mag = AK8975(false, AK8975_DEFAULT_ADDRESS);
@@ -566,6 +589,7 @@ void FreeIMU::RESET_Q() {
 	accgyro.setI2CBypassEnabled(1);
 	accgyro.setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);
 	accgyro.setFullScaleAccelRange(MPU60X0_ACCEL_FS_2);
+	gyro_sensitivity = 16.4f;
 	delay(100);
 	//initialize magnetometer
 	mag = AK8963(false, AK8963_DEFAULT_ADDRESS);
@@ -574,8 +598,11 @@ void FreeIMU::RESET_Q() {
   #elif HAS_MPU6000()
 	accgyro = MPU60X0(true, accgyro_addr);
 	accgyro.initialize();
+	accgyro.setRate(19);
 	accgyro.setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);
 	accgyro.setFullScaleAccelRange(MPU60X0_ACCEL_FS_2);
+	accgyro.setDLPFMode(MPU60X0_DLPF_BW_20); 
+	gyro_sensitivity = 16.4f;
 	delay(5);
   #endif 
   
@@ -624,11 +651,12 @@ void FreeIMU::RESET_Q() {
   #if HAS_L3D20()
 	gyro.init();
 	//gyro.enableDefault();
-	//						Sensitivity
+	//					Sensitivity
 	//+/-245:        0x00	8.75	
 	//+/-500:        0x10	17.5
 	//+/- 2000:      0x20	70
-	gyro.writeReg(0x23, 0x20);  
+	gyro.writeReg(0x23, 0x20);
+	gyro_sensitivity = 70.0f
   #endif
   
   #if HAS_LSM303()
@@ -701,10 +729,11 @@ void FreeIMU::RESET_Q() {
 	// load calibration from eeprom
 	calLoad();
   #endif
+
+
   
   RESET_Q();
-  
-  //getQ_simple(NULL);
+
 }
 
 #ifndef CALIBRATION_H
@@ -834,6 +863,7 @@ void FreeIMU::getRawValues(int * raw_values) {
 void FreeIMU::getValues(float * values) { 
 
   float acgyro_corr[9] = {0.,0.,0.,0.,0.,0.,0.,0.,0.};
+  float values_cal[9] = {0.,0.,0.,0.,0.,0.,0.,0.,0.};
   uint8_t i;
 
   #if HAS_ITG3200()  //assumes adxl3345
@@ -843,7 +873,7 @@ void FreeIMU::getValues(float * values) {
     accval[1] = mfilter_accy.filter((float) accval[1]);
     accval[2] = mfilter_accz.filter((float) accval[2]);
 	
-    gyro.readGyro(&values[3]);	
+    gyro.readGyro(&values_cal[3]);	
 	gyro.readTemp(&senTemp);
 	if(temp_corr_on == 1) {
 		if(senTemp < senTemp_break) {
@@ -857,33 +887,33 @@ void FreeIMU::getValues(float * values) {
 		}
 	}
 
-	values[0] = (float) accval[0] - acgyro_corr[0];
-	values[1] = (float) accval[1] - acgyro_corr[1];
-	values[2] = (float) accval[2] - acgyro_corr[2];
+	values_cal[0] = (float) accval[0] - acgyro_corr[0];
+	values_cal[1] = (float) accval[1] - acgyro_corr[1];
+	values_cal[2] = (float) accval[2] - acgyro_corr[2];
 		
-	values[3] = (values[3] - gyro_off_x)/14.375f;
-	values[4] = (values[4] - gyro_off_y)/14.375f;
-	values[5] = (values[5] - gyro_off_z)/14.375f;
+	values_cal[3] = (values_cal[3] - gyro_off_x)/gyro_sensitivity;
+	values_cal[4] = (values_cal[4] - gyro_off_y)/gyro_sensitivity;
+	values_cal[5] = (values_cal[5] - gyro_off_z)/gyro_sensitivity;
 
   #elif HAS_ALTIMU10()
 	gyro.read();
 	compass.read();
-	values[0] = (float) compass.a.x;
-	values[1] = (float) compass.a.y;
-	values[2] = (float) compass.a.z;
+	values_cal[0] = (float) compass.a.x;
+	values_cal[1] = (float) compass.a.y;
+	values_cal[2] = (float) compass.a.z;
 	//values[0] = mfilter_accx.filter((float) compass.a.x);
 	//values[1] = mfilter_accy.filter((float) compass.a.y);
 	//values[2] = mfilter_accz.filter((float) compass.a.z);	
-	values[3] = (float) gyro.g.x;
-	values[4] = (float) gyro.g.y;
-	values[5] = (float) gyro.g.z;
-    values[6] = (float) compass.m.x;
-    values[7] = (float) compass.m.y; 
-    values[8] = (float) compass.m.z;
+	values_cal[3] = (float) gyro.g.x;
+	values_cal[4] = (float) gyro.g.y;
+	values_cal[5] = (float) gyro.g.z;
+    values_cal[6] = (float) compass.m.x;
+    values_cal[7] = (float) compass.m.y; 
+    values_cal[8] = (float) compass.m.z;
 	
-	values[3] = (values[3] - gyro_off_x) / 70.0f;  //Sensitivity set at 70 for +/-2000 deg/sec, L3GD20H
-	values[4] = (values[4] - gyro_off_y) / 70.0f;
-	values[5] = (values[5] - gyro_off_z) / 70.0f;
+	values_cal[3] = (values_cal[3] - gyro_off_x) / gyro_sensitivity;  //Sensitivity set at 70 for +/-2000 deg/sec, L3GD20H
+	values_cal[4] = (values_cal[4] - gyro_off_y) / gyro_sensitivity;
+	values_cal[5] = (values_cal[5] - gyro_off_z) / gyro_sensitivity;
 	
   #else  // MPU6050
     int16_t accgyroval[9];
@@ -898,9 +928,9 @@ void FreeIMU::getValues(float * values) {
 		accgyroval[1] = mfilter_accy.filter((float) accgyroval[1]);
 		accgyroval[2] = mfilter_accz.filter((float) accgyroval[2]);
 		
-		values[6] = mfilter_mx.filter((float) accgyroval[6]);
-		values[7] = mfilter_my.filter((float) accgyroval[7]);
-		values[8] = mfilter_mz.filter((float) accgyroval[8]); 
+		values_cal[6] = mfilter_mx.filter((float) accgyroval[6]);
+		values_cal[7] = mfilter_my.filter((float) accgyroval[7]);
+		values_cal[8] = mfilter_mz.filter((float) accgyroval[8]); 
 
 	#else
 		accgyro.getMotion6(&accgyroval[0], &accgyroval[1], &accgyroval[2], 
@@ -927,23 +957,23 @@ void FreeIMU::getValues(float * values) {
 		//accgyroval[4] = accgyroval[4] - acgyro_corr[4];
 		//accgyroval[5] = accgyroval[5] - acgyro_corr[5];
 		
-		values[3] = (float) accgyroval[3] - acgyro_corr[3];
-		values[4] = (float) accgyroval[4] - acgyro_corr[4];
-		values[5] = (float) accgyroval[5] - acgyro_corr[5];
+		values_cal[3] = (float) accgyroval[3] - acgyro_corr[3];
+		values_cal[4] = (float) accgyroval[4] - acgyro_corr[4];
+		values_cal[5] = (float) accgyroval[5] - acgyro_corr[5];
 		}
 	  else {
-		values[3] = (float) accgyroval[3] - gyro_off_x;
-		values[4] = (float) accgyroval[4] - gyro_off_y;
-		values[5] = (float) accgyroval[5] - gyro_off_z;
+		values_cal[3] = (float) accgyroval[3] - gyro_off_x;
+		values_cal[4] = (float) accgyroval[4] - gyro_off_y;
+		values_cal[5] = (float) accgyroval[5] - gyro_off_z;
 	  }
 	  
     for( i = 0; i<6; i++) {
       if( i < 3 ) {
-        values[i] = (float) accgyroval[i] - acgyro_corr[i];
+        values_cal[i] = (float) accgyroval[i] - acgyro_corr[i];
       }
       else {
         //values[i] = ((float) accgyroval[i] - acgyro_corr[i])/ 16.4f; // NOTE: this depends on the sensitivity chosen
-		values[i] = values[i] / 16.4f;   //for 6050 etc
+		values_cal[i] = values_cal[i] / gyro_sensitivity;   //for 6050 etc
 	  }
     }	
   #endif
@@ -951,28 +981,32 @@ void FreeIMU::getValues(float * values) {
   
   #warning Accelerometer calibration active: have you calibrated your device?
   // remove offsets and scale accelerometer (calibration)
-  values[0] = (values[0] - acc_off_x) / acc_scale_x;
-  values[1] = (values[1] - acc_off_y) / acc_scale_y;
-  values[2] = (values[2] - acc_off_z) / acc_scale_z;
+  values_cal[0] = (values_cal[0] - acc_off_x) / acc_scale_x;
+  values_cal[1] = (values_cal[1] - acc_off_y) / acc_scale_y;
+  values_cal[2] = (values_cal[2] - acc_off_z) / acc_scale_z;
   
   #if HAS_HMC5883L()
-    magn.getValues(&values[6]);
+    magn.getValues(&values_cal[6]);
   #endif
   
   #if HAS_HMC5883L() || HAS_MPU9150() || HAS_MPU9250() || HAS_LSM303()
     // calibration
 	if(temp_corr_on == 1) {
-		values[6] = (values[6] - acgyro_corr[6] - magn_off_x) / magn_scale_x;
-		values[7] = (values[7] - acgyro_corr[7] - magn_off_y) / magn_scale_y;
-		values[8] = (values[8] - acgyro_corr[8] - magn_off_z) / magn_scale_z;
+		values_cal[6] = (values_cal[6] - acgyro_corr[6] - magn_off_x) / magn_scale_x;
+		values_cal[7] = (values_cal[7] - acgyro_corr[7] - magn_off_y) / magn_scale_y;
+		values_cal[8] = (values_cal[8] - acgyro_corr[8] - magn_off_z) / magn_scale_z;
 	}	
 	else {
 		#warning Magnetometer calibration active: have you calibrated your device?
-		values[6] = (values[6] - magn_off_x) / magn_scale_x;
-		values[7] = (values[7] - magn_off_y) / magn_scale_y;
-		values[8] = (values[8] - magn_off_z) / magn_scale_z;	
+		values_cal[6] = (values_cal[6] - magn_off_x) / magn_scale_x;
+		values_cal[7] = (values_cal[7] - magn_off_y) / magn_scale_y;
+		values_cal[8] = (values_cal[8] - magn_off_z) / magn_scale_z;	
 	}
   #endif
+  
+  for(int i = 0; i < 9; i++) {
+	values[i] = sensor_sign[i] * values_cal[sensor_order[i]];
+  }
 }
 
 
@@ -1116,93 +1150,31 @@ void FreeIMU::getQ(float * q, float * val) {
   sampleFreq = 1.0 / ((now - lastUpdate) / 1000000.0);
   lastUpdate = now;
   
+  // Set up call to the appropriate filter using the axes alignment information
   // gyro values are expressed in deg/sec, the * M_PI/180 will convert it to radians/sec
   #if IS_9DOM() && not defined(DISABLE_MAGN)
-   #if MARG == 0
-		#if HAS_AXIS_ALIGNED()		
-			AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
-			val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[6], val[7], val[8]);
-			//val[9] = calcMagHeading( q0,  q1,  q2,  q3, val[6], val[7], val[8]);
-		#elif defined(SEN_10724)
-			AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[7], -val[6], val[8]);
-			val[9] = calcMagHeading( q0,  q1,  q2,  q3, val[7], -val[6], val[8]);
-		#elif defined(ARDUIMU_v3) || defined(APM_2_5)
-			AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], -val[6], -val[7], val[8]);
-			//val[9] = calcMagHeading( q0,  q1,  q2,  q3, -val[6], -val[7], val[8]);  
-			val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], -val[6], -val[7], val[8]);
-		#elif defined(GEN_MPU9150) || defined(MPU9250_5611) || defined(GEN_MPU9250)
-			AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[7], val[6], -val[8]);
-			//val[9] = calcMagHeading( q0,  q1,  q2, q3, val[7], val[6], val[8]); 
-			val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[7], val[6], -val[8]);
-		#elif defined(APM_2_5)	
-			MadgwickAHRSupdate(val[4] * M_PI/180, -val[3] * M_PI/180, val[5] * M_PI/180, val[1], -val[0], val[2], -val[7], val[6], val[8]);
-			val[9] = maghead.iheading(1, 0, 0, val[1], -val[0], val[2], -val[7], val[6], val[8]);
-		#endif
+	#if MARG == 0
+		AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
+	#elif MARG == 1
+		MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
+	#elif MARG == 3	
+		MARGUpdateFilter(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
 	#endif
-	
-	#if MARG == 1
-		#if HAS_AXIS_ALIGNED()		
-			MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
-			val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[6], val[7], val[8]);
-			//val[9] = calcMagHeading( q0,  q1,  q2,  q3, val[6], val[7], val[8]);
-			//val[9] = calcMagHeading( q0,  q1,  q2,  q3, val[6], val[7], val[8]);
-		#elif defined(SEN_10724)
-			MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[7], -val[6], val[8]);
-			val[9] = calcMagHeading( q0,  q1,  q2,  q3, val[7], -val[6], val[8]);
-		#elif defined(ARDUIMU_v3) 
-			MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], -val[6], -val[7], val[8]);
-			//val[9] = calcMagHeading( q0,  q1,  q2,  q3, -val[6], -val[7], val[8]); 
-			val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], -val[6], -val[7], val[8]);
-		#elif defined(GEN_MPU9150) || defined(MPU9250_5611) || defined(GEN_MPU9250) || defined(Mario)
-			MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[7], val[6], -val[8]);
-			//val[9] = calcMagHeading( q0,  q1,  q2, q3, val[7], val[6], val[8]); 
-			val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[7], val[6], -val[8]);
-		#elif defined(APM_2_5)	
-			MadgwickAHRSupdate(val[4] * M_PI/180, -val[3] * M_PI/180, val[5] * M_PI/180, val[1], -val[0], val[2], -val[7], val[6], val[8]);
-			val[9] = maghead.iheading(1, 0, 0, val[1], -val[0], val[2], -val[7], val[6], val[8]);
-		#endif
-	#endif
-
-	#if MARG == 3
-		#if HAS_AXIS_ALIGNED()		
-			MARGUpdateFilter(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
-			val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[6], val[7], val[8]);
-			//val[9] = calcMagHeading( q0,  q1,  q2,  q3, val[6], val[7], val[8]);
-			//val[9] = calcMagHeading( q0,  q1,  q2,  q3, val[6], val[7], val[8]);
-		#elif defined(SEN_10724)
-			MARGUpdateFilter(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[7], -val[6], val[8]);
-			val[9] = calcMagHeading( q0,  q1,  q2,  q3, val[7], -val[6], val[8]);
-		#elif defined(ARDUIMU_v3) 
-			MARGUpdateFilter(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], -val[6], -val[7], val[8]);
-			//val[9] = calcMagHeading( q0,  q1,  q2,  q3, -val[6], -val[7], val[8]); 
-			val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], -val[6], -val[7], val[8]);
-		#elif defined(GEN_MPU9150) || defined(MPU9250_5611) || defined(GEN_MPU9250) || defined(Mario)
-			MARGUpdateFilter(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[7], val[6], -val[8]);
-			//val[9] = calcMagHeading( q0,  q1,  q2, q3, val[7], val[6], val[8]); 
-			val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[7], val[6], -val[8]);
-		#elif defined(APM_2_5)	
-			MARGUpdateFilter(val[4] * M_PI/180, -val[3] * M_PI/180, val[5] * M_PI/180, val[1], -val[0], val[2], -val[7], val[6], val[8]);
-			val[9] = maghead.iheading(1, 0, 0, val[1], -val[0], val[2], -val[7], val[6], val[8]);
-		#endif
-	#endif
-	
+	val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[6], val[7], val[8]);
   #else
-	#if(MARG == 0)
+	#if MARG == 0
 		AHRSupdateIMU(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2]);
-		val[9] = -9999.0f;
-	#elif(MARG == 1)
+	#elif MARG == 1
 		MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], 0, 0, 0);
-		val[9] = -9999.0f;
 	#else
 		MARGUpdateFilterIMU(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2]);
-		val[9] = -9999.0f;
-		
 	#endif
+	val[9] = -9999.0f;
   #endif
   
   MotionDetect( val );
 
-  #if HAS_AXIS_ALIGNED() && IS_9DOM() && not defined(DISABLE_MAGN)
+  #if IS_9DOM() && not defined(DISABLE_MAGN)
 	if(val[11] - motiondetect_old < 0) {  
 		getQ_simple(q, val);
 	}

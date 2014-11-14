@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define FREEIMU_v035
 //#define FREEIMU_v035_MS
 //#define FREEIMU_v035_BMP
-#define FREEIMU_v04
+//#define FREEIMU_v04
 
 // 3rd party boards. Please consider donating or buying a FreeIMU board to support this library development.
 //#define SEN_10121 //IMU Digital Combo Board - 6 Degrees of Freedom ITG3200/ADXL345 SEN-10121 http://www.sparkfun.com/products/10121
@@ -48,7 +48,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define GY_88  //GY-88 Sensor Board from eBay
 //#define GY_87  //GY-87 Sensor Board from eBay, NOTE: Pressusre sensor is BMP180 but BMP085 library should work
 //#define Mario   // MPU-9150 plus Altitude/Pressure Sensor Breakout - MPL3115A2  https://www.sparkfun.com/products/11084
-//#define APM_2_5  //  APM 2.5.2 (EBAY)
+#define APM_2_5  //  APM 2.5.2 (EBAY)
 
 //#define DISABLE_MAGN // Uncomment this line to disable the magnetometer in the sensor fusion algorithm
 
@@ -113,9 +113,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #define nsamples 75
   #define instability_fix 1
 
-// ***********************************************
-// *** No configuration needed below this line ***
-// ***********************************************
+// ****************************************************
+// *** No configuration needed below this line      ***
+// *** Unless you are defining a new IMU            ***
+// ***                                              ***
+// *** Define Marg= 3 factors: go to line 491       ***
+// *** Define IMU Axis Alignment: go to line 500    ***
+// ****************************************************
 #define FREEIMU_LIB_VERSION "DEV"
 
 #define FREEIMU_DEVELOPER "Fabio Varesano - varesano.net"
@@ -137,7 +141,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 
-// board IDs
+// define board IDs
 #if defined(FREEIMU_v01)
   #define FREEIMU_ID "FreeIMU v0.1"
 #elif defined(FREEIMU_v02)
@@ -184,7 +188,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #define FREEIMU_ID "MPU-9150 plus MPL3115A2" 
 #endif
 
-
+// define imu sensors
 #define HAS_ITG3200() (defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) \
 					  || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) \
 					  || defined(FREEIMU_v035_BMP) || defined(SEN_10121) || defined(SEN_10736) \
@@ -231,7 +235,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 							|| defined(SEN_10736) || defined(GY_87) )
 
 #include <Wire.h>
-
 #include "Arduino.h"
 #include "calibration.h"
 #include <MovingAvarageFilter.h>
@@ -480,16 +483,44 @@ class FreeIMU
 	float val[12], motiondetect_old;
 	//int8_t nsamples, temp_break, instability_fix, senTemp_break;
 	int16_t DTemp, temp_corr_on; 
-	float rt, senTemp;
+	float rt, senTemp, gyro_sensitivity;
 	float sampleFreq; // half the sample period expressed in seconds
 	byte deviceType;
 	int zeroMotioncount = 0;
 	
+	// --------------------------------------------------------------------
+	// Define Marg = 3 factors here
+	// --------------------------------------------------------------------
 	#define gyroMeasError 3.14159265358979 * (.50f / 180.0f) 	// gyroscope measurement error in rad/s (shown as 5 deg/s)
 	#define gyroMeasDrift 3.14159265358979 * (0.02f / 180.0f) 	// gyroscope measurement error in rad/s/s (shown as 0.2f deg/s/s)
 	#define beta1 sqrt(3.0f / 4.0f) * gyroMeasError 			// compute beta
 	#define zeta sqrt(3.0f / 4.0f) * gyroMeasDrift 				// compute zeta
 
+	// --------------------------------------------------------------------
+	// Define IMU Axis Alignment here
+	// --------------------------------------------------------------------	
+	#if HAS_AXIS_ALIGNED()
+		//accx, accy, accz, gyrox, gyroy, gyroz, magx, magy, magz
+		int sensor_order[9] = {0,1,2,3,4,5,6,7,8};
+		int sensor_sign[9] = {1,1,1,1,1,1,1,1,1};
+	#elif defined(SEN_10724)
+		int sensor_order[9] = {0,1,2,3,4,5,7,6,8};
+		int sensor_sign[9] = {1,1,1,1,1,1,1,-1,1};	
+	#elif defined(ARDUIMU_v3)
+		int sensor_order[9] = {0,1,2,3,4,5,6,7,8};
+		int sensor_sign[9] = {1,1,1,1,1,1,-1,-1,1};	
+	#elif defined(GEN_MPU9150) || defined(MPU9250_5611) || defined(GEN_MPU9250)
+		int sensor_order[9] = {0,1,2,3,4,5,7,6,8};
+		int sensor_sign[9] = {1,1,1,1,1,1,1,-1};	
+	#elif defined(APM_2_5)	
+		int sensor_order[9] = {1,0,2,3,4,5,7,6,8};
+		int sensor_sign[9] = {1,-1,1,1,1,1,-1,1,1};
+	#endif 	
+
+	// --------------------------------------------------------------------
+	// No further changes below this point
+	// --------------------------------------------------------------------
+	
   private:
     //void AHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz);
     //void AHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az);
@@ -514,7 +545,7 @@ class FreeIMU
 	float SEq_1 = 1, SEq_2 = 0, SEq_3 = 0, SEq_4 = 0; 	// estimated orientation quaternion elements with initial conditions
 	float b_x = 1, b_z = 0; 				// reference direction of flux in earth frame
 	float w_bx = 0, w_by = 0, w_bz = 0; // estimate gyroscope biases error
-	
+
 	#if(MARG == 0)
 		void AHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz);
 		void AHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az);

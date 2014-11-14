@@ -2,7 +2,12 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Saturday, Nov 8, 2014
+Friday, Nov 13, 2014
+
+11-13-14
+Added gyro_sensitivity as a variable to be defined in the sensors settings area of the FreeIMU.cpp file.
+
+Re-worked code for defining sensor alignment so it is defined once in the FreeIMU.h file. Allows getQ_simple function to be used for all 9dof IMUs. Also simplies calling of AHRS functions. 
 
 11-08-14
 Fixed getQ_simple function to calculate quaternions correctly from yaw, pitch and roll. Modified the function so it can be used to improve convergence when IMU transitions from motion to zero motion.  Updated examples to include moving average filter. Serial sketch serial_ARM_cpu can be used universally and output motion detect to the v3 processing sketch in the experimental folder. Still have to make changes to a couple of the other sketches.
