@@ -11,7 +11,8 @@
 #include "LowPassFilter.h"
 #include "ModeFilter.h"
 #include "Butter.h"
-
+#include "MovingAvarageFilter.h"
+#include "RunningAverage.h"
 
 #endif //__FILTER_H__
 

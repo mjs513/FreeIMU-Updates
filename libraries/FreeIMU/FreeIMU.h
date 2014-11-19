@@ -513,8 +513,8 @@ class FreeIMU
 		int sensor_order[9] = {0,1,2,3,4,5,7,6,8};
 		int sensor_sign[9] = {1,1,1,1,1,1,1,-1};	
 	#elif defined(APM_2_5)	
-		int sensor_order[9] = {1,0,2,3,4,5,7,6,8};
-		int sensor_sign[9] = {1,-1,1,1,1,1,-1,1,1};
+		int sensor_order[9] = {1,0,2,4,3,5,7,6,8};
+		int sensor_sign[9] = {1,-1,1,1,-1,1,-1,1,1};
 	#endif 	
 
 	// --------------------------------------------------------------------

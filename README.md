@@ -2,7 +2,12 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Friday, Nov 13, 2014
+Wednesday, Nov 19, 2014
+
+11-19-14
+Combined running average filter and simple moving average filter into the AP_Filter library.
+
+Added a capability to the Arduino serial sketch to load a permanent GPS config file from a attached I2C eeprom.  For my setup default baud is 57600. 
 
 11-13-14
 Added gyro_sensitivity as a variable to be defined in the sensors settings area of the FreeIMU.cpp file.

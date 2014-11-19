@@ -1166,7 +1166,7 @@ void FreeIMU::getQ(float * q, float * val) {
 		AHRSupdateIMU(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2]);
 	#elif MARG == 1
 		MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], 0, 0, 0);
-	#else
+	#else  MARG == 3
 		MARGUpdateFilterIMU(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2]);
 	#endif
 	val[9] = -9999.0f;
