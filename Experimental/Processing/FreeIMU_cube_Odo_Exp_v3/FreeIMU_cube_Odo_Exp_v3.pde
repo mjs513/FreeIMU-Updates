@@ -54,7 +54,7 @@ Serial myPort;  // Create object from Serial class
 final String serialPort = "COM3"; // replace this with your serial port. On windows you will need something like "COM1".
 int BaudRate=57600;
 String File_Name = "IMU9250-MARG1.txt";
-int HAS_GPS = 0;
+int HAS_GPS = 1;
 
 //setting a 1D Kalman filter
 //uncomment if you have removed complimentary altitude filter from library
@@ -498,18 +498,18 @@ void serialEvent(Serial p) {
         
       //read GPS
       if(HAS_GPS == 1){
-          hdop = decodeFloat(inputStringArr[18]);
-          hdop_val = decodeFloat(inputStringArr[19]);
-          lat = decodeFloat(inputStringArr[20]);
-          longt = decodeFloat(inputStringArr[21]);
-          loc_val = decodeFloat(inputStringArr[22]);
-          gpsalt = decodeFloat(inputStringArr[23]);
-          gpsalt_val = decodeFloat(inputStringArr[24]);
-          cog = decodeFloat(inputStringArr[25]);
-          cog_val = decodeFloat(inputStringArr[26]);
-          sog = decodeFloat(inputStringArr[27]);
-          sog_val = decodeFloat(inputStringArr[28]);
-          gpschars = decodeFloat(inputStringArr[29]);    
+          hdop = decodeFloat(inputStringArr[19]);
+          hdop_val = decodeFloat(inputStringArr[20]);
+          lat = decodeFloat(inputStringArr[21]);
+          longt = decodeFloat(inputStringArr[22]);
+          loc_val = decodeFloat(inputStringArr[23]);
+          gpsalt = decodeFloat(inputStringArr[24]);
+          gpsalt_val = decodeFloat(inputStringArr[25]);
+          cog = decodeFloat(inputStringArr[26]);
+          cog_val = decodeFloat(inputStringArr[27]);
+          sog = decodeFloat(inputStringArr[28]);
+          sog_val = decodeFloat(inputStringArr[29]);
+          gpschars = decodeFloat(inputStringArr[30]);    
        }        
       }
     }
