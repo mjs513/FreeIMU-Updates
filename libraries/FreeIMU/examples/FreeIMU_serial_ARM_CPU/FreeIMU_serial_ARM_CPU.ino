@@ -39,7 +39,8 @@
 
 #define HAS_GPS 0
 #define BaudRate 57600
-static const unsigned long GPSBaud = 38400;
+static const unsigned long GPSBaud = 57600;
+#define gpsSerial Serial1
 
 KalmanFilter kFilters[4];
 int k_index = 3;
@@ -58,7 +59,10 @@ FreeIMU my3IMU = FreeIMU();
   #include <TinyGPS++.h>
   // The TinyGPS++ object
   TinyGPSPlus gps;
-  // The serial connection to the GPS device
+  
+  // Setup GPS Serial and load config from i2c eeprom
+  boolean gpsStatus[] = {false, false, false, false, false, false, false};
+  unsigned long start;
 #endif
 
 //The command from the PC
@@ -83,8 +87,18 @@ void setup() {
   my3IMU.init(true);
 
   #if HAS_GPS
-	// For Galileo,DUE and Teensy use Serial port
-    Serial1.begin(GPSBaud);
+	// For Galileo,DUE and Teensy use Serial port 1
+	//Load configuration from i2c eeprom - this assumes you have saved
+	//a default configuration to the eeprom or permanent storage.
+	//If you do not have this setup you will have to remove the
+	//following lines and the additional code at the end of the sketch.
+    gpsSerial.begin(9600);	
+	//Settings Array
+	//Code based on http://playground.arduino.cc/UBlox/GPS
+	byte settingsArray[] = {0x04}; // Not really used for this example
+	configureUblox(settingsArray);
+	//Retain this line
+	gpsSerial.begin(GPSBaud); 
   #endif
   
   // LED
@@ -409,8 +423,107 @@ static void smartDelay(unsigned long ms)
   unsigned long start = millis();
   do 
   {
-    while (Serial1.available())
-      gps.encode(Serial1.read());
+    while (gpsSerial.available())
+      gps.encode(gpsSerial.read());
   } while (millis() - start < ms);
   #endif
 }
+
+#if HAS_GPS
+
+	void configureUblox(byte *settingsArrayPointer) {
+	byte gpsSetSuccess = 0;
+	//Serial.println("Configuring u-Blox GPS initial state...");
+
+	//Generate the configuration string for loading from i2c eeprom
+	byte setCFG[] = {0xB5, 0x62, 0x06, 0x09, 0x0D, 0x00, 0x00, 0x00, 0x00, 0x00, 
+	0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0x04, 0x1E,
+	0xB4 };
+	calcChecksum(&setCFG[2], sizeof(setCFG) - 4);
+
+	delay(2500);
+
+	gpsSetSuccess = 0;
+	while(gpsSetSuccess < 3) {
+		//Serial.print("Loading permanent configuration... ");
+		sendUBX(&setCFG[0], sizeof(setCFG));  //Send UBX Packet
+		gpsSetSuccess += getUBX_ACK(&setCFG[2]); 
+               //Passes Class ID and Message ID to the ACK Receive function      
+		if (gpsSetSuccess == 10) gpsStatus[1] = true;
+		if (gpsSetSuccess == 5 | gpsSetSuccess == 6) gpsSetSuccess -= 4;
+	}
+	if (gpsSetSuccess == 3) Serial.println("Config update failed.");
+	gpsSetSuccess = 0;
+	}
+
+	void calcChecksum(byte *checksumPayload, byte payloadSize) {
+		byte CK_A = 0, CK_B = 0;
+		for (int i = 0; i < payloadSize ;i++) {
+			CK_A = CK_A + *checksumPayload;
+			CK_B = CK_B + CK_A;
+			checksumPayload++;
+		}
+		*checksumPayload = CK_A;
+		checksumPayload++;
+		*checksumPayload = CK_B;
+	}
+
+	void sendUBX(byte *UBXmsg, byte msgLength) {
+		for(int i = 0; i < msgLength; i++) {
+			gpsSerial.write(UBXmsg[i]);
+			gpsSerial.flush();
+		}
+		gpsSerial.println();
+		gpsSerial.flush();
+	}
+
+
+	byte getUBX_ACK(byte *msgID) {
+		byte CK_A = 0, CK_B = 0;
+		byte incoming_char;
+		boolean headerReceived = false;
+		unsigned long ackWait = millis();
+		byte ackPacket[10] = {0xB5, 0x62, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+		int i = 0;
+		while (1) {
+			if (gpsSerial.available()) {
+				incoming_char = gpsSerial.read();
+				if (incoming_char == ackPacket[i]) {
+					i++;
+				}
+			else if (i > 2) {
+				ackPacket[i] = incoming_char;
+				i++;
+			}
+		}
+		if (i > 9) break;
+		if ((millis() - ackWait) > 1500) {
+			//Serial.println("ACK Timeout");
+			return 5;
+			}
+		if (i == 4 && ackPacket[3] == 0x00) {
+			//Serial.println("NAK Received");
+			return 1;
+			}
+		}
+
+		for (i = 2; i < 8 ;i++) {
+			CK_A = CK_A + ackPacket[i];
+			CK_B = CK_B + CK_A;
+		}
+  
+		if (msgID[0] == ackPacket[6] && msgID[1] == ackPacket[7] && CK_A == ackPacket[8] && CK_B == ackPacket[9]) {
+			//Serial.println("Success!");
+			//Serial.print("ACK Received! ");
+			//printHex(ackPacket, sizeof(ackPacket));
+			return 10;
+		}
+		else {
+			//Serial.print("ACK Checksum Failure: ");
+			//printHex(ackPacket, sizeof(ackPacket));
+			delay(1000);
+			return 1;
+		}
+	}
+
+#endif
