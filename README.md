@@ -2,7 +2,10 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Wednesday, Nov 19, 2014
+Sunday, Dec 28, 2014
+
+11-28-14
+Have incorporated the XBee-Arduino library by Andrew Rapp into an example sketch (FreeIMU_serial_ARM_CPU_XBEE.ino).  Did make a modification to it so that it would send packets without escapes.  So please use the one in the library folder otherwise it will not work.  Incorporated the Digi Xbee Java Library into the processing GUI (FreeIMU_cube_Odo_Exp_Digi2) in the Experimental folder.  This code has only been tested with the Mega with XBee 900HPs.
 
 11-19-14
 Combined running average filter and simple moving average filter into the AP_Filter library.
