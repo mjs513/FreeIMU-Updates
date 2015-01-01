@@ -2,7 +2,10 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Sunday, Dec 28, 2014
+Thursday, Jan 1, 2015
+
+01-01-15
+Merged pull request by Mauro Mombelli who fixed AHRS.h for readability and merged ARHSupdateIMU with AHRSupdate.  Updated FreeIMU.h accordingly.
 
 11-28-14
 Have incorporated the XBee-Arduino library by Andrew Rapp into an example sketch (FreeIMU_serial_ARM_CPU_XBEE.ino).  Did make a modification to it so that it would send packets without escapes.  So please use the one in the library folder otherwise it will not work.  Incorporated the Digi Xbee Java Library into the processing GUI (FreeIMU_cube_Odo_Exp_Digi2) in the Experimental folder.  This code has only been tested with the Mega with XBee 900HPs.

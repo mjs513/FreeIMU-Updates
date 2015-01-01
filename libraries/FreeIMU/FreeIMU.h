@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define FREEIMU_v035
 //#define FREEIMU_v035_MS
 //#define FREEIMU_v035_BMP
-//#define FREEIMU_v04
+#define FREEIMU_v04
 
 // 3rd party boards. Please consider donating or buying a FreeIMU board to support this library development.
 //#define SEN_10121 //IMU Digital Combo Board - 6 Degrees of Freedom ITG3200/ADXL345 SEN-10121 http://www.sparkfun.com/products/10121
@@ -48,7 +48,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define GY_88  //GY-88 Sensor Board from eBay
 //#define GY_87  //GY-87 Sensor Board from eBay, NOTE: Pressusre sensor is BMP180 but BMP085 library should work
 //#define Mario   // MPU-9150 plus Altitude/Pressure Sensor Breakout - MPL3115A2  https://www.sparkfun.com/products/11084
-#define APM_2_5  //  APM 2.5.2 (EBAY)
+//#define APM_2_5  //  APM 2.5.2 (EBAY)
 
 //#define DISABLE_MAGN // Uncomment this line to disable the magnetometer in the sensor fusion algorithm
 
@@ -61,7 +61,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // Set filter type: 1 = Madgwick Gradient Descent, 0 - Madgwick implementation of Mahoney DCM
 // in Quaternion form, 3 = Madwick Original Paper AHRS
-#define MARG 3
+#define MARG 0
 
 // proportional gain governs rate of convergence to accelerometer/magnetometer
 // integral gain governs rate of convergence of gyroscope biases
@@ -548,7 +548,7 @@ class FreeIMU
 
 	#if(MARG == 0)
 		void AHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz);
-		void AHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az);
+		//void AHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az);
   	#elif(MARG == 1)
 		void MadgwickAHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz);
 		void MadgwickAHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az);
