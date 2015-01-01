@@ -54,7 +54,7 @@ Serial myPort;  // Create object from Serial class
 final String serialPort = "COM3"; // replace this with your serial port. On windows you will need something like "COM1".
 int BaudRate=57600;
 String File_Name = "IMU9250-MARG1.txt";
-int HAS_GPS = 1;
+int HAS_GPS = 0;
 
 //setting a 1D Kalman filter
 //uncomment if you have removed complimentary altitude filter from library
@@ -281,7 +281,7 @@ void setup()
     myDelay(1000);
   }
   
-  myPort.write("z" + char(burst));
+  myPort.write("z");
   myPort.bufferUntil('\n');
   
   cp5.setAutoDraw(false);
@@ -563,7 +563,7 @@ void serialEvent(Serial p) {
       }
 
       myDelay(100);
-      p.write("z" + char(burst));
+      p.write("z");
       count = 0;
     }
   }
