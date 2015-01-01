@@ -8,18 +8,23 @@
 // 
 
 class AltComp {
+
+  private:
+    float Kp1;                // PI observer velocity gain 
+    float Kp2;                 // PI observer position gain
+    float Ki;               // PI observer integral gain (bias cancellation)
+  
+    float AltErrorI;
+    float AltError;
+    float InstAcc;
+    float Delta;
+    float EstVelocity;
+    float EstAlt;  
+  
   public:
     
-    float Kp1 = 0.55f;                // PI observer velocity gain 
-    float Kp2 = 1.0f;                 // PI observer position gain
-    float Ki  = 0.001f;               // PI observer integral gain (bias cancellation)
-  
-    float AltErrorI = 0.0f;
-    float AltError = 0.0f;
-    float InstAcc = 0.0f;
-    float Delta = 0.0f;
-    float EstVelocity = 0.0f;
-    float EstAlt = 0.0f;
+    AltComp() : Kp1(0.55f), Kp2(1.0f), Ki(0.001f), AltErrorI(0.0f), AltError(0.0f), InstAcc(0.0f),
+				Delta(0.0f), EstVelocity(0.0f), EstAlt(0.0f) {}
     
     /**
      * Computes the complementary estimation of Altitude based from the Barometer and Accelerometer.
