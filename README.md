@@ -2,7 +2,10 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Thursday, Jan 1, 2015
+Friday, Jan 9, 2015
+
+01-09-15
+Updated xbee-arduino library to add new function: setAPImode(MODE). Where MODE would be set equal to 1 or 2 to correspond to the API mode that you selected for you Xbees.  Defaults to API Mode 2.
 
 01-01-15
 Merged pull request by Mauro Mombelli who fixed AHRS.h for readability and merged ARHSupdateIMU with AHRSupdate.  Updated FreeIMU.h accordingly.

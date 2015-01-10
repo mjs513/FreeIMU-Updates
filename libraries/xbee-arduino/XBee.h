@@ -32,7 +32,7 @@
 #define SERIES_2
 
 // set to ATAP value of XBee. AP=2 is recommended
-#define ATAP 1
+//#define ATAP 1
 
 #define START_BYTE 0x7e
 #define ESCAPE 0x7d
@@ -677,6 +677,13 @@ class XBee {
 public:
 	XBee();
 	/**
+	 * Sets the API mode in the library.  Default is set to ATAP=1.  This was added as abort
+	 * of working the Digi JAVA Library and the 900HP library. This does not change the API mode
+	 * you setup on the radio itself
+	 */
+	void setAPImode(uint8_t API);
+	
+	/**
 	 * Reads all available serial bytes until a packet is parsed, an error occurs, or the buffer is empty.
 	 * You may call <i>xbee</i>.getResponse().isAvailable() after calling this method to determine if
 	 * a packet is ready, or <i>xbee</i>.getResponse().isError() to determine if
@@ -723,6 +730,8 @@ public:
 	 * Specify the serial port.  Only relevant for Arduinos that support multiple serial ports (e.g. Mega)
 	 */
 	void setSerial(Stream &serial);
+	
+	uint8_t ATAP = 2;
 private:
 	bool available();
 	uint8_t read();

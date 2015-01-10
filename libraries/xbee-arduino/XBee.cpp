@@ -747,6 +747,10 @@ void XBeeResponse::reset() {
 	_errorCode = NO_ERROR;
 }
 
+void XBee::setAPImode(uint8_t API) {
+	ATAP = API;
+}
+
 void XBee::resetResponse() {
 	_pos = 0;
 	_escape = false;

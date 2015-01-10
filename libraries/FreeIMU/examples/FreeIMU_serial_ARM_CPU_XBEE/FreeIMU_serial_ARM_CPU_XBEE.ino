@@ -58,6 +58,7 @@ FreeIMU my3IMU = FreeIMU();
   #include <XBee.h>
 
   XBee xbee = XBee();
+
   XBeeResponse response = XBeeResponse();
   // create reusable response objects for responses we expect to handle
   ZBRxResponse rx = ZBRxResponse();
@@ -80,6 +81,7 @@ void setup() {
   #if HAS_telem
     Serial2.begin(telemBaud);
     xbee.setSerial(Serial2);
+    xbee.setAPImode(1);
   #endif
   
   my3IMU.init(true);
