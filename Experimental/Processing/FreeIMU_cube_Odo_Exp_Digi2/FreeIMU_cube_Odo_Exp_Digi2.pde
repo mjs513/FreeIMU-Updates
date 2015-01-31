@@ -61,7 +61,7 @@ PrintWriter output;
 Serial myPort;  // Create object from Serial class
 
 String File_Name = "IMU9250-MARG1.txt";
-int HAS_GPS = 0;
+int HAS_GPS = 1;
 
 int HAS_Xbee = 1;
 // *** REPLACE WITH THE SERIAL PORT (COM PORT) FOR YOUR LOCAL XBEE ***
@@ -224,7 +224,7 @@ final int VIEW_SIZE_X = 1000, VIEW_SIZE_Y = 600;
 int xCompass    = 865;        int yCompass    = 365;
 int xLevelObj   = 723;        int yLevelObj   = 90+0;
 
-final int burst = 32;
+final int burst = 64;
 int count = 0;
 
 String skpath;
@@ -606,6 +606,16 @@ void decodePacket() {
         }
         altitude = decodeFloat(inputStringArr[17]);
         motionDetect = decodeFloat(inputStringArr[18]);
+        
+        //read GPS
+        if(HAS_GPS == 1){
+          hdop = decodeFloat(inputStringArr[19]);
+          lat = decodeFloat(inputStringArr[20]);
+          longt = decodeFloat(inputStringArr[21]);
+          gpsalt = decodeFloat(inputStringArr[23]);
+          cog = decodeFloat(inputStringArr[24]);
+          sog = decodeFloat(inputStringArr[25]);
+         } 
       }
     }
        //println(acc[0]+","+acc[1]+","+acc[2]+","+ gyro[0]+","+gyro[1]+","+gyro[2]+","+

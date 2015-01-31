@@ -11,7 +11,7 @@
 #include <MS561101BA.h> //Comment out for APM 2.5
 #include <I2Cdev.h>
 #include <MPU60X0.h> 
-//#include <AP_Baro_MS5611.h>  //Uncomment for APM2.5
+#include <AP_Baro_MS5611.h>  //Uncomment for APM2.5
 
 //#define DEBUG
 #include "DebugUtils.h"
@@ -25,7 +25,7 @@
 
 #define BaudRate 57600
 
-#define HAS_GPS 0
+#define HAS_GPS 1
 #define gpsSerial Serial1
 static const unsigned long GPSBaud = 57600;
 
@@ -33,7 +33,7 @@ static const unsigned long GPSBaud = 57600;
 #define telemSerial Serial2
 #define telemBaud 57600
 
-uint8_t count = 32;
+uint8_t count = 64;
 float q[4];
 int raw_values[11];
 float ypr[3]; // yaw pitch roll
@@ -64,7 +64,7 @@ FreeIMU my3IMU = FreeIMU();
   ZBRxResponse rx = ZBRxResponse();
   //Address set to receiving Xbee (one attached to PC)
   XBeeAddress64 Broadcast = XBeeAddress64(0x0013A200, 0x40C04290);
-  char Message[184], charBuf[2];
+  char Message[230], charBuf[2];
 
 #endif 
 
@@ -79,8 +79,8 @@ void setup() {
   Serial.begin(BaudRate);
   Wire.begin();
   #if HAS_telem
-    Serial2.begin(telemBaud);
-    xbee.setSerial(Serial2);
+    telemSerial.begin(telemBaud);
+    xbee.setSerial(telemSerial);
     xbee.setAPImode(1);
   #endif
   
@@ -242,6 +242,7 @@ void loop() {
         #if HAS_telem
           //serialPrintFloatArr(val_array,19);
           //Serial.println('\n');
+          Message[0] = '\0';
           XBeeSerialPrintFloatArr(val_array,19);
         #else
           serialPrintFloatArr(val_array,19);
@@ -249,22 +250,16 @@ void loop() {
         
         #if HAS_GPS
           val_array[0] = (float) gps.hdop.value();
-          val_array[1] = (float) gps.hdop.isValid();
-          val_array[2] = (float) gps.location.lat();
-          val_array[3] = (float) gps.location.lng();
-          val_array[4] = (float) gps.location.isValid();
-          val_array[5] = (float) gps.altitude.meters();
-          val_array[6] = (float) gps.altitude.isValid();
-          val_array[7] = (float) gps.course.deg();
-          val_array[8] = (float) gps.course.isValid();
-          val_array[9] = (float) gps.speed.kmph();
-          val_array[10] = (float) gps.speed.isValid();
-          val_array[11] = (float) gps.charsProcessed();
+          val_array[1] = (float) gps.location.lat();
+          val_array[2] = (float) gps.location.lng();
+          val_array[3] = (float) gps.altitude.meters();
+          val_array[4] = (float) gps.course.deg();
+          val_array[5] = (float) gps.speed.kmph();
 		  
           #if HAS_telem
-	    XBeeSerialPrintFloatArr(val_array,12);
+	    XBeeSerialPrintFloatArr(val_array,6);
           #else
-	    serialPrintFloatArr(val_array,12);
+	    serialPrintFloatArr(val_array,6);
 	    Serial.print('\n');			
           #endif
           smartDelay(20);
@@ -410,7 +405,7 @@ static void smartDelay(unsigned long ms)
 
 #if HAS_telem
 void XBeeSerialPrintFloatArr(float * arr, int len) {
-  Message[0] = '\0';
+
   for(uint8_t i=0; i<len; i++) {
     XBeeSerialFloatPrint(arr[i]);
     strcat(Message, ",");
