@@ -644,7 +644,9 @@ void FreeIMU::RESET_Q() {
 	// 19.8 meters for my location, true = using meter units
     // this initialization is useful if current altitude is known,
     // pressure will be calculated based on TruePressure and known altitude.	
-	baro085.init(3, 1981.6469, true);  
+	//baro085.init(3, 1981.6469, true);  
+	//Changed Init to default pressure
+	baro085.init();
   #endif
   
   //ALTIMU SENSOR INIT
@@ -1580,7 +1582,6 @@ void FreeIMU::setTempCalib(int opt_temp_cal) {
 void FreeIMU::setSeaPress(float sea_press_inp) {
 
 	def_sea_press = sea_press_inp;
-
 }
 
 void FreeIMU::getQ_simple(float * q, float * val)
