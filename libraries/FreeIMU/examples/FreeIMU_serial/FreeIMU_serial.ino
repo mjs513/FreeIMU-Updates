@@ -1,5 +1,4 @@
 #include <AP_Math_freeimu.h>
-#include <Filter.h>    // Filter library
 #include <Butter.h>    // Butterworth filter
 #include <iCompass.h>
 
@@ -19,8 +18,8 @@
 #include <AK8975.h>
 #include <AK8963.h>
 #include <L3G.h>
-#include <LPS331.h> 
-#include <AP_Baro_MS5611.h>
+#include <LPS331.h>
+//#include <AP_Baro_MS5611.h>
 
 #include <EEPROM.h>
 #include <Wire.h>
@@ -30,6 +29,7 @@
 #include "DebugUtils.h"
 #include "CommunicationUtils.h"
 #include "FreeIMU.h"
+#include "DCM.h"
 #include "FilteringScheme.h"
 #include "RunningAverage.h"
 #include <MovingAvarageFilter.h>
@@ -80,7 +80,8 @@ void setup() {
   //#endif
 	
   my3IMU.init(true);
-
+  delay(500);
+  
   #if HAS_GPS
     ss.begin(GPSBaud);
   #endif

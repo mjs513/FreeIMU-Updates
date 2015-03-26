@@ -1,4 +1,3 @@
-#
 #include <ADXL345.h>
 #include <bma180.h>
 #include <HMC58X3.h>
@@ -10,12 +9,13 @@
 #include <EEPROM.h>
 #include <L3G.h>
 #include <LPS331.h> 
-#include <AP_Baro_MS5611.h>
+#include <BMP085.h>
+//#include <AP_Baro_MS5611.h>
 #include "RunningAverage.h"
 #include <iCompass.h>
 
 #include <AP_Math_freeimu.h>
-#include <Filter.h>    // Filter library
+
 #include <Butter.h>    // Butterworth filter
 
 #include <EEPROM.h>
@@ -26,6 +26,7 @@
 #include "DebugUtils.h"
 #include "CommunicationUtils.h"
 #include "FreeIMU.h"
+#include "DCM.h"
 #include "FilteringScheme.h"
 #include <MovingAvarageFilter.h>
 
@@ -38,9 +39,9 @@ void setup() {
   Serial.begin(115200);
   Wire.begin();
   
-  delay(5);
+  delay(500);
   my3IMU.init();
-  delay(5);
+  delay(500);
 }
 
 

@@ -140,12 +140,12 @@ GNU General Public License for more details.
 09-03-14
 -------- Initial release:  Implemented the MadgwickAHRS (MARG) filter.  Option available to use either the Mahoney
 -------- AHRS or the MARG from FreeIMU.h.  
-
+------------------------------------------------------------------------
 09-19-14
 -------- Set up altitude to accept new sea level pressure from processing as option pxxxxxx, where xxxxxx
 -------- is an the SL pressure in millibars * 100, so 1015.45 would read 101545
 -------- Changed tilt compensation routine: deleting iCompass
-
+------------------------------------------------------------------------
 09-20-14
 -------- Deleted iCompass and RunningAverage from FreeIMU. Compass averaging is done in the Processing 
 -------- sketch using Yarmartino compass averaging method which is more address issue of discontinuity 
@@ -157,15 +157,17 @@ GNU General Public License for more details.
 -------- done from within FreeIMU.cpp using a different method.
 -------- FreeIMU_serial.ino updated to reflect changes to implementation of altitude complimentary 
 -------- filter from within the library as opposed to calling from the serial sketch.
-
+------------------------------------------------------------------------
 09-22-14
 -------- Changed LSM303 library default sampling rate to 100hz for accel and magnetometer to adjust 
 -------- for use with Teensy 3.1
 -------- Updated (int) to (int16_t) in lps331 library for getTemperatureRaw.
 -------- FreeIMU examples updated accordingly based on compass averaging change.
+------------------------------------------------------------------------
 10-03-14 
 -------- Updated FreeIMU.cpp to allow easier access to change accelerometer/gyro/magneter default
 -------- range settings to match description in wiki page
+------------------------------------------------------------------------
 10-12-14 
 -------- Updated library for support to APM 2.5 (Arduimu).  This change should also work on the 
 -------- APM 2.6 board as well.  MS5611 SPI library added from Ardupilot library (saved alot of 
@@ -176,6 +178,7 @@ GNU General Public License for more details.
 -------- MPU6000 gyro - any custom firmware out there for this?" found at
 -------- https://groups.google.com/forum/#!topic/diyrovers/thIohPCNyZA. Also see 
 --------  http://forum.arduino.cc/index.php?PHPSESSID=6mia4mslt5dalc1fi4ad8rl2g1&topic=125623.0
+------------------------------------------------------------------------
 10-19-14
 -------- Several updates/corrections made to library: Fixed APM 2.5 axis alignment, deleted a 
 -------- 3g library that was not there, more tweaks to beta terms, uploaded missing TinyGPS++ 
@@ -184,30 +187,72 @@ GNU General Public License for more details.
 -------- Incorporated MPL3115A2 pressure sensor support by Mario Cannistra 
 -------- (https://github.com/mariocannistra) as well as an example using a MPU-9250 
 -------- using the MPL3115A2.
+------------------------------------------------------------------------
 10-24-14
 -------- Implemented a third version of the Madgwick filter (Gradient Descent). This version 
 -------- is directly from his original paper.  Beta and Zeta have been left at their default 
 -------- values in the paper.
+------------------------------------------------------------------------
 10-25-14
 -------- Fixed several bugs that would cause the new AHRS filter to crash on compile.
 -------- Jitting is still there and its a lot of fun watching the algorithm work with the 
 -------- default settings for the MPU9250.  Have fun tweaking the settings.
+------------------------------------------------------------------------
 11-04-14
 -------- Minor update. Moved motion detect algorithm to FreeIMU library proper.  Created 
 -------- FreeIMU_cube_Odo_Exp_v3.pde to take motion detect from library.
+------------------------------------------------------------------------
 11-05-14
 -------- Thanks goes to duguyiqiu for pointing out that the Arduino Due Freq was not printing 
 -------- correctly. As a result I found that the legacy code did not address the I2C bus speed 
 -------- for the Due or the Mega 2560 to 400hz.  This is fixed with this update.
+------------------------------------------------------------------------
 11-08-14
 -------- Fixed getQ_simple (q's not correctly identified), added a motion transition test and
 -------- and called getQ_simple to get convergence on yaw faster (used heading)
+------------------------------------------------------------------------
 11-12-14
 -------- Incorporated central definition of sensor order & signs for MARG calls in FreeIMU.hPa
 -------- getQ_simple now works for all 9dof sensors whether sensors are aligned or not.
+------------------------------------------------------------------------
 11-13-14
 -------- Setup a gyro_sensitivity variable defined at the same time you set up your gryo
 -------- Made a minor change to the MPU60X0.cpp library for MPU6000 SPI
+------------------------------------------------------------------------
+11-19-14
+-------- Combined running average filter and simple moving average filter into the AP_Filter library.
+-------- Added a capability to the Arduino serial sketch to load a permanent GPS config file from a 
+-------- attached I2C eeprom.  For my setup default baud is 57600.
+------------------------------------------------------------------------
+11-28-14
+-------- Have incorporated the XBee-Arduino library by Andrew Rapp into an example sketch 
+-------- (FreeIMU_serial_ARM_CPU_XBEE.ino).  Did make a modification to it so that it would send packets 
+-------- without escapes.  So please use the one in the library folder otherwise it will not work.  
+-------- Incorporated the Digi Xbee Java Library into the processing GUI (FreeIMU_cube_Odo_Exp_Digi2) in 
+-------- the Experimental folder.  This code has only been tested with the Mega with XBee 900HPs.
+-------- NOTE: To use the Xbee-Arduino with its examples skecthes you will need to edit the Xbee.h file 
+-------- and set ATAP=2 (Escpaes sent), currently set to ATAP=1 (No Escapes).
+------------------------------------------------------------------------
+01-01-15
+-------- Merged pull request by Mauro Mombelli who fixed AHRS.h for readability and merged ARHSupdateIMU 
+-------- with AHRSupdate.  Updated FreeIMU.h accordingly.
+------------------------------------------------------------------------
+01-09-15
+-------- Updated xbee-arduino library to add new function: setAPImode(MODE). Where MODE would be set equal 
+-------- to 1 or 2 to correspond to the API mode that you selected for you Xbees.  Defaults to API Mode 2.
+-------------------------------------------------------------------------
+03-25-15 Incorporated DCM option based on the 9 Degree of Measurement Attitude and Heading Reference System 
+-------- for Sparkfun 9DOF Razor IMU (SEN-10125 and SEN-10736) and SparkFun 9DOF Sensor Stick (SEN-10183, 
+-------- SEN-10321 and SEN-10724), https://github.com/ptrbrtz/razor-9dof-ahrs.git.  The DCM, MATH and 
+-------- Razor_AHRS.ino files were combined into a DCM library for use with the FreeIMU library.
+-------- DCM implementation was based on the original code (http://code.google.com/p/sf9domahrs/) 
+-------- by Doug Weibel and Jose Julio, based on ArduIMU v1.5 by Jordi Munoz and William Premerlani, Jose Julio
+-------- Additional functions added to get Euler angles directly from the DCM class as well as a function
+-------- to convert the DCM matrix to quaternions which is used in the example sketch to interface with
+-------- with existing Processing sketches.
+-------- An example file has been created to show the DCM implementation with euler angle output.
+-------- Use existing Serial sketches for use with processing. No other changes are needed.
+--------------------------------------------------------------------------
 */
 
 #include "Arduino.h"
@@ -225,8 +270,11 @@ GNU General Public License for more details.
 	#include "AHRS.h"
 #elif(MARG == 1)
 	#include "MadgwickAHRS.h"
-#else
+#elif(MARG == 3)
 	#include "MARGUpdateFilter.h"
+#else
+	#include "DCM.h"
+	//dcm = DCM(); This has to be defined later otherwise compiler complains
 #endif
 
 //#include "vector_math.h"
@@ -476,7 +524,6 @@ void FreeIMU::RESET_Q() {
 	void FreeIMU::init(int accgyro_addr, bool fastmode) {
 #endif
   delay(5);
-
   
   // disable internal pullups of the ATMEGA which Wire enable by default
   #if defined(__AVR_ATmega168__) || defined(__AVR_ATmega8__) || defined(__AVR_ATmega328P__)
@@ -510,7 +557,8 @@ void FreeIMU::RESET_Q() {
       TWBR = ((F_CPU / 400000L) - 16) / 2; 
     }
   #endif
-  
+
+ 
   #if HAS_ADXL345()
     // init ADXL345
     acc.init(acc_addr);
@@ -723,8 +771,10 @@ void FreeIMU::RESET_Q() {
   // zero gyro
   //zeroGyro();
   //if(temp_corr_on == 0) {
-  //digitalWrite(12,HIGH);  
+  //digitalWrite(12,HIGH);
+  
   initGyros(); //}
+
   //digitalWrite(12,LOW);
 	
   #ifndef CALIBRATION_H
@@ -732,9 +782,19 @@ void FreeIMU::RESET_Q() {
 	calLoad();
   #endif
 
-
   
   RESET_Q();
+
+  float values[11];
+
+  //DCM filter implementation set here so we can intit with calibrated values.  All initializations have to be done first.
+  #if(MARG == 4)
+    dcm = DCM();
+    getValues( values);
+    values[9] = maghead.iheading(1, 0, 0, values[0], values[1], values[2], values[6], values[7], values[8]);
+    dcm.setSensorVals(values);
+    dcm.DCM_init(Kp_ROLLPITCH, Ki_ROLLPITCH, Kp_YAW, Ki_YAW);
+  #endif
 
 }
 
@@ -1147,33 +1207,49 @@ void FreeIMU::getQ(float * q, float * val) {
   //DEBUG_PRINT(val[6]);
   //DEBUG_PRINT(val[7]);
   //DEBUG_PRINT(val[8]);
-  
+ 
   now = micros();
   sampleFreq = 1.0 / ((now - lastUpdate) / 1000000.0);
   lastUpdate = now;
   
   // Set up call to the appropriate filter using the axes alignment information
   // gyro values are expressed in deg/sec, the * M_PI/180 will convert it to radians/sec
-  #if IS_9DOM() && not defined(DISABLE_MAGN)
-	#if MARG == 0
-		AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
-	#elif MARG == 1
-		MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
-	#elif MARG == 3	
-		MARGUpdateFilter(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
+  #if(MARG < 4)
+	#if IS_9DOM() && not defined(DISABLE_MAGN)
+		#if MARG == 0
+			AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
+		#elif MARG == 1
+			MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
+		#elif MARG == 3	
+			MARGUpdateFilter(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
+		#endif
+		val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[6], val[7], val[8]);
+	#else
+		#if MARG == 0
+			AHRSupdateIMU(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2]);
+		#elif MARG == 1
+			MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], 0, 0, 0);
+		#elif  MARG == 3
+			MARGUpdateFilterIMU(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2]);
+		#endif
+		val[9] = -9999.0f;
 	#endif
-	val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[6], val[7], val[8]);
-  #else
-	#if MARG == 0
-		AHRSupdateIMU(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2]);
-	#elif MARG == 1
-		MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], 0, 0, 0);
-	#else  MARG == 3
-		MARGUpdateFilterIMU(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2]);
-	#endif
-	val[9] = -9999.0f;
+
+	q[0] = q0;	
+	q[1] = q1;
+  	q[2] = q2;
+  	q[3] = q3;
+
   #endif
   
+  #if MARG == 4
+     val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[6], val[7], val[8]);
+	dcm.setSensorVals(val);
+	dcm.G_Dt = 1./ sampleFreq;
+  	dcm.calDCM();
+  	dcm.getDCM2Q(q);
+  #endif
+	
   MotionDetect( val );
 
   #if IS_9DOM() && not defined(DISABLE_MAGN)
@@ -1181,13 +1257,8 @@ void FreeIMU::getQ(float * q, float * val) {
 		getQ_simple(q, val);
 	}
   #endif
-  
+ 
   motiondetect_old = val[11];
-  
-  q[0] = q0;
-  q[1] = q1;
-  q[2] = q2;
-  q[3] = q3;
   
   #if HAS_PRESS()
 	val[10] = getEstAltitude(q, val, (1./sampleFreq));
@@ -1499,8 +1570,51 @@ void FreeIMU::getYawPitchRollRadAHRS(float * ypr, float * q) {
   ypr[2] = atan(gy / sqrt(gx*gx + gz*gz));
 }
 
+/**
+ * Returns the yaw pitch and roll angles, respectively defined as the angles in degrees between
+ * the Earth North and the IMU X axis (yaw), the Earth ground plane and the IMU X axis (pitch)
+ * and the Earth ground plane and the IMU Y axis. 
+ * 
+ * Roll and Pitch angle ranges 0-360 degrees instead of 0-90 degrees
+ * 
+ * @note This is not an Euler representation: the rotations aren't consecutive rotations but only
+ * angles from Earth and the IMU. For Euler representation Yaw, Pitch and Roll see FreeIMU::getEuler
+ * 
+ * @param ypr three floats array which will be populated by Yaw, Pitch and Roll angles in degrees
+*/
+void FreeIMU::getYawPitchRoll180(float * ypr) {
+	float q[4];				// quaternion
+	float val[11];
+	float gx, gy, gz;		// estimated gravity direction
+	
+	getQ(q, val);
 
+	gx = 2 * (q[1]*q[3] - q[0]*q[2]);
+	gy = 2 * (q[0]*q[1] + q[2]*q[3]);
+	gz = q[0]*q[0] - q[1]*q[1] - q[2]*q[2] + q[3]*q[3];
 
+	//calculating yaw
+	//ypr[0] = atan2(2 * q[1] * q[2] - 2 * q[0] * q[3], 2 * q[0]*q[0] + 2 * q[1] * q[1] - 1);	
+	ypr[0] = val[9];
+	if(ypr[0] > 180.) ypr[0] = ypr[0] - 360.;
+	ypr[0] = ypr[0] * 0.0174532925;
+	
+	//calculating Pitch1
+	//Serial.print(gx); Serial.print("       "); Serial.print(gz); Serial.print("       ");
+	if(gx > 0 && gz > 0) {
+		ypr[1] = atan(gx / sqrt(gy*gy + gz*gz));
+	} else if(gx > 0 && gz <= 0) {
+		ypr[1] = PI - atan(gx / sqrt(gy*gy + gz*gz));
+	} else if(gx < 0 && gz < 0) {
+		ypr[1] = (-PI - atan(gx / sqrt(gy*gy + gz*gz)));
+	} else  {
+		ypr[1] =  atan(gx / sqrt(gy*gy + gz*gz));
+	}
+	
+	//Calculating Roll1
+    ypr[2] = atan(gy / sqrt(gx*gx + gz*gz));
+
+}
 
 /**
  * Returns the yaw pitch and roll angles, respectively defined as the angles in degrees between
@@ -1803,7 +1917,6 @@ float FreeIMU::invSqrt(float x) {
                 return 1.0f / sqrt(x);
         }
 }
-
 
 /**
  * Fast inverse square root implementation. Compatible both for 32 and 8 bit microcontrollers.

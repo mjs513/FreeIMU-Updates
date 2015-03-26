@@ -11,12 +11,13 @@
 #include <MS561101BA.h> //Comment out for APM 2.5
 #include <I2Cdev.h>
 #include <MPU60X0.h> 
-#include <AP_Baro_MS5611.h>  //Uncomment for APM2.5
+//#include <AP_Baro_MS5611.h>  //Uncomment for APM2.5
 
 //#define DEBUG
 #include "DebugUtils.h"
 #include "CommunicationUtils.h"
 #include "FreeIMU.h"
+#include "DCM.h"
 #include "FilteringScheme.h"
 #include "RunningAverage.h"
 
@@ -30,7 +31,7 @@
 static const unsigned long GPSBaud = 57600;
 
 #define HAS_telem 1
-#define telemSerial Serial2
+#define telemSerial Serial2  //xbee on serial2 for my xbee setup
 #define telemBaud 57600
 
 uint8_t count = 64;

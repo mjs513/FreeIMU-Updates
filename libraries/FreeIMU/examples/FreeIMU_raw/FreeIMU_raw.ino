@@ -1,5 +1,4 @@
 #include <AP_Math_freeimu.h>
-#include <Filter.h>    // Filter library
 #include <Butter.h>    // Butterworth filter
 #include <iCompass.h>
 
@@ -26,6 +25,7 @@
 #include "DebugUtils.h"
 #include "CommunicationUtils.h"
 #include "FreeIMU.h"
+#include "DCM.h"
 #include "FilteringScheme.h"
 #include "RunningAverage.h"
 #include <MovingAvarageFilter.h>
@@ -59,10 +59,4 @@ void loop() {
   
   Serial.print('\n');
   
-  /*
-  my3IMU.getValues(val);
-  sprintf(str, "%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d", int(val[0]), int(val[1]), int(val[2]), int(val[3]), int(val[4]), int(val[5]), int(val[6]), int(val[7]), int(val[8]));  
-  Serial.print(str);
-  Serial.print(10, BYTE);
-  */
 }

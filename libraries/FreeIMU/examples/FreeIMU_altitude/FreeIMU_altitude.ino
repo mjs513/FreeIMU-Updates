@@ -25,7 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <AP_Math_freeimu.h>
-#include <Filter.h>    // Filter library
 #include <Butter.h>    // Butterworth filter
 #include <iCompass.h>
 
@@ -39,11 +38,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <MPU60X0.h>
 #include <L3G.h>
 #include <LPS331.h> 
-#include <AP_Baro_MS5611.h>
-
-#include <AP_Math_freeimu.h>
-#include <Filter.h>    // Filter library
-#include <Butter.h>    // Butterworth filter
+#include <BMP085.h>
+//#include <AP_Baro_MS5611.h>
 
 #include <EEPROM.h>
 #include <Wire.h>
@@ -53,6 +49,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "DebugUtils.h"
 #include "CommunicationUtils.h"
 #include "FreeIMU.h"
+#include "DCM.h"
 #include "FilteringScheme.h"
 #include "RunningAverage.h"
 #include <MovingAvarageFilter.h>

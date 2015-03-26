@@ -54,15 +54,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define DISABLE_MAGN // Uncomment this line to disable the magnetometer in the sensor fusion algorithm
 
 //Magnetic declination angle for iCompass
-#define MAG_DEC 4 //+4.0 degrees for Israel
-#define MAG_DEC -13.1603  //degrees for Flushing, NY
+//#define MAG_DEC 4 //+4.0 degrees for Israel
+//#define MAG_DEC -13.1603  //degrees for Flushing, NY
+#define MAG_DEC 0
 
 //Number of samples to average in iCompass
 #define WINDOW_SIZE 1 //Set to 1 to turn off the Running Average
 
 // Set filter type: 1 = Madgwick Gradient Descent, 0 - Madgwick implementation of Mahoney DCM
-// in Quaternion form, 3 = Madwick Original Paper AHRS
-#define MARG 3
+// in Quaternion form, 3 = Madwick Original Paper AHRS, 4 - DCM Implementation
+#define MARG 4
 
 // proportional gain governs rate of convergence to accelerometer/magnetometer
 // integral gain governs rate of convergence of gyroscope biases
@@ -73,40 +74,86 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	#define twoKpDef  (2.0f * 0.5f)
 	#define twoKiDef  (2.0f * 0.00002f)
 	#define betaDef  0.1f
+	//Used for DCM filter
+	const float Kp_ROLLPITCH = 1.2f;  //was .3423
+	const float Ki_ROLLPITCH = 0.0234f;
+	const float Kp_YAW = 1.75f;   // was 1.2 and 0.02
+	const float Ki_YAW = 0.002f;
 #elif defined(FREEIMU_v04)
 	#define twoKpDef  (2.0f * 0.75f)	//works with and without mag enabled
 	#define twoKiDef  (2.0f * 0.1625f)
 	#define betaDef  0.085f
+	//Used for DCM filter
+	const float Kp_ROLLPITCH = 1.2f;  //was .3423
+	const float Ki_ROLLPITCH = 0.0234f;
+	const float Kp_YAW = 1.75f;   // was 1.2 and 0.02
+	const float Ki_YAW = 0.002f;
 #elif defined(GEN_MPU6050)
 	#define twoKpDef  (2.0f * 0.5f)
 	#define twoKiDef  (2.0f * 0.25f)
 	#define betaDef	  0.2f
+	//Used for DCM filter
+	const float Kp_ROLLPITCH = 1.2f;  //was .3423
+	const float Ki_ROLLPITCH = 0.0234f;
+	const float Kp_YAW = 1.75f;   // was 1.2 and 0.02
+	const float Ki_YAW = 0.002f;
 #elif defined(GEN_MPU9150)
 	#define twoKpDef  (2.0f * 0.75f)
 	#define twoKiDef  (2.0f * 0.1f)	
 	#define betaDef	  0.01f
+	//Used for DCM filter
+	const float Kp_ROLLPITCH = 1.2f;  //was .3423
+	const float Ki_ROLLPITCH = 0.0234f;
+	const float Kp_YAW = 1.75f;   // was 1.2 and 0.02
+	const float Ki_YAW = 0.002f;
 #elif defined(Altimu10)
 	//#define twoKpDef  (2.0f * 1.01f)
 	//#define twoKiDef  (2.0f * 0.00002f)	
 	#define twoKpDef  (2.0f * 2.75f)
 	#define twoKiDef  (2.0f * 0.1625f)
 	#define betaDef  2.0f
+	//Used for DCM filter
+	const float Kp_ROLLPITCH = 1.2f;  //was .3423
+	const float Ki_ROLLPITCH = 0.0234f;
+	const float Kp_YAW = 1.75f;   // was 1.2 and 0.02
+	const float Ki_YAW = 0.002f;
 #elif defined(GEN_MPU9250) || defined(MPU9250_5611)
 	#define twoKpDef  (2.0f * 1.75f) // was 0.95
 	#define twoKiDef  (2.0f * 0.05f) // was 0.05	
 	#define betaDef	  0.015f
+	//Used for DCM filter
+	const float Kp_ROLLPITCH = 1.2f;  //was .3423
+	const float Ki_ROLLPITCH = 0.0234f;
+	const float Kp_YAW = 1.75f;   // was 1.2 and 0.02
+	const float Ki_YAW = 0.002f;
 #elif defined(APM_2_5)
 	#define twoKpDef  (2.0f * 0.5f)
 	#define twoKiDef  (2.0f * 0.25f)
 	#define betaDef	  0.015f	//was 0.015
+	//Used for DCM filter
+	const float Kp_ROLLPITCH = 1.2f;  //was .3423
+	const float Ki_ROLLPITCH = 0.0234f;
+	const float Kp_YAW = 1.75f;   // was 1.2 and 0.02
+	const float Ki_YAW = 0.002f;
 #elif defined(Microduino)
-	#define twoKpDef  (2.0f * 0.75f)	//works with and without mag enabled
-	#define twoKiDef  (2.0f * 0.1625f)
+	#define twoKpDef  (2.0f * 1.75f)	//works with and without mag enabled, 1.75
+	#define twoKiDef  (2.0f * 0.0075f)  //.1625f
 	#define betaDef  0.015f
+	//Used for DCM filter
+	const float Kp_ROLLPITCH = 1.2f;  //was .3423
+	const float Ki_ROLLPITCH = 0.0234f;
+	const float Kp_YAW = 1.75f;   // was 1.2 and 0.02
+	const float Ki_YAW = 0.002f;
+
 #else
 	#define twoKpDef  (2.0f * 0.5f)
 	#define twoKiDef  (2.0f * 0.1f)
 	#define betaDef  0.1f
+	//Used for DCM filter
+	const float Kp_ROLLPITCH = 1.2f;  //was .3423
+	const float Ki_ROLLPITCH = 0.0234f;
+	const float Kp_YAW = 1.75f;   // was 1.2 and 0.02
+	const float Ki_YAW = 0.002f;
 #endif 
 
 //
@@ -253,6 +300,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define FREEIMU_EEPROM_BASE 0x0A
 #define FREEIMU_EEPROM_SIGNATURE 0x19
 
+#if(MARG == 4)
+	#include "DCM.h"
+#endif
+
 //#if FREEIMU_VER <= 3
 #if HAS_ADXL345()
   #include <ADXL345.h>
@@ -390,12 +441,14 @@ class FreeIMU
     void getEulerRad(float * angles);
     void getYawPitchRollRad(float * ypr);
 	void getYawPitchRollRadAHRS(float * ypr, float * q);
+	void getYawPitchRoll180(float * ypr);
 	float invSqrt(float x);
 	void setTempCalib(int opt_temp_cal);
 	void setSeaPress(float sea_press_inp);
 	float calcMagHeading(float q0, float q1, float q2, float q3, float bx, float by, float bz);
 	void getQ_simple(float* q, float * val);
 	void MotionDetect(float * val);
+	
 	
     #if HAS_MS5611()
       float getBaroAlt();
@@ -423,7 +476,12 @@ class FreeIMU
       //float getEstAltitude();
 	  float getEstAltitude(float * q, float * val, float dt2);
     #endif
-        
+	
+
+	#if(MARG == 4)
+		DCM dcm;
+	#endif
+	
     // we make them public so that users can interact directly with device classes
     #if HAS_ADXL345()
       ADXL345 acc;
@@ -559,7 +617,7 @@ class FreeIMU
   	#elif(MARG == 1)
 		void MadgwickAHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz);
 		void MadgwickAHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az);
-	#else
+	#elif(MARG == 3)
 		void MARGUpdateFilter(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz);
 		void MARGUpdateFilterIMU(float gx, float gy, float gz, float ax, float ay, float az);
 	#endif

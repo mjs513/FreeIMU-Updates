@@ -1,5 +1,4 @@
 #include <AP_Math_freeimu.h>
-#include <Filter.h>    // Filter library
 #include <Butter.h>    // Butterworth filter
 #include <iCompass.h>
 /**
@@ -19,7 +18,7 @@
 #include <AK8963.h>
 #include <L3G.h>
 #include <LPS331.h> 
-#include <AP_Baro_MS5611.h>
+//#include <AP_Baro_MS5611.h>
 
 #include <EEPROM.h>
 #include <Wire.h>
@@ -29,6 +28,7 @@
 #include "DebugUtils.h"
 #include "CommunicationUtils.h"
 #include "FreeIMU.h"
+#include "DCM.h"
 #include "FilteringScheme.h"
 #include "RunningAverage.h"
 #include <MovingAvarageFilter.h>
@@ -198,7 +198,7 @@ void loop() {
 	
         #if HAS_PRESS()
            // with baro
-           val_array[17] = my3IMU.getEstAltitude();
+           val_array[17] = val[10];
            val_array[13] = (my3IMU.getBaroTemperature());
            val_array[14] = (my3IMU.getBaroPressure());
         #elif HAS_MPU6050()

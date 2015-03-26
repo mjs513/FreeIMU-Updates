@@ -47,7 +47,7 @@ calibration_h_file_name = "calibration.h"
 word = 2
 
 acc_range = 25000
-magn_range = 1000
+magn_range = 1500
 
 class FreeIMUCal(QMainWindow, Ui_FreeIMUCal):
   def __init__(self):

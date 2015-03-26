@@ -2,7 +2,16 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Friday, Jan 9, 2015
+Wednesday, March 25, 2015
+
+03-25-15 
+Incorporated DCM option based on the 9 Degree of Measurement Attitude and Heading Reference System for Sparkfun 9DOF Razor IMU (SEN-10125 and SEN-10736) and SparkFun 9DOF Sensor Stick (SEN-10183, SEN-10321 and SEN-10724), https://github.com/ptrbrtz/razor-9dof-ahrs.git.  The DCM, MATH and Razor_AHRS.ino files were combined into a DCM library for use with the FreeIMU library.
+
+DCM implementation was based on the original code (http://code.google.com/p/sf9domahrs/) by Doug Weibel and Jose Julio, based on ArduIMU v1.5 by Jordi Munoz and William Premerlani, Jose Julio. Also used by ArduIMU and Minimu-9.
+
+Additional functions added to get Euler angles directly from the DCM class as well as a function to convert the DCM matrix to quaternions which is used in the example sketch to interface with with existing Processing sketches.
+
+An example file has been created to show the DCM implementation with euler angle output. Use existing Serial sketches for use with processing. No other changes are needed.
 
 01-09-15
 Updated xbee-arduino library to add new function: setAPImode(MODE). Where MODE would be set equal to 1 or 2 to correspond to the API mode that you selected for you Xbees.  Defaults to API Mode 2.
