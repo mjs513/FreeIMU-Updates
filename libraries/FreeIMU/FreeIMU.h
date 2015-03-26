@@ -55,8 +55,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //Magnetic declination angle for iCompass
 //#define MAG_DEC 4 //+4.0 degrees for Israel
-//#define MAG_DEC -13.1603  //degrees for Flushing, NY
-#define MAG_DEC 0
+#define MAG_DEC -13.1603  //degrees for Flushing, NY
+//#define MAG_DEC 0
 
 //Number of samples to average in iCompass
 #define WINDOW_SIZE 1 //Set to 1 to turn off the Running Average

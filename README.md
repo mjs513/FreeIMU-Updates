@@ -13,6 +13,8 @@ Additional functions added to get Euler angles directly from the DCM class as we
 
 An example file has been created to show the DCM implementation with euler angle output. Use existing Serial sketches for use with processing. No other changes are needed.
 
+To use the DCM option set MARG = 4.  Remember that using a Magnetometer will give you better results than not when using this implementation of DCM.  It will work with a 6DOF but you may not have the best results.  You will also have to tune the proportional and integral gains for the IMU you select.  I have only tested and tuned the gains for the Microduio 10DOF IMU that I used to test the changes.
+
 01-09-15
 Updated xbee-arduino library to add new function: setAPImode(MODE). Where MODE would be set equal to 1 or 2 to correspond to the API mode that you selected for you Xbees.  Defaults to API Mode 2.
 
