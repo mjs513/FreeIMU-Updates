@@ -1214,13 +1214,13 @@ void FreeIMU::getQ(float * q, float * val) {
   
   // Set up call to the appropriate filter using the axes alignment information
   // gyro values are expressed in deg/sec, the * M_PI/180 will convert it to radians/sec
-  #if(MARG < 4)
+  #if(MARG == 0 || MARG == 1 || MARG == 3)
 	#if IS_9DOM() && not defined(DISABLE_MAGN)
 		#if MARG == 0
 			AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
 		#elif MARG == 1
 			MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
-		#elif MARG == 3	
+		#else
 			MARGUpdateFilter(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
 		#endif
 		val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[6], val[7], val[8]);
@@ -1229,7 +1229,7 @@ void FreeIMU::getQ(float * q, float * val) {
 			AHRSupdateIMU(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2]);
 		#elif MARG == 1
 			MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], 0, 0, 0);
-		#elif  MARG == 3
+		#else
 			MARGUpdateFilterIMU(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2]);
 		#endif
 		val[9] = -9999.0f;
@@ -1242,8 +1242,8 @@ void FreeIMU::getQ(float * q, float * val) {
 
   #endif
   
-  #if MARG == 4
-     val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[6], val[7], val[8]);
+  #if (MARG == 4 && IS_9DOM() && not defined(DISABLE_MAGN))
+    val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[6], val[7], val[8]);
 	dcm.setSensorVals(val);
 	dcm.G_Dt = 1./ sampleFreq;
   	dcm.calDCM();
