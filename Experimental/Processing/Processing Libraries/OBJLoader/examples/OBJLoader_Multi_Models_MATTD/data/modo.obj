@@ -1,0 +1,81 @@
+# Wavefront OBJ file: /Users/polymonkey/Documents/Processing/objLoader_examples/ObjLoader_Sample_MATTD/data/modo
+# Exported from Luxology modo on Fri Jul 11 15:56:36 2008
+#
+
+mtllib modo.mtl
+
+o cube
+
+g cube
+v -4 -4 -4
+v 4 -4 -4
+v -4 4 -4
+v 4 4 -4
+v -4 -4 4
+v 4 -4 4
+v -4 4 4
+v 4 4 4
+# vertices: 8
+
+vt 1 0
+vt 0 0
+vt 0 0
+vt 0 0
+vt 1 0
+vt 1 0
+vt 1 1
+vt 0 1
+vt 0 1
+vt 0 1
+vt 1 1
+vt 1 1
+vt 0 1
+vt 1 0
+vt 0 0
+vt 1 1
+vt 0 0
+vt 1 0
+vt 1 1
+vt 0 0
+vt 0 1
+vt 0 1
+vt 1 0
+vt 1 1
+# uvs: 24
+
+vn 0 -0 -1
+vn -0 -1 0
+vn -1 0 -0
+vn 0 -0 -1
+vn -0 -1 0
+vn 1 0 0
+vn 0 -0 -1
+vn -1 0 -0
+vn 0 1 0
+vn 0 -0 -1
+vn 1 0 0
+vn 0 1 0
+vn -0 -1 0
+vn -1 0 -0
+vn 0 0 1
+vn -0 -1 0
+vn 1 0 0
+vn 0 0 1
+vn -1 0 -0
+vn 0 1 0
+vn 0 0 1
+vn 1 0 0
+vn 0 1 0
+vn 0 0 1
+# normals: 24
+
+usemtl scene_material
+g cube
+f 1/1/1 3/7/7 4/10/10 2/4/4
+f 1/2/2 2/5/5 6/16/16 5/13/13
+f 1/3/3 5/14/14 7/19/19 3/8/8
+f 2/6/6 4/11/11 8/22/22 6/17/17
+f 3/9/9 7/20/20 8/23/23 4/12/12
+f 5/15/15 6/18/18 8/24/24 7/21/21
+# polygons: 6
+

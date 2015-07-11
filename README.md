@@ -2,7 +2,13 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Wednesday, March 25, 2015
+Wednesday, July 11, 2015
+
+07-11-15
+Made available two kalman filters for use with the FreeIMU library.  The first is the Kalman implementation by Kristian Lauszus, TKJ Eectronics, http://www.tkjelectronics.com, using his modified sketch that will compare the FreeIMU filter selected to that of the Kalman filter.  The Arduino sketch is FreeIMU_KalmanV1.ino.  The sketch requires the StandardCplusplus lib - please use the version on my github page as I had to make changes to it to work with the mega and other arduino boards per a issue description from the library.
+
+The second implementaion uses the Kalman class from Picopter - Matthew Watson authored on Apr 29 2013, https://github.com/big5824/Picopter.git.  The sketch uses the ArduinoEigen Library and the stlport library which I hava also uploaded so please refresh your download.  The sketch for this implementation is FreeIMU_EKF2.  I also uploaded a processing sketch from Adafruit (Bunnyrotate.pde) for their AHRS implementation demo.  It uses the Saito object loader.  I did make a few modifications including getting rid of the bunny and use the Cassini model that comes with Saito library.  This I am also uploading.
+
 
 03-25-15 
 Incorporated DCM option based on the 9 Degree of Measurement Attitude and Heading Reference System for Sparkfun 9DOF Razor IMU (SEN-10125 and SEN-10736) and SparkFun 9DOF Sensor Stick (SEN-10183, SEN-10321 and SEN-10724), https://github.com/ptrbrtz/razor-9dof-ahrs.git.  The DCM, MATH and Razor_AHRS.ino files were combined into a DCM library for use with the FreeIMU library.

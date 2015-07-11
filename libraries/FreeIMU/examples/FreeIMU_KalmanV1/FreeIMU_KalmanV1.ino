@@ -21,8 +21,8 @@
  
  Same licens as original sketch by Kristian Lauszus, TKJ Electronics.
 */
+
 #include <AP_Math_freeimu.h>
-#include <Filter.h>    // Filter library
 #include <Butter.h>    // Butterworth filter
 #include <iCompass.h>
 
@@ -32,7 +32,7 @@
 #include <SPI.h>
 #include <HMC58X3.h>
 #include <MPU60X0.h>
-#include <AP_Baro_MS5611.h>
+//#include <AP_Baro_MS5611.h>
 #include "I2Cdev.h"
 #include <BMP085.h>
 #include <FilteringScheme.h>

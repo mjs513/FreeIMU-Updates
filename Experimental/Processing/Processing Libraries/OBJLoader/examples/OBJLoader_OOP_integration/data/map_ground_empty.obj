@@ -1,0 +1,34 @@
+# XSI Wavefront OBJ Export v3.0
+# File Created: Mon Apr 09 18:17:03 2007
+# XSI Version: 5.11.2006.0529
+mtllib map_ground_empty.mtl
+
+o ground_empty
+# Hierarchy (from self to top father)
+g ground_empty
+
+#begin 4 vertices
+v -0.999999 0.150000 -1.000000
+v 1.000000 0.150000 1.000000
+v -1.000000 0.150000 1.000000
+v 1.000000 0.150000 -1.000000
+#end 4 vertices
+
+#begin 4 normals
+vn 0.000000 1.000000 0.000000
+vn 0.000000 1.000000 0.000000
+vn 0.000000 1.000000 0.000000
+vn 0.000000 1.000000 0.000000
+#end 4 vertex normals
+
+#begin 4 texture vertices
+vt 0.085231 0.591633 0.000000
+vt 0.418040 0.591633 0.000000
+vt 0.085231 0.924442 0.000000
+vt 0.418040 0.924442 0.000000
+#end 4 texture vertices
+
+#begin 1 faces
+usemtl scene_material
+f 3/1/1 2/2/2 4/4/4 1/3/3 
+#end 1 faces

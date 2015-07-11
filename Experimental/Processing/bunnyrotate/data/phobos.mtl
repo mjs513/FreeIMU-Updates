@@ -1,0 +1,22 @@
+# Ns = Phong specular component. Ranges from 0 to 1000. (I've seen various statements about this range (see below))
+# Kd = Diffuse color weighted by the diffuse coefficient.
+# Ka = Ambient color weighted by the ambient coefficient.
+# Ks = Specular color weighted by the specular coefficient.
+# d = Dissolve factor (pseudo-transparency). Values are from 0-1. 0 is completely transparent, 1 is opaque.
+# Ni = Refraction index. Values range from 1 upwards. A value of 1 will cause no refraction. A higher value implies refraction.
+# illum = (0, 1, or 2) 0 to disable lighting, 1 for ambient & diffuse only (specular color set to black), 2 for full lighting (see below)
+# sharpness = ? (see below)
+# c
+# map_Bump = Bump texture map.
+# map_d = Opacity texture map.
+# refl = reflection type and filename (?)
+
+newmtl white
+Ka 1 1 1
+Kd 1 1 1
+Ks 0 0 0
+map_Kd phobos.jpg
+# map_Ks 0.5 0.5 0.5
+# map_Ka 0.5 0.5 0.5
+illum 2
+Ns 8

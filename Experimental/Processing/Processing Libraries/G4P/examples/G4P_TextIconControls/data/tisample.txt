@@ -1,0 +1,3 @@
+Icons are created from images files made by the user.
+The user supplied image should contain bewteen 1 and 3 images tiled horizontally. The GButton control the tile show depends on whether the mouse is off or over the control surface and if the mouse button is pressed while over the control.
+The GOption and GCheckbox controls need just 2 tiled images and the GLabel just 1 tiled image.

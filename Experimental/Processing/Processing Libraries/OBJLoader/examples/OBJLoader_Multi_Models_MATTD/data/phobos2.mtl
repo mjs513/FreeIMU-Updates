@@ -1,0 +1,8 @@
+newmtl white
+Ns 256
+d 1
+illum 2
+Kd 1 1 1
+Ks 0 0 0
+map_Kd phobos.jpg
+

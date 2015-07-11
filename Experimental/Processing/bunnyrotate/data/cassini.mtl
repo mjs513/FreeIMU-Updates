@@ -1,0 +1,96 @@
+newmtl ____default___
+illum 4
+Kd 0.88 0.88 0.88
+Ka 0.88 0.88 0.88
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 5.66
+newmtl darkerheatshield
+illum 4
+Kd 0.76 0.53 0.02
+Ka 0.76 0.53 0.02
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 5.66
+newmtl darkishred
+illum 4
+Kd 0.83 0.00 0.02
+Ka 0.83 0.00 0.02
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 5.66
+newmtl gold
+illum 4
+Kd 0.98 0.83 0.33
+Ka 0.98 0.83 0.33
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 2.00
+newmtl gold2
+illum 4
+Kd 0.90 0.71 0.02
+Ka 0.90 0.71 0.02
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 5.66
+newmtl heatshieldfoil
+illum 4
+Kd 0.96 0.71 0.12
+Ka 0.96 0.71 0.12
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 5.66
+newmtl huygens_dark
+illum 4
+Kd 0.31 0.31 0.31
+Ka 0.31 0.31 0.31
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 5.66
+newmtl material01
+illum 4
+Kd 0.83 0.83 0.78
+Ka 0.83 0.83 0.78
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 5.66
+newmtl meddark
+illum 4
+Kd 0.55 0.55 0.55
+Ka 0.55 0.55 0.55
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 5.66
+newmtl metallic
+illum 4
+Kd 0.69 0.69 0.69
+Ka 0.69 0.69 0.69
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 2.00
+newmtl vdark
+illum 4
+Kd 0.39 0.39 0.39
+Ka 0.39 0.39 0.39
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 5.66
+newmtl whitedish
+illum 4
+Kd 1.00 1.00 1.00
+Ka 1.00 1.00 1.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 1.00 1.00 1.00
+Ns 2.00
