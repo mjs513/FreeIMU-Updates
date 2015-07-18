@@ -6,12 +6,13 @@
  * modified Adafruit bunnyrotate processing sketch
  * Kalman library extracted from picopter Githup
 */
-
+#include <ADXL345.h>
+#include <ITG3200.h>
+//#include <MPU60X0.h>
 #include <HMC58X3.h>
 #include <BMP085.h>
 #include <I2Cdev.h>
-#include <MPU60X0.h>
-#include <EEPROM.h>
+//#include <EEPROM.h>
 #include <Wire.h>
 #include <SPI.h>
 
@@ -23,9 +24,15 @@
 #include "RunningAverage.h"
 #include <MovingAvarageFilter.h>
 
-#include <stlport.h>
-#include <Eigen30.h>
-#include <iostream>
+//Comment these lines out for ARM processors such as DUE and Teensy 3.1
+  //#include <EEPROM.h>
+  //#include <stlport.h>
+  //#include <iostream>
+  //#include <Eigen30.h>
+
+//Comment this line out for AVR boards such as ARduino Mega or Mircoduino
+  #include <EigenArm.h>
+
 
 #include <ExtendedKalman.h>
 
@@ -39,6 +46,7 @@ QuaternionClass quaternion;
 
 //    KalmanClass kalmanPhi_, kalmanPsi_;
 ExtendedKalmanClass EKF;
+
 
 #define Has_LSM303 0
 #define HAS_GPS 0
@@ -59,15 +67,21 @@ FreeIMU my3IMU = FreeIMU();
 //The command from the PC
 char cmd, tempCorr;
 
+
 void setup() {
   Serial.begin(115200);
   Wire.begin();
+  
+
   
   //#if HAS_MPU6050()
   //    my3IMU.RESET();
   //#endif
 	
   my3IMU.init(true);
+  
+  delay(200);
+  my3IMU.initGyros();
   Serial.println("FreeIMU initialized");
   // LED
   pinMode(13, OUTPUT);
@@ -76,29 +90,40 @@ void setup() {
 void loop() {
 
         my3IMU.getValues(val);
+        //sprintf(str, "%f,%f,%f,%f,%f,%f,%f,%f,%f,", val[0], val[1], val[2], val[3], val[4], val[5], val[6], val[7], val[8]);
+        //Serial.print(str);
+        //Serial.println("-------");
+        
 	now = micros();
         dt = ((now - lastUpdate) / 1000000.0);
-     
-        calibratedData.x = (val[0]);
-        calibratedData.y = (val[1]);
-        calibratedData.z = (val[2]); 
-        calibratedData.p = (val[3]);
-        calibratedData.q = (val[4]);
-        calibratedData.r = (val[5]);
-        calibratedData.magx = (val[6]);
-        calibratedData.magy = (val[7]);
-        calibratedData.magz = (val[8]);
+           
+        calibratedData.x =  (val[0]);
+        calibratedData.y =  (val[1]);
+        calibratedData.z =  (val[2]); 
+        calibratedData.p =  (val[3]);
+        calibratedData.q =  (val[4]);
+        calibratedData.r =  (val[5]);
+        calibratedData.magx =  (val[6]);
+        calibratedData.magy =  (val[7]);
+        calibratedData.magz =  (val[8]);
         calibratedData.q = -calibratedData.q;
         //calibratedData.temp = (my3IMU.getBaroTemperature());
         //calibratedData.pressure = (my3IMU.getBaroPressure());
         //calibratedData.altitude = ((pow(((1013.5) / calibratedData.pressure), 1/5.257) - 1.0) * (calibratedData.temp + 273.15)) / 0.0065;
-  
-        //Serial.println(sampleFreq/100);
+      
+        //Serial.print(quaternion.w);Serial.print(",  ");
+        //Serial.print(quaternion.x);Serial.print(",  "); Serial.print(quaternion.y); Serial.print(",  ");
+        //Serial.print(quaternion.z); Serial.println(); 
+        //Serial.println(dt,4);
         
         //if(dt/100 < 0.06) {
 	    quaternion = EKF.predict(&calibratedData, dt);
         //}
+        my3IMU.getValues(val);
         quaternion = EKF.update(&calibratedData, dt);
+        
+        //Serial.print(quaternion.x);Serial.print(",  "); Serial.print(quaternion.y); Serial.print(",  ");
+        //Serial.print(quaternion.z); Serial.println();
         
         //getYawPitchRollDeg(&quaternion);
         getYawPitchRoll180(&quaternion);
@@ -109,26 +134,7 @@ void loop() {
     //******************************************************/
 
 
-char serial_busy_wait() {
-  while(!Serial.available()) {
-    ; // do nothing until ready
-  }
-  return Serial.read();
-}
 
-// This custom version of delay() ensures that the gps object
-// is being "fed".
-static void smartDelay(unsigned long ms)
-{
-  #if HAS_GPS
-  unsigned long start = millis();
-  do 
-  {
-    while (ss.available())
-      gps.encode(ss.read());
-  } while (millis() - start < ms);
-  #endif
-}
 
 void getYawPitchRollDeg(QuaternionClass* q) {
   //float q[4]; // quaternion

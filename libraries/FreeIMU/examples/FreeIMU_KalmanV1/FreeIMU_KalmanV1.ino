@@ -30,8 +30,10 @@
 #include <Kalman.h> // Source: https://github.com/TKJElectronics/KalmanFilter
 #include <FreeIMU.h>
 #include <SPI.h>
+#include <ADXL345.h>
+#include <ITG3200.h>
 #include <HMC58X3.h>
-#include <MPU60X0.h>
+//#include <MPU60X0.h>
 //#include <AP_Baro_MS5611.h>
 #include "I2Cdev.h"
 #include <BMP085.h>
@@ -46,7 +48,7 @@ float val[12];
 FreeIMU my3IMU = FreeIMU();
 
 //#define RESTRICT_PITCH // Comment out to restrict roll to ±90deg instead - please read: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf
-#define opt 1
+#define opt 0
 
 Kalman kalmanX, kalmanY, kalmanZ; // Create the Kalman instances
 
@@ -65,7 +67,7 @@ uint32_t timer;
 void setup() {
   delay(100); // Wait for sensors to get ready
 
-  Serial.begin(38400);
+  Serial.begin(57600);
   Wire.begin();
   
   my3IMU.init(true);

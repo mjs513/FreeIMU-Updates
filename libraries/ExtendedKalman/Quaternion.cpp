@@ -16,11 +16,11 @@ QuaternionClass::QuaternionClass(const QuaternionClass& orig) {
 QuaternionClass::~QuaternionClass() {
 }
 
- void QuaternionClass::normalise(){
-    double norm = sqrt(w*w + x*x + y*y + z*z);
-    w /= norm;
-    x /= norm;
-    y /= norm;
-    z /= norm;
+void QuaternionClass::normalise(){
+   double norm = sqrt(w*w + x*x + y*y + z*z);
+   w /= norm;
+   x /= norm;
+   y /= norm;
+   z /= norm;
 }
 

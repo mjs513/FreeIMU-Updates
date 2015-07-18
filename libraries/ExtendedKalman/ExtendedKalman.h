@@ -8,13 +8,13 @@
 #ifndef EXTENDEDKALMAN_H
 #define	EXTENDEDKALMAN_H
 
-#include <iostream>
-
 #include "struct_calibratedData.h"
 #include "struct_euler.h"
 #include "Quaternion.h"
 #include "Eigen/Dense"
-using Eigen::Matrix;
+
+using namespace Eigen;
+//using Eigen::Matrix;
 
 #define pi 3.14159265358979
 
@@ -31,18 +31,18 @@ private:
     double q0, q1, q2, q3;
     double wx, wy, wz;
     double wxb, wyb, wzb;
-    Matrix<double,7,7> Q;
-    Matrix<double, 7, 1> x;
-    Matrix<double, 7, 7> F;
-    Matrix<double, 7, 7> P;
-    Matrix<double, 3, 1> z;
-    Matrix<double, 3, 1> h;
-    Matrix<double, 3, 1> y;
-    Matrix<double, 3, 7> H;
-    Matrix<double, 3, 3> S;
-    Matrix<double, 3, 3> R;
-    Matrix<double, 7, 3> K;
-    Matrix<double, 7, 7> I;
+	Eigen::Matrix<double,7,7> Q;
+    Eigen::Matrix<double, 7, 1> x;
+    Eigen::Matrix<double, 7, 7> F;
+    Eigen::Matrix<double, 7, 7> P;
+    Eigen::Matrix<double, 3, 1> z;
+    Eigen::Matrix<double, 3, 1> h;
+    Eigen::Matrix<double, 3, 1> y;
+    Eigen::Matrix<double, 3, 7> H;
+    Eigen::Matrix<double, 3, 3> S;
+    Eigen::Matrix<double, 3, 3> R;
+    Eigen::Matrix<double, 7, 3> K;
+    Eigen::Matrix<double, 7, 7> I;
     double norm;
 
 };
