@@ -370,25 +370,28 @@ FreeIMU::FreeIMU() {
   #elif HAS_MPU9250()
     accgyro = MPU60X0();
 	mag = AK8963();
-	maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);  
+	maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);
+  #elif HAS_LSM9DS0()
+	//lsm = LSM9DS0(MODE_I2C, LSM9DS0_G, LSM9DS0_XM);
+	lsm = LSM9DS0(MODE_I2C, LSM9DS0_G, LSM9DS0_XM);
+	maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);	
   #endif
     
-  #if HAS_MS5611()
-	#if HAS_APM25()
-		baro = AP_Baro_MS5611();
-	#else
-		baro = MS561101BA();
-	#endif
-  #elif HAS_BMP085()
-    baro085 = BMP085();
-  #elif HAS_LPS331()
-    baro331 = LPS331();
-  #elif HAS_MPL3115A2()
-    baro3115 = MPL3115A2();
-  #endif
-  
   #if HAS_PRESS()
     kPress.KalmanInit(0.0000005,0.01,1.0,0);
+    #if HAS_MS5611()
+	    #if HAS_APM25()
+		    baro = AP_Baro_MS5611();
+	    #else
+		    baro = MS561101BA();
+	    #endif
+      #elif HAS_BMP085()
+        baro085 = BMP085();
+      #elif HAS_LPS331()
+        baro331 = LPS331();
+      #elif HAS_MPL3115A2()
+        baro3115 = MPL3115A2();
+      #endif
   #endif
   
   // initialize quaternion
@@ -453,6 +456,8 @@ void FreeIMU::init() {
 	pinMode(40, OUTPUT);
     digitalWrite(40, HIGH);
 	init(53, false);
+  #elif HAS_LSM9DS0()
+	init0(true);	
   #else
 	init(FIMU_ACCGYRO_ADDR, false);
   #endif
@@ -468,6 +473,8 @@ void FreeIMU::init(bool fastmode) {
 	pinMode(40, OUTPUT);
     digitalWrite(40, HIGH);
 	init(53, fastmode);
+  #elif HAS_LSM9DS0()
+	init0(fastmode);
   #else
 	init(FIMU_ACCGYRO_ADDR, fastmode);
   #endif
@@ -518,7 +525,7 @@ void FreeIMU::RESET_Q() {
 */
 #if HAS_ITG3200()
 	void FreeIMU::init(int acc_addr, int gyro_addr, bool fastmode) {
-#elif HAS_ALTIMU10()
+#elif HAS_ALTIMU10() || HAS_LSM9DS0()
 	void FreeIMU::init0(bool fastmode) {
 #else
 	void FreeIMU::init(int accgyro_addr, bool fastmode) {
@@ -653,6 +660,19 @@ void FreeIMU::RESET_Q() {
 	gyro_sensitivity = 16.4f;
 	delay(5);
   #endif 
+  
+  #if HAS_LSM9DS0()
+	// Use the begin() function to initialize the LSM9DS0 library.
+	// You can either call it with no parameters (the easy way):
+	uint16_t status = lsm.begin(lsm.G_SCALE_2000DPS, lsm.A_SCALE_2G );
+	// Or call it with declarations for sensor scales and data rates:  
+	//uint16_t status = lsm.begin(lsm.G_SCALE_2000DPS, 
+	//                            lsm.A_SCALE_6G, lsm.M_SCALE_2GS);
+	//Angular rate FS = ±245 dps, gyro_sensitivity = 8.75
+	//Angular rate FS = ±500 dps, gyro_sensitivity =  17.50
+	//Angular rate FS = ±2000 dps, gyro_sensitivity =  70
+	gyro_sensitivity = 70.0f;
+  #endif
   
   #if HAS_HMC5883L()
 	// init HMC5843
@@ -915,7 +935,24 @@ void FreeIMU::getRawValues(int * raw_values) {
     raw_values[7] = compass.m.y;
     raw_values[8] = compass.m.z;
   #endif	
-  
+
+  #if HAS_LSM9DS0()
+	lsm.readAccel();
+	lsm.readGyro();
+	lsm.readMag();
+    raw_values[0] = lsm.ax;
+    raw_values[1] = lsm.ay;
+    raw_values[2] = lsm.az;
+    raw_values[6] = lsm.mx;
+    raw_values[7] = lsm.my;
+    raw_values[8] = lsm.mz;
+    raw_values[3] = lsm.gx;
+    raw_values[4] = lsm.gy;
+    raw_values[5] = lsm.gz;	
+	lsm.readTemp();
+	DTemp = lsm.temperature;
+	raw_values[9] = DTemp;
+  #endif
 }
 
 
@@ -976,7 +1013,27 @@ void FreeIMU::getValues(float * values) {
 	values_cal[3] = (values_cal[3] - gyro_off_x) / gyro_sensitivity;  //Sensitivity set at 70 for +/-2000 deg/sec, L3GD20H
 	values_cal[4] = (values_cal[4] - gyro_off_y) / gyro_sensitivity;
 	values_cal[5] = (values_cal[5] - gyro_off_z) / gyro_sensitivity;
+
+  #elif HAS_LSM9DS0()
+	lsm.readAccel();
+	lsm.readGyro();
+	lsm.readMag();
+    values_cal[0] = (float) lsm.ax;
+    values_cal[1] = (float) lsm.ay;
+    values_cal[2] = (float) lsm.az;
+    values_cal[6] = (float) lsm.mx;
+    values_cal[7] = (float) lsm.my;
+    values_cal[8] = (float) lsm.mz;
+    values_cal[3] = (float) lsm.gx;
+    values_cal[4] = (float) lsm.gy;
+    values_cal[5] = (float) lsm.gz;	 
 	
+	values_cal[3] = (values_cal[3] - gyro_off_x) / gyro_sensitivity;  //Sensitivity set at 70 for +/-2000 deg/sec, L3GD20H
+	values_cal[4] = (values_cal[4] - gyro_off_y) / gyro_sensitivity;
+	values_cal[5] = (values_cal[5] - gyro_off_z) / gyro_sensitivity;
+
+	lsm.readTemp();
+	DTemp = lsm.temperature;
   #else  // MPU6050
     int16_t accgyroval[9];
 	#if HAS_MPU9150() || HAS_MPU9250()
@@ -1051,7 +1108,7 @@ void FreeIMU::getValues(float * values) {
     magn.getValues(&values_cal[6]);
   #endif
   
-  #if HAS_HMC5883L() || HAS_MPU9150() || HAS_MPU9250() || HAS_LSM303()
+  #if HAS_HMC5883L() || HAS_MPU9150() || HAS_MPU9250() || HAS_LSM303() || HAS_LSM9DS0()
     // calibration
 	if(temp_corr_on == 1) {
 		values_cal[6] = (values_cal[6] - acgyro_corr[6] - magn_off_x) / magn_scale_x;
@@ -1127,7 +1184,7 @@ void FreeIMU::initGyros() {
 	
     // we try to get a good calibration estimate for up to 10 seconds
     // if the gyros are stable, we should get it in 1 second
-	for (int16_t j = 0; j <= 10 && num_converged < num_gyros; j++) {
+	for (int16_t j = 0; j <= 30 && num_converged < num_gyros; j++) {
 		Vector3f gyro_sum[INS_MAX_INSTANCES], gyro_avg[INS_MAX_INSTANCES], gyro_diff[INS_MAX_INSTANCES];
 		float diff_norm[INS_MAX_INSTANCES];
 		
@@ -1252,11 +1309,11 @@ void FreeIMU::getQ(float * q, float * val) {
 	
   MotionDetect( val );
 
-  #if IS_9DOM() && not defined(DISABLE_MAGN)
-	if(val[11] - motiondetect_old < 0) {  
-		getQ_simple(q, val);
-	}
-  #endif
+  //#if IS_9DOM() && not defined(DISABLE_MAGN)
+	//if(val[11] - motiondetect_old < 0) {  
+	//	getQ_simple(q, val);
+	//}
+  //#endif
  
   motiondetect_old = val[11];
   

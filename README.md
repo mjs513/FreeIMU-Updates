@@ -2,7 +2,11 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Wednesday, July 18, 2015
+Wednesday, July 24, 2015
+
+07-24-15
+
+Completed adding support for the LSM9DS0 iNemo IMU.  Made use of the Sparkfun LSM9DS0 library.  Thanks to the guys at Sparkfun, I owe you guys at SFE a few beers.  I did have to make a minor modification to the library to make it callable from the FreeIMU class. Based on initial tests its a pretty impressive little IMU. Staytuned for another video showing the stability of this little board.  
 
 07-18-15
 

@@ -1,29 +1,4 @@
-#include <AP_Math_freeimu.h>
-#include <Butter.h>    // Butterworth filter
-#include <iCompass.h>
-/**
- * FreeIMU library serial communication protocol to be used with
- * modified Adafruit bunnyrotate processing sketch
- * Kalman library extracted from picopter Githup
-*/
-#include <ADXL345.h>
-#include <ITG3200.h>
-//#include <MPU60X0.h>
-#include <HMC58X3.h>
-#include <BMP085.h>
-#include <I2Cdev.h>
-//#include <EEPROM.h>
-#include <Wire.h>
-#include <SPI.h>
-
-//#define DEBUG
-#include "DebugUtils.h"
-#include "CommunicationUtils.h"
-#include "FreeIMU.h"
-#include "FilteringScheme.h"
-#include "RunningAverage.h"
-#include <MovingAvarageFilter.h>
-
+        
 //Comment these lines out for ARM processors such as DUE and Teensy 3.1
   //#include <EEPROM.h>
   //#include <stlport.h>
@@ -32,7 +7,6 @@
 
 //Comment this line out for AVR boards such as ARduino Mega or Mircoduino
   #include <EigenArm.h>
-
 
 #include <ExtendedKalman.h>
 

@@ -21,25 +21,26 @@
  
  Same licens as original sketch by Kristian Lauszus, TKJ Electronics.
 */
-
 #include <AP_Math_freeimu.h>
+#include <Filter.h>    // Filter library
 #include <Butter.h>    // Butterworth filter
 #include <iCompass.h>
 
 #include <Wire.h>
-#include <Kalman.h> // Source: https://github.com/TKJElectronics/KalmanFilter
+
 #include <FreeIMU.h>
 #include <SPI.h>
-#include <ADXL345.h>
-#include <ITG3200.h>
 #include <HMC58X3.h>
-//#include <MPU60X0.h>
-//#include <AP_Baro_MS5611.h>
+#include <MPU60X0.h>
+#include <AP_Baro_MS5611.h>
 #include "I2Cdev.h"
 #include <BMP085.h>
+#include <SFE_LSM9DS0.h>
 #include <FilteringScheme.h>
 #include "CommunicationUtils.h"
 #include "DebugUtils.h"
+
+#include <Kalman.h> // Source: https://github.com/TKJElectronics/KalmanFilter
  
 float output[6];
 float val[12];
@@ -48,7 +49,7 @@ float val[12];
 FreeIMU my3IMU = FreeIMU();
 
 //#define RESTRICT_PITCH // Comment out to restrict roll to ±90deg instead - please read: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf
-#define opt 0
+#define opt 1
 
 Kalman kalmanX, kalmanY, kalmanZ; // Create the Kalman instances
 
@@ -67,7 +68,7 @@ uint32_t timer;
 void setup() {
   delay(100); // Wait for sensors to get ready
 
-  Serial.begin(57600);
+  Serial.begin(38400);
   Wire.begin();
   
   my3IMU.init(true);

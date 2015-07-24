@@ -1,11 +1,7 @@
-#include <AP_Math_freeimu.h>
-#include <Butter.h>    // Butterworth filter
-#include <iCompass.h>
-#include <MovingAvarageFilter.h>
-
 /**
  * FreeIMU library serial communication protocol
 */
+//These are optional depending on your IMU configuration
 
 #include <ADXL345.h>
 #include <HMC58X3.h>
@@ -20,7 +16,15 @@
 #include <AK8963.h>
 #include <L3G.h>
 #include <LPS331.h> 
+#include <SFE_LSM9DS0.h>
 //#include <AP_Baro_MS5611.h>  //Uncomment for APM2.5
+
+
+//These are mandatory
+#include <AP_Math_freeimu.h>
+#include <Butter.h>    // Butterworth filter
+#include <iCompass.h>
+#include <MovingAvarageFilter.h>
 
 #include <Wire.h>
 #include <SPI.h>
@@ -160,7 +164,7 @@ void loop() {
           my3IMU.acc.readAccel(&raw_values[0], &raw_values[1], &raw_values[2]);
           my3IMU.gyro.readGyroRaw(&raw_values[3], &raw_values[4], &raw_values[5]);
           writeArr(raw_values, 6, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
-        #elif HAS_MPU9150()  || HAS_MPU9250()
+        #elif HAS_MPU9150()  || HAS_MPU9250() || HAS_LSM9DS0()
           my3IMU.getRawValues(raw_values);
           writeArr(raw_values, 9, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
         #elif HAS_MPU6050() || HAS_MPU6000()   // MPU6050
@@ -173,7 +177,7 @@ void loop() {
         #endif
         //writeArr(raw_values, 6, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
         
-        #if IS_9DOM() && (!HAS_MPU9150()  && !HAS_MPU9250() && !HAS_ALTIMU10())
+        #if IS_9DOM() && (!HAS_MPU9150()  && !HAS_MPU9250() && !HAS_ALTIMU10() && !HAS_LSM9DS0())
           my3IMU.magn.getValues(&raw_values[0], &raw_values[1], &raw_values[2]);
           writeArr(raw_values, 3, sizeof(int));
         #endif
@@ -193,7 +197,7 @@ void loop() {
       uint8_t count = serial_busy_wait();
       for(uint8_t i=0; i<count; i++) {
         my3IMU.getQ(q, val);
-	val_array[15] = my3IMU.sampleFreq;        
+        val_array[15] = my3IMU.sampleFreq;        
         //my3IMU.getValues(val);       
         val_array[7] = (val[3] * M_PI/180);
         val_array[8] = (val[4] * M_PI/180);
@@ -221,6 +225,8 @@ void loop() {
            val_array[13] = (my3IMU.DTemp/340.) + 35.;
 		#elif HAS_MPU9150()  || HAS_MPU9250()
            val_array[13] = ((float) my3IMU.DTemp) / 333.87 + 21.0;
+        #elif HAS_LSM9DS0()
+            val_array[13] = 21.0 + (float) my3IMU.DTemp/8.; //degrees C
         #elif HAS_ITG3200()
            val_array[13] = my3IMU.rt;
         #endif
@@ -282,6 +288,8 @@ void loop() {
            val_array[13] = (my3IMU.DTemp/340.) + 35.;
 		#elif HAS_MPU9150()  || HAS_MPU9250()
            val_array[13] = ((float) my3IMU.DTemp) / 333.87 + 21.0;
+        #elif HAS_LSM9DS0()
+            val_array[13] = 21.0 + (float) my3IMU.DTemp/8.; //degrees C
         #elif HAS_ITG3200()
            val_array[13] = my3IMU.rt;
         #endif
