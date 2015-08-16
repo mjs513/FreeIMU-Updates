@@ -726,7 +726,7 @@ void FreeIMU::RESET_Q() {
 	//+/-500:        0x10	17.5
 	//+/- 2000:      0x20	70
 	gyro.writeReg(0x23, 0x20);
-	gyro_sensitivity = 70.0f
+	gyro_sensitivity = 70.0f;
   #endif
   
   #if HAS_LSM303()
