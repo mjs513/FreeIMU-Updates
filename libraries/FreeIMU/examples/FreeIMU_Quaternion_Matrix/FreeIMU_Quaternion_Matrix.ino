@@ -17,6 +17,7 @@
 #include <L3G.h>
 #include <LPS331.h> 
 #include <SFE_LSM9DS0.h>
+#include <BaroSensor.h>
 //#include <AP_Baro_MS5611.h>  //Uncomment for APM2.5
 
 

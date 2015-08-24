@@ -50,7 +50,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define Mario   // MPU-9150 plus Altitude/Pressure Sensor Breakout - MPL3115A2  https://www.sparkfun.com/products/11084
 //#define APM_2_5  //  APMM 2.5.2 (EBAY)
 //#define Microduino
-#define ST_LSM9DS0
+//#define ST_LSM9DS0   //Note this includes the MS5637 pressure sensor  board
+#define LSM9DS0_MS5637 //Note this includes the MS5637 pressure sensor  board
 
 //#define DISABLE_MAGN // Uncomment this line to disable the magnetometer in the sensor fusion algorithm
 
@@ -145,7 +146,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	const float Ki_ROLLPITCH = 0.0234f;
 	const float Kp_YAW = 1.75f;   // was 1.2 and 0.02
 	const float Ki_YAW = 0.002f;
-#elif defined(ST_LSM9DS0)
+#elif (defined(ST_LSM9DS0) || defined(LSM9DS0_MS5637))
 	//Madgwick's implementation of Mayhony's AHRS algorithm
 	#define twoKpDef  (2.0f * 1.75f)	//works with and without mag enabled
 	#define twoKiDef  (2.0f * 0.025f)
@@ -253,7 +254,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #define FREEIMU_ID "MPU-9150 plus MPL3115A2" 
 #elif defined(Microduino)
   #define FREEIMU_ID "Microduino IMU" 
-#elif defined(ST_LSM9DS0)
+#elif defined(ST_LSM9DS0) || defined(LSM9DS0_MS5637)
   #define FREEIMU_ID "LSM9DS0 IMU"
 #endif
 
@@ -279,18 +280,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define HAS_ALTIMU10() (defined(Altimu10))
 #define HAS_L3D20() (defined(Altimu10))
 #define HAS_LSM303() (defined(Altimu10))
-#define HAS_LSM9DS0() (defined(ST_LSM9DS0))
+#define HAS_LSM9DS0() (defined(ST_LSM9DS0) || defined(LSM9DS0_MS5637))
 
 #define HAS_MS5611() (defined(MPU9250_5611) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v04) \
 					 || defined(APM_2_5))
 #define HAS_BMP085() (defined(GY_88) || defined(GY_88) || defined(DFROBOT) || defined(Microduino))
 #define HAS_LPS331() (defined(Altimu10))
 #define HAS_MPL3115A2() defined(Mario)
+#define HAS_MS5637() (defined(LSM9DS0_MS5637))
 #define HAS_PRESS() (defined(Altimu10) || defined(MPU9250_5611) || defined(FREEIMU_v035_MS) \
 					|| defined(FREEIMU_v04) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) \
 					|| defined(FREEIMU_v035_BMP) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v04) \
 					|| defined(GY_87) ||defined(GY_88) || defined(DFROBOT) || defined(APM_2_5) \
-					|| defined(Mario) || defined(Microduino) )
+					|| defined(Mario) || defined(Microduino) || defined(LSM9DS0_MS5637) )
 					
 #define IS_6DOM() (defined(SEN_10121) || defined(GEN_MPU6050))
 #define IS_9DOM() (defined(GY_87) ||defined(GY_88) || defined(Altimu10) || defined(GEN_MPU9250) || defined(MPU9250_5611) \
@@ -298,7 +300,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 				   || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) \
 				   || defined(FREEIMU_v04) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183) \
 				   || defined(ARDUIMU_v3)  || defined(APM_2_5) || defined(Mario) || defined(Microduino) \
-				   || defined(ST_LSM9DS0))
+				   || defined(ST_LSM9DS0) || defined(LSM9DS0_MS5637))
 #define HAS_AXIS_ALIGNED() (defined(Altimu10) || defined(GY_88) || defined(GEN_MPU6050) \
 							|| defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) \
 							|| defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) \
@@ -396,6 +398,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     #include <LPS331.h>
   #elif HAS_MPL3115A2()
     #include <MPL3115A2.h>
+  #elif HAS_MS5637()
+    #include <BaroSensor.h>
   #endif
   
 #endif
@@ -496,10 +500,16 @@ class FreeIMU
         float getBaroAlt();
         float getBaroAlt(float sea_press);
 	    float getBaroTemperature();
-	    float getBaroPressure();	  
-	  #endif	
-    #endif
+	    float getBaroPressure();
+	  #elif HAS_MS5637()
+        float getBaroAlt();
+        float getBaroAlt(float sea_press);
+	    float getBaroTemperature();
+	    float getBaroPressure();
+	  #endif  
+    #endif 
 
+	
 	#if(MARG == 4)
 		DCM dcm;
 	#endif
@@ -559,8 +569,11 @@ class FreeIMU
       #elif HAS_LPS331()
 		LPS331 baro331;
       #elif HAS_MPL3115A2()
-		MPL3115A2 baro3115;	  
+		MPL3115A2 baro3115;
+      #elif HAS_MS5637()
+		BaroSensorClass baro5637;			
       #endif
+	  
     #endif
      
 	//Global Variables
@@ -611,7 +624,7 @@ class FreeIMU
 	#elif defined(APM_2_5)	
 		int sensor_order[9] = {1,0,2,4,3,5,7,6,8};
 		int sensor_sign[9] = {1,-1,1,1,-1,1,-1,1,1};
-	#elif defined(ST_LSM9DS0)
+	#elif defined(ST_LSM9DS0) || defined(LSM9DS0_MS5637)
 		int sensor_order[9] = {0,1,2,3,4,5,6,7,8};
 		int sensor_sign[9] = {1,1,1,1,1,1,1,1,-1};	
 	#endif 	

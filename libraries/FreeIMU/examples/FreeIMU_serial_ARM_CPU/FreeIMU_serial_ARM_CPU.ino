@@ -17,6 +17,7 @@
 #include <L3G.h>
 #include <LPS331.h> 
 #include <SFE_LSM9DS0.h>
+#include <BaroSensor.h>
 //#include <AP_Baro_MS5611.h>  //Uncomment for APM2.5
 
 
@@ -149,7 +150,7 @@ void loop() {
         my3IMU.getRawValues(raw_values);
         sprintf(str, "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,", raw_values[0], raw_values[1], raw_values[2], raw_values[3], raw_values[4], raw_values[5], raw_values[6], raw_values[7], raw_values[8], raw_values[9]);
         Serial.print(str);
-        #if (HAS_MS5611() || HAS_BMP085() || HAS_LPS331())
+        #if HAS_PRESS()
           Serial.print(my3IMU.getBaroTemperature()); Serial.print(",");
           Serial.print(my3IMU.getBaroPressure()); Serial.print(",");
         #endif

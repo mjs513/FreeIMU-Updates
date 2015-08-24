@@ -1,7 +1,8 @@
 void position(){
   
-  float g0 = 9.81;
-
+  float g0 = 1;
+  gravityCompensateDynAcc();
+  
   motionDetect_transition = motionDetect - motionDetect_old;
   
   if(motionDetect < 1){

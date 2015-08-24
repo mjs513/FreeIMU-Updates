@@ -253,6 +253,28 @@ GNU General Public License for more details.
 -------- An example file has been created to show the DCM implementation with euler angle output.
 -------- Use existing Serial sketches for use with processing. No other changes are needed.
 --------------------------------------------------------------------------
+07-18-15 Added two Kalman filter sketches using the output of the FreeIMU library. The first is the Kalman 
+-------- implementation by Kristian Lauszus, TKJ Eectronics, http://www.tkjelectronics.com, using his modified sketch 
+-------- that will compare the FreeIMU filter selected to that of the Kalman filter. The Arduino sketch is 
+-------- FreeIMU_KalmanV1.ino. The sketch requires the StandardCplusplus lib - please use the version on my github 
+-------- page as I had to make changes to it to work with the mega and other arduino boards per a issue description 
+-------- from the library.
+-------- 
+-------- The second implementaion uses the Kalman class from Picopter - Matthew Watson authored on Apr 29 2013,
+--------  https://github.com/big5824/Picopter.git. The sketch uses the ArduinoEigen Library and the stlport library 
+-------- which I hava also uploaded so please refresh your download. The sketch for this implementation is 
+-------- FreeIMU_EKF2. I also uploaded a processing sketch from Adafruit (Bunnyrotate.pde) for their AHRS 
+-------- implementation demo. It uses the Saito object loader. I did make a few modifications including getting 
+-------- rid of the bunny and use the Cassini model that comes with Saito library. This I also uploaded in the 
+-------- Experimental directory.
+--------------------------------------------------------------------------
+07-24-15 Completed adding support for the LSM9DS0 iNemo IMU. Made use of the Sparkfun LSM9DS0 library. Thanks 
+-------- to the guys at Sparkfun, I owe you guys at SFE a few beers. I did have to make a minor modification to the 
+-------- library to make it callable from the FreeIMU class. 
+---------------------------------------------------------------------------
+08-24-15 Added support for the MS5637 Pressure Sensor using a slightly modified version of the Freetronics
+-------- library.  All sketches were updated according.
+---------------------------------------------------------------------------
 */
 
 #include "Arduino.h"
@@ -391,6 +413,8 @@ FreeIMU::FreeIMU() {
         baro331 = LPS331();
       #elif HAS_MPL3115A2()
         baro3115 = MPL3115A2();
+	  #elif HAS_MS5637()
+	    baro5637 = BaroSensorClass();
       #endif
   #endif
   
@@ -707,7 +731,7 @@ void FreeIMU::RESET_Q() {
 	baro3115.setOversampleRate(4); // Set Oversample to the recommended 128 --> 512ms
 	baro3115.enableEventFlags(); // Enable all three pressure and temp event flags 
   #endif  
-  
+   
   #if HAS_BMP085()
 	// 19.8 meters for my location, true = using meter units
     // this initialization is useful if current altitude is known,
@@ -715,6 +739,10 @@ void FreeIMU::RESET_Q() {
 	//baro085.init(3, 1981.6469, true);  
 	//Changed Init to default pressure
 	baro085.init();
+  #endif
+  
+  #if HAS_MS5637()
+	baro5637.begin();
   #endif
   
   //ALTIMU SENSOR INIT
@@ -1430,7 +1458,6 @@ float def_sea_press = 1013.25;
 #endif
 
 #if HAS_LPS331()
-
 	// Returns temperature from LPS331 - added by MJS
 	float FreeIMU::getBaroTemperature() {
 		float temp1 = baro331.readTemperatureC();		
@@ -1501,6 +1528,42 @@ float def_sea_press = 1013.25;
 	}	
 #endif
 
+#if HAS_MS5637()
+	// Returns temperature, pressure and altitude from MS5637
+	// from the Freetronics library
+	
+	float FreeIMU::getBaroTemperature() {
+		float temp1 = baro5637.getTemperature();
+		// also available in °F float temp1 = baro3115.readTempF();
+		return(temp1);
+	}
+
+	float FreeIMU::getBaroPressure() {
+		// 1 kPa = 10 hPa = 1000 Pa
+		// 100 Pascals = 1 hPa = 1 mb
+		// sensor output is in Pa
+		// need to convert Pascals to millibars:
+		float new_press = baro5637.getPressure() ;
+		return(new_press);
+	}
+
+	/**
+	* Returns an altitude estimate from baromether readings only using a default sea level pressure
+	*/
+	float FreeIMU::getBaroAlt() {
+		return getBaroAlt(def_sea_press);
+	}
+
+	/**
+	* Returns an altitude estimate from barometer readings only using sea_press as current sea level pressure
+	*/
+	float FreeIMU::getBaroAlt(float sea_press) {
+		float temp = baro5637.getTemperature();
+		float press = baro5637.getPressure();
+        float new_press = kPress.measureRSSI(press);
+		return ((pow((sea_press / new_press), 1/5.257) - 1.0) * (temp + 273.15)) / 0.0065;
+	}	
+#endif
 
 /**
  * Returns the estimated altitude from fusing barometer and accelerometer

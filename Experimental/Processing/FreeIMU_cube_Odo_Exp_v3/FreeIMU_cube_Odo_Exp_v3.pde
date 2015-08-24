@@ -51,9 +51,9 @@ PrintWriter output;
 
 Serial myPort;  // Create object from Serial class
 
-final String serialPort = "COM3"; // replace this with your serial port. On windows you will need something like "COM1".
+final String serialPort = "COM4"; // replace this with your serial port. On windows you will need something like "COM1".
 int BaudRate=57600;
-String File_Name = "IMU9250-MARG1.txt";
+String File_Name = "IMU-9ds0.txt";
 int HAS_GPS = 0;
 
 //setting a 1D Kalman filter
@@ -775,3 +775,17 @@ public float iround(float number, float decimal) {
 
 //=======================================
 
+void gravityCompensateDynAcc() {
+  float[] g = new float[3];
+  
+  // get expected direction of gravity in the sensor frame
+  g[0] = 2 * (q[1] * q[3] - q[0] * q[2]);
+  g[1] = 2 * (q[0] * q[1] + q[2] * q[3]);
+  g[2] = q[0] * q[0] - q[1] * q[1] - q[2] * q[2] + q[3] * q[3];
+  
+  // compensate accelerometer readings with the expected direction of gravity
+  dyn_acc[0] = acc[0] - g[0];
+  dyn_acc[1] = acc[1] - g[1];
+  dyn_acc[2] = acc[2] - g[2];
+}
+ 
