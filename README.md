@@ -2,7 +2,15 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Wednesday, July 24, 2015
+Tuesday, August 25, 2015
+
+08-25-15 
+
+Added 360 degree Euler angle rotation function. Also fixed an issue with val array out of bounds preventing correct angles being returned when angle functions are returned.
+
+08-24-15 
+
+Added support for the MS5637 Pressure Sensor using a slightly modified version of the Freetronics library.  All sketches were updated according.
 
 07-24-15
 

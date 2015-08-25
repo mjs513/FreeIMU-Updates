@@ -50,8 +50,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define Mario   // MPU-9150 plus Altitude/Pressure Sensor Breakout - MPL3115A2  https://www.sparkfun.com/products/11084
 //#define APM_2_5  //  APMM 2.5.2 (EBAY)
 //#define Microduino
-//#define ST_LSM9DS0   //Note this includes the MS5637 pressure sensor  board
-#define LSM9DS0_MS5637 //Note this includes the MS5637 pressure sensor  board
+#define ST_LSM9DS0   //Note this includes the MS5637 pressure sensor  board
+//#define LSM9DS0_MS5637 //Note this includes the MS5637 pressure sensor  board
 
 //#define DISABLE_MAGN // Uncomment this line to disable the magnetometer in the sensor fusion algorithm
 
@@ -470,6 +470,8 @@ class FreeIMU
     void getYawPitchRollRad(float * ypr);
 	void getYawPitchRollRadAHRS(float * ypr, float * q);
 	void getYawPitchRoll180(float * ypr);
+    void getEuler360deg(float * angles);	
+    void getEuler360(float * angles);
 	float invSqrt(float x);
 	void setTempCalib(int opt_temp_cal);
 	void setSeaPress(float sea_press_inp);
@@ -672,6 +674,7 @@ class FreeIMU
 
 float invSqrt(float number);
 void arr3_rad_to_deg(float * arr);
+void arr3_deg_to_rad(float * arr);
 void Qmultiply(float *  q, float *  q1, float * q2);
 void gravityCompensateAcc(float * acc, float * q);
 
