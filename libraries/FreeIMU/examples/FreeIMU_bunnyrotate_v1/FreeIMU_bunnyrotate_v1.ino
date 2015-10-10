@@ -38,7 +38,7 @@ void setup() {
   Serial.begin(57600);
   Wire.begin();
   
-  my3IMU.init();
+  my3IMU.init(true);
   delay(500);
   my3IMU.initGyros();
 }
@@ -48,4 +48,14 @@ void loop() {
   //my3IMU.getQ(q,val);
   my3IMU.getEuler360deg(euler);
 
+
+  Serial.print(F("Orientation: "));
+  Serial.print(euler[0]);
+  Serial.print(F(" "));
+  Serial.print(euler[1]);
+  Serial.print(F(" "));
+  Serial.print(euler[2]);
+  Serial.println(F(""));
+  
+  delay(10);
 }

@@ -2,7 +2,13 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Tuesday, August 25, 2015
+Saturday, October 10, 2015
+
+10-10-15
+
+Added a FreeIMU60XX library.  This is essentially the same as the FreeIMU library tailored to fit on the Arduino Uno and supporting only the Invensese 6000, 6050, 9150 and the 9250 MPU.  It also now only supports the MS5611 pressure sensor.
+
+Inorder to make it fit the temperature compensation and motion detection routines have been removed.
 
 08-25-15 
 
