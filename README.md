@@ -2,7 +2,11 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Saturday, October 10, 2015
+Sunday, October 11, 2015
+
+10-11-15
+
+Renamed DebugUtils directory to FreeIMUUtils and moved CommunicationUtil.h and .cpp files to this directory.  This was done to allow FreeIMU and FreeIMU60XX to coexist without errors.
 
 10-10-15
 
