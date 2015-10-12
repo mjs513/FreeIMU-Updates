@@ -1233,6 +1233,55 @@ void FreeIMU_6050::getEuler360(float * angles) {
   arr3_deg_to_rad(angles);
 }
 
+/**
+ * Returns the Euler angles in degrees defined with the Aerospace sequence (NED).  Conversion
+ * based on MATLAB quat2angle.m for an ZXY rotation sequence. euler[0] = yaw, euler[1]=pitch and euler[2] = roll
+ * Angles are lie between 0-360 degrees.  Added return of q and val array.
+ * 
+ * @param angles three floats array which will be populated by the Euler angles in degrees
+*/
+void FreeIMU_6050::getEuler360degAttitude(float * angles, float * q, float * val) {
+  float m11, m12, m21, m31, m32;
+  float gx, gy, gz; // estimated gravity direction
+  //float q[4]; // quaternion
+  //float val[12];
+  
+  getQ(q, val);
+  
+  gx = 2 * (q[1]*q[3] - q[0]*q[2]);
+  gy = 2 * (q[0]*q[1] + q[2]*q[3]);
+  gz = q[0]*q[0] - q[1]*q[1] - q[2]*q[2] + q[3]*q[3];
+    
+  m11 = 2.*(q[1]*q[2] + q[0]*q[3]);
+  m12 = q[0]*q[0] + q[1]*q[1] - q[2]*q[2] - q[3]*q[3];
+  m21 = -2.*(q[1]*q[3] - q[0]*q[2]);               
+  m31 = 2.*(q[2]*q[3] + q[0]*q[1]);              
+  m32 = q[0]*q[0] - q[1]*q[1] - q[2]*q[2] + q[3]*q[3];
+
+  // find angles for rotations about X, Y, and Z axes
+  angles[0] = -atan2( m11, m12 ) * 57.2957795;
+  angles[1] = -asin( m21 ) * 57.2957795;
+  angles[2] = -atan2( m31, m32 ) * 57.2957795;
+    
+  //  	Gx	gy	gz
+  //0-90	"+"		"+"
+  //90-180	"+"		"-"
+  //180-270	"-"		"-"
+  //270-360	"-"		"+"
+    
+  if(gx >= 0 && gz < 0)
+      angles[1] = 180. - angles[1];
+     else if(gx < 0 && gz < 0)
+       angles[1] = 180. - angles[1];
+      else if(gx < 0 && gz >=0)
+        angles[1] = 360. + angles[1];
+        
+  if(angles[0] < 0) angles[0] = 360. + angles[0];
+  if(angles[2] < 0) angles[2] = 360. + angles[2];
+  
+  angles[0] = 360 - angles[0];
+  
+}
 
 /**
  * Returns the yaw pitch and roll angles, respectively defined as the angles in radians between

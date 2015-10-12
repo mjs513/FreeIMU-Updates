@@ -55,9 +55,8 @@ void setup() {
 }
 
 void loop() { 
-  //float val_array[19] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-  my3IMU.getQ(q, val);
-  my3IMU.getEuler360deg(ypr);
+
+  my3IMU.getEuler360degAttitude(ypr, q, val);
   Serial.print("Yaw: ");
   Serial.print(ypr[0] );
   Serial.print(" Pitch: ");
@@ -69,10 +68,6 @@ void loop() {
   Serial.print(val[9]);
   Serial.print(" Altitude: ");
   Serial.print(val[10]);
-  
-  //for(int i = 0; i < 11; i++) {
-  //  Serial.print(val[i]); Serial.print(", ");
-  //}
   
   Serial.println("");
   

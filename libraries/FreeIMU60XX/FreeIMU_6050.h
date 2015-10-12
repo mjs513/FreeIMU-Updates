@@ -304,6 +304,7 @@ class FreeIMU_6050
 	//void getYawPitchRoll180(float * ypr);
     void getEuler360deg(float * angles);	
     void getEuler360(float * angles);
+	void getEuler360degAttitude(float * angles, float * q, float * val);
 	float invSqrt(float x);
 	void setTempCalib(int opt_temp_cal);
 	void setSeaPress(float sea_press_inp);
