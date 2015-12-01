@@ -36,6 +36,7 @@
 #include "I2Cdev.h"
 #include <BMP085.h>
 #include <SFE_LSM9DS0.h>
+#include <BaroSensor.h> // MS5637-1 pressure sensor
 #include <FilteringScheme.h>
 #include "CommunicationUtils.h"
 #include "DebugUtils.h"

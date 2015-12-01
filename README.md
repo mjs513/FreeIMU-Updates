@@ -4,6 +4,14 @@ FreeIMU-Updates
 Change Log
 Sunday, October 11, 2015
 
+12-01-15
+Replace LPS331 library by LPS libray for compatibility with ALTIMU10 v3 (LPS331AP) and AltIMU-10 v4 (LPS25H).
+------- https://github.com/pololu/lps-arduino
+------- Add support for the Dadafruit 10-DOF IMU (L3GD20H / LSM303 / BMP180).
+------- Thanks to grezco for incorporating these changes.
+Added additional code to Extended Kalman Filter example to work with Eigen without need to modify the Teensy board file.  Thanks to users over at Teensy forum
+
+
 10-11-15
 
 Renamed DebugUtils directory to FreeIMUUtils and moved CommunicationUtil.h and .cpp files to this directory.  This was done to allow FreeIMU and FreeIMU60XX to coexist without errors.

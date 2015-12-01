@@ -1,7 +1,7 @@
 #include <Wire.h>
-#include <LPS331.h>
+#include <LPS.h>
 
-LPS331 ps;
+LPS ps;
 
 void setup()
 {
@@ -19,17 +19,17 @@ void setup()
 
 void loop()
 {
-  float pressure = ps.readPressureInchesHg();
-  float altitude = ps.pressureToAltitudeFeet(pressure);
-  float temperature = ps.readTemperatureF();
-
+  float pressure = ps.readPressureMillibars();
+  float altitude = ps.pressureToAltitudeMeters(pressure);
+  float temperature = ps.readTemperatureC();
+  
   Serial.print("p: ");
   Serial.print(pressure);
-  Serial.print(" inHg\ta: ");
+  Serial.print(" mbar\ta: ");
   Serial.print(altitude);
-  Serial.print(" ft\tt: ");
+  Serial.print(" m\tt: ");
   Serial.print(temperature);
-  Serial.println(" deg F");
+  Serial.println(" deg C");
 
   delay(100);
 }

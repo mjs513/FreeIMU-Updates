@@ -1,4 +1,40 @@
-        
+//These are optional depending on your IMU configuration
+
+#include <ADXL345.h>
+#include <HMC58X3.h>
+#include <LSM303.h>
+#include <LPS.h> 
+#include <ITG3200.h> //note LPS library must come before ITG lib
+#include <bma180.h>
+#include <MS561101BA.h> //Comment out for APM 2.5
+#include <BMP085.h>
+#include <I2Cdev.h>
+#include <MPU60X0.h>
+#include <AK8975.h>
+#include <AK8963.h>
+#include <L3G.h>
+#include <SFE_LSM9DS0.h>
+#include <BaroSensor.h> // MS5637-1 pressure sensor
+//#include <AP_Baro_MS5611.h>  //Uncomment for APM2.5
+
+//These are mandatory
+#include <AP_Math_freeimu.h>
+#include <Butter.h>    // Butterworth filter
+#include <iCompass.h>
+#include <MovingAvarageFilter.h>
+
+//#define DEBUG
+#include "DebugUtils.h"
+#include "CommunicationUtils.h"
+#include "FreeIMU.h"
+#include "DCM.h"
+#include "FilteringScheme.h"
+#include "RunningAverage.h"
+
+#include <Wire.h>
+#include <SPI.h>  
+
+
 //Comment these lines out for ARM processors such as DUE and Teensy 3.1
   //#include <EEPROM.h>
   //#include <stlport.h>
@@ -21,7 +57,6 @@ QuaternionClass quaternion;
 //    KalmanClass kalmanPhi_, kalmanPsi_;
 ExtendedKalmanClass EKF;
 
-
 #define Has_LSM303 0
 #define HAS_GPS 0
 
@@ -41,12 +76,15 @@ FreeIMU my3IMU = FreeIMU();
 //The command from the PC
 char cmd, tempCorr;
 
+extern "C"{
+  int _getpid(){ return -1;}
+  int _kill(int pid, int sig){ return -1; }
+  int _write(){return -1;}
+}
 
 void setup() {
   Serial.begin(115200);
   Wire.begin();
-  
-
   
   //#if HAS_MPU6050()
   //    my3IMU.RESET();
@@ -180,4 +218,3 @@ void getYawPitchRoll180(QuaternionClass* q) {
     Serial.print(ypr[2]);
     Serial.println(F(""));
 }
-

@@ -161,7 +161,7 @@ GNU General Public License for more details.
 09-22-14
 -------- Changed LSM303 library default sampling rate to 100hz for accel and magnetometer to adjust 
 -------- for use with Teensy 3.1
--------- Updated (int) to (int16_t) in lps331 library for getTemperatureRaw.
+-------- Updated (int) to (int16_t) in LPS library for getTemperatureRaw.
 -------- FreeIMU examples updated accordingly based on compass averaging change.
 ------------------------------------------------------------------------
 10-03-14 
@@ -278,6 +278,11 @@ GNU General Public License for more details.
 08-25-15 Added 360 degree Euler angle rotation function. Also fixed an issue with val array out of bounds
 ------- preventing correct angles being returned when angle functions are returned.
 ---------------------------------------------------------------------------
+11-28-15 Replace LPS331 library by LPS libray for compatibility with ALTIMU10 v3 (LPS331AP) and AltIMU-10 v4 (LPS25H).
+------- https://github.com/pololu/lps-arduino
+------- Add support for the Dadafruit 10-DOF IMU (L3GD20H / LSM303 / BMP180).
+---------------------------------------------------------------------------
+
 */
 
 #include "Arduino.h"
@@ -342,12 +347,12 @@ butter10hz0_3 mfilter_accy;
 butter10hz0_3 mfilter_accz;
 
 //#if HAS_MPU9150() || HAS_MPU9250()
-	//Set up Butterworth Filter for 9150 mag - more noisy than HMC5883L
-	//was butter50hz2_0, new values base on Mario Cannistrà suggestion
-	//he also used same filter on the gryo's which I am not using rigth now
-	butter100hz2_0  mfilter_mx;
-	butter100hz2_0  mfilter_my;
-	butter100hz2_0  mfilter_mz;
+//Set up Butterworth Filter for 9150 mag - more noisy than HMC5883L
+//was butter50hz2_0, new values base on Mario Cannistrà suggestion
+//he also used same filter on the gryo's which I am not using rigth now
+butter100hz2_0  mfilter_mx;
+butter100hz2_0  mfilter_my;
+butter100hz2_0  mfilter_mz;
 //#endif
 
 //Setup Motion Detect Averages
@@ -372,12 +377,12 @@ FreeIMU::FreeIMU() {
   
   #if HAS_HMC5883L()
     magn = HMC58X3();
-	maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);
+    maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);
   #endif
   
   #if HAS_LSM303()
-	compass = LSM303();
-	maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);	
+    compass = LSM303();
+    maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);	
   #endif
   
   #if HAS_ITG3200()
@@ -390,16 +395,16 @@ FreeIMU::FreeIMU() {
     accgyro = MPU60X0(); // SPI for Arduimu v3
   #elif HAS_MPU9150()
     accgyro = MPU60X0();
-	mag = AK8975();
-	maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);
+    mag = AK8975();
+    maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);
   #elif HAS_MPU9250()
     accgyro = MPU60X0();
-	mag = AK8963();
-	maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);
+    mag = AK8963();
+    maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);
   #elif HAS_LSM9DS0()
-	//lsm = LSM9DS0(MODE_I2C, LSM9DS0_G, LSM9DS0_XM);
-	lsm = LSM9DS0(MODE_I2C, LSM9DS0_G, LSM9DS0_XM);
-	maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);	
+    //lsm = LSM9DS0(MODE_I2C, LSM9DS0_G, LSM9DS0_XM);
+    lsm = LSM9DS0(MODE_I2C, LSM9DS0_G, LSM9DS0_XM);
+    maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);	
   #endif
     
   #if HAS_PRESS()
@@ -412,8 +417,8 @@ FreeIMU::FreeIMU() {
 	    #endif
       #elif HAS_BMP085()
         baro085 = BMP085();
-      #elif HAS_LPS331()
-        baro331 = LPS331();
+      #elif HAS_LPS()
+        baroLPS = LPS();
       #elif HAS_MPL3115A2()
         baro3115 = MPL3115A2();
 	  #elif HAS_MS5637()
@@ -449,61 +454,65 @@ FreeIMU::FreeIMU() {
   gyro_off_z = 0.;
   
   #ifndef CALIBRATION_H
-  // initialize scale factors to neutral values
-	acc_scale_x = 1;
-	acc_scale_y = 1;
-	acc_scale_z = 1;
-	magn_scale_x = 1;
-	magn_scale_y = 1;
-	magn_scale_z = 1;
+    // initialize scale factors to neutral values
+	  acc_scale_x = 1;
+	  acc_scale_y = 1;
+	  acc_scale_z = 1;
+	  magn_scale_x = 1;
+	  magn_scale_y = 1;
+	  magn_scale_z = 1;
   #else
-	// get values from global variables of same name defined in calibration.h
-	acc_off_x = ::acc_off_x;
-	acc_off_y = ::acc_off_y;
-	acc_off_z = ::acc_off_z;
-	acc_scale_x = ::acc_scale_x;
-	acc_scale_y = ::acc_scale_y;
-	acc_scale_z = ::acc_scale_z;
-	magn_off_x = ::magn_off_x;
-	magn_off_y = ::magn_off_y;
-	magn_off_z = ::magn_off_z;
-	magn_scale_x = ::magn_scale_x;
-	magn_scale_y = ::magn_scale_y;
-	magn_scale_z = ::magn_scale_z;
+	  // get values from global variables of same name defined in calibration.h
+	  acc_off_x = ::acc_off_x;
+	  acc_off_y = ::acc_off_y;
+	  acc_off_z = ::acc_off_z;
+	  acc_scale_x = ::acc_scale_x;
+	  acc_scale_y = ::acc_scale_y;
+	  acc_scale_z = ::acc_scale_z;
+	  magn_off_x = ::magn_off_x;
+	  magn_off_y = ::magn_off_y;
+ 	  magn_off_z = ::magn_off_z;
+	  magn_scale_x = ::magn_scale_x;
+	  magn_scale_y = ::magn_scale_y;
+	  magn_scale_z = ::magn_scale_z;
   #endif
 }
 
 void FreeIMU::init() {
   #if HAS_ITG3200()
-	init(FIMU_ACC_ADDR, FIMU_ITG3200_DEF_ADDR, false);
+    init(FIMU_ACC_ADDR, FIMU_ITG3200_DEF_ADDR, false);
   #elif HAS_ALTIMU10()
     init0(false);
   #elif HAS_APM25()
-	//As per APM standard code, stop the barometer from holding the SPI bus
-	pinMode(40, OUTPUT);
+    //As per APM standard code, stop the barometer from holding the SPI bus
+    pinMode(40, OUTPUT);
     digitalWrite(40, HIGH);
-	init(53, false);
+    init(53, false);
   #elif HAS_LSM9DS0()
-	init0(true);	
+    init0(true);	
+  #elif HAS_ADA_10_DOF()
+    init0(false);
   #else
-	init(FIMU_ACCGYRO_ADDR, false);
+    init(FIMU_ACCGYRO_ADDR, false);
   #endif
 }
 
 void FreeIMU::init(bool fastmode) {
   #if HAS_ITG3200()
-	init(FIMU_ACC_ADDR, FIMU_ITG3200_DEF_ADDR, fastmode);
+    init(FIMU_ACC_ADDR, FIMU_ITG3200_DEF_ADDR, fastmode);
   #elif HAS_ALTIMU10()
     init0(fastmode);
   #elif HAS_APM25()
-	//As per APM standard code, stop the barometer from holding the SPI bus
-	pinMode(40, OUTPUT);
+    //As per APM standard code, stop the barometer from holding the SPI bus
+    pinMode(40, OUTPUT);
     digitalWrite(40, HIGH);
-	init(53, fastmode);
+    init(53, fastmode);
   #elif HAS_LSM9DS0()
-	init0(fastmode);
+    init0(fastmode);
+  #elif HAS_ADA_10_DOF()
+    init0(fastmode);
   #else
-	init(FIMU_ACCGYRO_ADDR, fastmode);
+    init(FIMU_ACCGYRO_ADDR, fastmode);
   #endif
 }
 
@@ -515,35 +524,35 @@ void FreeIMU::RESET() {
 	delay(50);
 	//reset matrix
 	q0 = 1.0f;
-    q1 = 0.0f;
-    q2 = 0.0f;
-    q3 = 0.0f;
-    exInt = 0.0;
-    eyInt = 0.0;
-    ezInt = 0.0;
-    twoKp = twoKpDef;
-    twoKi = twoKiDef;
-   // beta = betaDef;
-    integralFBx = 0.0f,  integralFBy = 0.0f, integralFBz = 0.0f;
-    //lastUpdate = 0;
-    //now = 0;
+  q1 = 0.0f;
+  q2 = 0.0f;
+  q3 = 0.0f;
+  exInt = 0.0;
+  eyInt = 0.0;
+  ezInt = 0.0;
+  twoKp = twoKpDef;
+  twoKi = twoKiDef;
+  // beta = betaDef;
+  integralFBx = 0.0f,  integralFBy = 0.0f, integralFBz = 0.0f;
+  //lastUpdate = 0;
+  //now = 0;
 }
 
 void FreeIMU::RESET_Q() {
 	//reset matrix
 	q0 = 1.0f;
-    q1 = 0.0f;
-    q2 = 0.0f;
-    q3 = 0.0f;
-    exInt = 0.0;
-    eyInt = 0.0;
-    ezInt = 0.0;
-    twoKp = twoKpDef;
-    twoKi = twoKiDef;
-   // beta = betaDef;
-    integralFBx = 0.0f,  integralFBy = 0.0f, integralFBz = 0.0f;
-    //lastUpdate = 0;
-    //now = 0;
+  q1 = 0.0f;
+  q2 = 0.0f;
+  q3 = 0.0f;
+  exInt = 0.0;
+  eyInt = 0.0;
+  ezInt = 0.0;
+  twoKp = twoKpDef;
+  twoKi = twoKiDef;
+  // beta = betaDef;
+  integralFBx = 0.0f,  integralFBy = 0.0f, integralFBz = 0.0f;
+  //lastUpdate = 0;
+  //now = 0;
 }
 
 
@@ -552,7 +561,7 @@ void FreeIMU::RESET_Q() {
 */
 #if HAS_ITG3200()
 	void FreeIMU::init(int acc_addr, int gyro_addr, bool fastmode) {
-#elif HAS_ALTIMU10() || HAS_LSM9DS0()
+#elif HAS_ALTIMU10() || HAS_LSM9DS0() || HAS_ADA_10_DOF()
 	void FreeIMU::init0(bool fastmode) {
 #else
 	void FreeIMU::init(int accgyro_addr, bool fastmode) {
@@ -596,8 +605,8 @@ void FreeIMU::RESET_Q() {
   #if HAS_ADXL345()
     // init ADXL345
     acc.init(acc_addr);
-	acc.set_bw(ADXL345_BW_100);
-	acc.setRangeSetting(2);
+    acc.set_bw(ADXL345_BW_100);
+    acc.setRangeSetting(2);
   #elif HAS_BMA180()
     // init BMA180
     acc.setAddress(acc_addr);
@@ -611,105 +620,105 @@ void FreeIMU::RESET_Q() {
   #endif
 
   #if HAS_ITG3200()
-	// init ITG3200
-	gyro.init(gyro_addr);
-	delay(1000);
-	gyro.setFilterBW(BW020_SR1);
-	delay(1000);
-	// calibrate the ITG3200
-	gyro.zeroCalibrate(128,5);
-	gyro_sensitivity = 14.375f;
+    // init ITG3200
+    gyro.init(gyro_addr);
+    delay(1000);
+    gyro.setFilterBW(BW020_SR1);
+    delay(1000);
+    // calibrate the ITG3200
+    gyro.zeroCalibrate(128,5);
+    gyro_sensitivity = 14.375f;
   #endif
   
- /* 
- * For Invensense MPUs:
- *
- * FS_SEL | Full Scale Range   | LSB Sensitivity
- * -------+--------------------+----------------
- * 0      | +/- 250 degrees/s  | 131 LSB/deg/s
- * 1      | +/- 500 degrees/s  | 65.5 LSB/deg/s
- * 2      | +/- 1000 degrees/s | 32.8 LSB/deg/s
- * 3      | +/- 2000 degrees/s | 16.4 LSB/deg/s
- */
+   /* 
+   * For Invensense MPUs:
+   *
+   * FS_SEL | Full Scale Range   | LSB Sensitivity
+   * -------+--------------------+----------------
+   * 0      | +/- 250 degrees/s  | 131 LSB/deg/s
+   * 1      | +/- 500 degrees/s  | 65.5 LSB/deg/s
+   * 2      | +/- 1000 degrees/s | 32.8 LSB/deg/s
+   * 3      | +/- 2000 degrees/s | 16.4 LSB/deg/s
+   */
   #if HAS_MPU6050()
-	accgyro = MPU60X0(false, accgyro_addr);
-	accgyro.initialize();
-	accgyro.setDLPFMode(MPU60X0_DLPF_BW_20); 
-	accgyro.setI2CMasterModeEnabled(0);
-	accgyro.setI2CBypassEnabled(1);
-	accgyro.setRate(0x13);			//Sets sample rate to 8000/1+7 = 1000Hz
-	accgyro.setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);
-	accgyro.setFullScaleAccelRange(MPU60X0_ACCEL_FS_2);
-	gyro_sensitivity = 16.4f;
-	delay(5);
-	delay(30);
+    accgyro = MPU60X0(false, accgyro_addr);
+    accgyro.initialize();
+    accgyro.setDLPFMode(MPU60X0_DLPF_BW_20); 
+    accgyro.setI2CMasterModeEnabled(0);
+    accgyro.setI2CBypassEnabled(1);
+    accgyro.setRate(0x13);			//Sets sample rate to 8000/1+7 = 1000Hz
+    accgyro.setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);
+    accgyro.setFullScaleAccelRange(MPU60X0_ACCEL_FS_2);
+    gyro_sensitivity = 16.4f;
+    delay(5);
+    delay(30);
   #elif HAS_MPU9150()
-	//initialize accelerometer and gyroscope
-	accgyro = MPU60X0(false, accgyro_addr);
-	#if HAS_MPU9250()
-		accgyro.initialize9250();
-		accgyro.setDLPFMode(MPU60X0_DLPF_BW_98);
+    //initialize accelerometer and gyroscope
+    accgyro = MPU60X0(false, accgyro_addr);
+    #if HAS_MPU9250()
+	    accgyro.initialize9250();
+	    accgyro.setDLPFMode(MPU60X0_DLPF_BW_98);
 	#else
-		accgyro.initialize();
-		accgyro.setDLPFMode(MPU60X0_DLPF_BW_20);
+	  accgyro.initialize();
+	  accgyro.setDLPFMode(MPU60X0_DLPF_BW_20);
 	#endif
-	accgyro.setI2CMasterModeEnabled(0);
-	accgyro.setI2CBypassEnabled(1);
-	accgyro.setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);
-	accgyro.setFullScaleAccelRange(MPU60X0_ACCEL_FS_2);
-	gyro_sensitivity = 16.4f;
-	delay(100);
-	//initialize magnetometer
-	mag = AK8975(false, AK8975_DEFAULT_ADDRESS);
-	mag.initialize();
+    accgyro.setI2CMasterModeEnabled(0);
+    accgyro.setI2CBypassEnabled(1);
+    accgyro.setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);
+	  accgyro.setFullScaleAccelRange(MPU60X0_ACCEL_FS_2);
+	  gyro_sensitivity = 16.4f;
+	  delay(100);
+	  //initialize magnetometer
+	  mag = AK8975(false, AK8975_DEFAULT_ADDRESS);
+	  mag.initialize();
   #elif HAS_MPU9250()
-	//initialize accelerometer and gyroscope
-	accgyro = MPU60X0(false, accgyro_addr);
-	accgyro.initialize9250();
-	accgyro.setDLPFMode(MPU60X0_DLPF_BW_20); 
-	accgyro.setI2CMasterModeEnabled(0);
-	accgyro.setI2CBypassEnabled(1);
-	accgyro.setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);
-	accgyro.setFullScaleAccelRange(MPU60X0_ACCEL_FS_2);
-	gyro_sensitivity = 16.4f;
-	delay(100);
-	//initialize magnetometer
-	mag = AK8963(false, AK8963_DEFAULT_ADDRESS);
-	mag.initialize();  
-	mag.setModeRes(AK8963_MODE_CONT2, MFS_16BITS);
+	  //initialize accelerometer and gyroscope
+	  accgyro = MPU60X0(false, accgyro_addr);
+	  accgyro.initialize9250();
+	  accgyro.setDLPFMode(MPU60X0_DLPF_BW_20); 
+	  accgyro.setI2CMasterModeEnabled(0);
+	  accgyro.setI2CBypassEnabled(1);
+	  accgyro.setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);
+	  accgyro.setFullScaleAccelRange(MPU60X0_ACCEL_FS_2);
+	  gyro_sensitivity = 16.4f;
+	  delay(100);
+	  //initialize magnetometer
+	  mag = AK8963(false, AK8963_DEFAULT_ADDRESS);
+	  mag.initialize();  
+	  mag.setModeRes(AK8963_MODE_CONT2, MFS_16BITS);
   #elif HAS_MPU6000()
-	accgyro = MPU60X0(true, accgyro_addr);
-	accgyro.initialize();
-	accgyro.setRate(19);
-	accgyro.setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);
-	accgyro.setFullScaleAccelRange(MPU60X0_ACCEL_FS_2);
-	accgyro.setDLPFMode(MPU60X0_DLPF_BW_20); 
-	gyro_sensitivity = 16.4f;
-	delay(5);
+	  accgyro = MPU60X0(true, accgyro_addr);
+	  accgyro.initialize();
+	  accgyro.setRate(19);
+	  accgyro.setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);
+	  accgyro.setFullScaleAccelRange(MPU60X0_ACCEL_FS_2);
+	  accgyro.setDLPFMode(MPU60X0_DLPF_BW_20); 
+	  gyro_sensitivity = 16.4f;
+	  delay(5);
   #endif 
   
   #if HAS_LSM9DS0()
-	// Use the begin() function to initialize the LSM9DS0 library.
-	// You can either call it with no parameters (the easy way):
-	uint16_t status = lsm.begin(lsm.G_SCALE_2000DPS, lsm.A_SCALE_2G );
-	// Or call it with declarations for sensor scales and data rates:  
-	//uint16_t status = lsm.begin(lsm.G_SCALE_2000DPS, 
-	//                            lsm.A_SCALE_6G, lsm.M_SCALE_2GS);
-	//Angular rate FS = ±245 dps, gyro_sensitivity = 8.75
-	//Angular rate FS = ±500 dps, gyro_sensitivity =  17.50
-	//Angular rate FS = ±2000 dps, gyro_sensitivity =  70
-	gyro_sensitivity = 70.0f;
+    // Use the begin() function to initialize the LSM9DS0 library.
+	  // You can either call it with no parameters (the easy way):
+	  uint16_t status = lsm.begin(lsm.G_SCALE_2000DPS, lsm.A_SCALE_2G );
+	  // Or call it with declarations for sensor scales and data rates:  
+	  //uint16_t status = lsm.begin(lsm.G_SCALE_2000DPS, 
+	  //                            lsm.A_SCALE_6G, lsm.M_SCALE_2GS);
+	  //Angular rate FS = ±245 dps, gyro_sensitivity = 8.75
+	  //Angular rate FS = ±500 dps, gyro_sensitivity =  17.50
+	  //Angular rate FS = ±2000 dps, gyro_sensitivity =  70
+	  gyro_sensitivity = 70.0f;
   #endif
   
   #if HAS_HMC5883L()
-	// init HMC5843
-	magn.init(false); // Don't set mode yet, we'll do that later on.
-	// Calibrate HMC using self test, not recommended to change the gain after calibration.
-	magn.calibrate(1); // Use gain 1=default, valid 0-7, 7 not recommended.
-	// Single mode conversion was used in calibration, now set continuous mode
-	magn.setMode(0);
-	delay(10);
-	magn.setDOR(B110);
+	  // init HMC5843
+	  magn.init(false); // Don't set mode yet, we'll do that later on.
+	  // Calibrate HMC using self test, not recommended to change the gain after calibration.
+	  magn.calibrate(1); // Use gain 1=default, valid 0-7, 7 not recommended.
+	  // Single mode conversion was used in calibration, now set continuous mode
+	  magn.setMode(0);
+	  delay(10);
+	  magn.setDOR(B110);
   #endif
   
   
@@ -727,43 +736,43 @@ void FreeIMU::RESET_Q() {
 
   #if HAS_MPL3115A2()
     baro3115.begin();
-	baro3115.setModeBarometer(); // Measure pressure in Pascals from 20 to 110 kPa
-	// Set the # of samples from 1 to 128. See datasheet.
-	// Integer values between 0 < n < 7 give oversample ratios 2^n and 
-	// sampling intervals of 0=6 ms , 1=10, 2=18, 3=34, 4=66, 5=130, 6=258, and 7=512 
-	baro3115.setOversampleRate(4); // Set Oversample to the recommended 128 --> 512ms
-	baro3115.enableEventFlags(); // Enable all three pressure and temp event flags 
+	  baro3115.setModeBarometer(); // Measure pressure in Pascals from 20 to 110 kPa
+	  // Set the # of samples from 1 to 128. See datasheet.
+	  // Integer values between 0 < n < 7 give oversample ratios 2^n and 
+	  // sampling intervals of 0=6 ms , 1=10, 2=18, 3=34, 4=66, 5=130, 6=258, and 7=512 
+	  baro3115.setOversampleRate(4); // Set Oversample to the recommended 128 --> 512ms
+	  baro3115.enableEventFlags(); // Enable all three pressure and temp event flags 
   #endif  
    
   #if HAS_BMP085()
-	// 19.8 meters for my location, true = using meter units
+    // 19.8 meters for my location, true = using meter units
     // this initialization is useful if current altitude is known,
     // pressure will be calculated based on TruePressure and known altitude.	
-	//baro085.init(3, 1981.6469, true);  
-	//Changed Init to default pressure
-	baro085.init();
+    //baro085.init(3, 1981.6469, true);  
+    //Changed Init to default pressure
+    baro085.init();
   #endif
   
   #if HAS_MS5637()
-	baro5637.begin();
+    baro5637.begin();
   #endif
   
-  //ALTIMU SENSOR INIT
+  //ALTIMU or Adafruit 10-DOF SENSOR INIT
   #if HAS_L3D20()
-	gyro.init();
-	//gyro.enableDefault();
-	//					Sensitivity
-	//+/-245:        0x00	8.75	
-	//+/-500:        0x10	17.5
-	//+/- 2000:      0x20	70
-	gyro.writeReg(0x23, 0x20);
-	gyro_sensitivity = 70.0f;
+    gyro.init();
+    //gyro.enableDefault();
+    //					Sensitivity
+    //+/-245:        0x00	8.75	
+    //+/-500:        0x10	17.5
+    //+/- 2000:      0x20	70
+    gyro.writeReg(0x23, 0x20);
+    gyro_sensitivity = 70.0f;
   #endif
   
   #if HAS_LSM303()
-	compass.init();
+    compass.init();
     compass.enableDefault();
-	deviceType = compass.getDeviceType();
+    deviceType = compass.getDeviceType();
 
 	if((int16_t) deviceType == 3) {	// LSM303D
 		// Accelerometer
@@ -771,7 +780,7 @@ void FreeIMU::RESET_Q() {
 		compass.writeReg(LSM303::CTRL2, 0x00);
 
 		// Magnetometer
-    	// MFS = 01 (+/- 4 gauss full scale),  MFS = 00(+/- 2 gauss full scale)
+    // MFS = 01 (+/- 4 gauss full scale),  MFS = 00(+/- 2 gauss full scale)
 		// MFS = 10 (+/- 8 gauss full scale),  MFS = 11(+/- 12 gauss full scale)
 		compass.writeReg(LSM303::CTRL6, 0x00);
 	}
@@ -780,7 +789,7 @@ void FreeIMU::RESET_Q() {
 		// FS = 00  (+/- 2 g full scale); HR = 1 (high resolution enable)
 		//                                  FS HR
 		//    equates to 0b00 00  1    00 0
-    	// FS = 0x01  (+/- 4 g),  0x10: +/- 8 g, 0x11: +/- 16 g 
+    // FS = 0x01  (+/- 4 g),  0x10: +/- 8 g, 0x11: +/- 16 g 
 		//  or: 0x08, 0x18, 0x28, 0x38 respectfully
 		compass.writeAccReg(LSM303::CTRL_REG4_A, 0x08);
 	
@@ -799,7 +808,7 @@ void FreeIMU::RESET_Q() {
 		// 0x00 = 0b00000000
 		// FS = 00 (+/- 2 g full scale), 01 (+/- 4g), 11} (+/- 8g)
 		// 0x00, 0x01, 0x03 respectfully
-    	compass.writeAccReg(LSM303::CTRL_REG4_A, 0x00);
+    compass.writeAccReg(LSM303::CTRL_REG4_A, 0x00);
 
 		// Magnetometer Settings
 		// ±1.3ga	(0x20)
@@ -814,9 +823,9 @@ void FreeIMU::RESET_Q() {
 
   #endif
   
-  #if HAS_LPS331()
-    baro331.init();
-	baro331.enableDefault();
+  #if HAS_LPS()
+    baroLPS.init();
+    baroLPS.enableDefault();
   #endif
   
   // zero gyro
@@ -829,8 +838,8 @@ void FreeIMU::RESET_Q() {
   //digitalWrite(12,LOW);
 	
   #ifndef CALIBRATION_H
-	// load calibration from eeprom
-	calLoad();
+	  // load calibration from eeprom
+	  calLoad();
   #endif
 
   
@@ -903,37 +912,37 @@ void FreeIMU::calLoad() {
  * Populates raw_values with the raw_values from the sensors
 */
 void FreeIMU::getRawValues(int * raw_values) {
-    //Set raw values for Magnetometer, Press, Temp to 0 in case you are only using
+  //Set raw values for Magnetometer, Press, Temp to 0 in case you are only using
 	//an accelerometer and gyro
 	//raw_values[9] will be set to MPU-6050 temp, see zeroGyro to change raw_values dimension
-    raw_values[6] = 0;
-    raw_values[7] = 0;
-    raw_values[8] = 0;
-    raw_values[9] = 0;
+  raw_values[6] = 0;
+  raw_values[7] = 0;
+  raw_values[8] = 0;
+  raw_values[9] = 0;
 	
   #if HAS_ITG3200()
     acc.readAccel(&raw_values[0], &raw_values[1], &raw_values[2]);
     gyro.readGyroRaw(&raw_values[3], &raw_values[4], &raw_values[5]);
-	gyro.readTemp(&senTemp);
-	raw_values[9] = senTemp*100;
+	  gyro.readTemp(&senTemp);
+	  raw_values[9] = senTemp*100;
   #elif HAS_MPU6050() || HAS_MPU6000() || HAS_MPU9150() || HAS_MPU9250()
     #ifdef __AVR__
-     accgyro.getMotion6(&raw_values[0], &raw_values[1], &raw_values[2], &raw_values[3], &raw_values[4], &raw_values[5]);  	  
+      accgyro.getMotion6(&raw_values[0], &raw_values[1], &raw_values[2], &raw_values[3], &raw_values[4], &raw_values[5]);  	  
  	  #if HAS_MPU9150() || HAS_MPU9250()
-		mag.getHeading(&raw_values[6], &raw_values[7], &raw_values[8]);			
-		delay(10);
+		  mag.getHeading(&raw_values[6], &raw_values[7], &raw_values[8]);			
+		  delay(10);
 		#endif
-	 rt = accgyro.getTemperature();	  
-     raw_values[9] = rt;
+	  rt = accgyro.getTemperature();	  
+    raw_values[9] = rt;
 	 #else
       int16_t ax, ay, az, gx, gy, gz, mx, my, mz, rt;
       accgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
 	  #if HAS_MPU9150() || HAS_MPU9250() 
-		mag.getHeading(&mx, &my, &mz);
-		raw_values[6] = mx;
-		raw_values[7] = my;
-		raw_values[8] = mz;				
-		delay(10);
+		  mag.getHeading(&mx, &my, &mz);
+		  raw_values[6] = mx;
+		  raw_values[7] = my;
+		  raw_values[8] = mz;				
+		  delay(10);
 		#endif
       raw_values[0] = ax;
       raw_values[1] = ay;
@@ -952,13 +961,13 @@ void FreeIMU::getRawValues(int * raw_values) {
   
  #if HAS_L3D20()
 	  gyro.read();
-      raw_values[3] = gyro.g.x;
-      raw_values[4] = gyro.g.y;
-      raw_values[5] = gyro.g.z;	
+    raw_values[3] = gyro.g.x;
+    raw_values[4] = gyro.g.y;
+    raw_values[5] = gyro.g.z;	
   #endif
 
   #if HAS_LSM303()
-	compass.read();
+	  compass.read();
     raw_values[0] = compass.a.x;
     raw_values[1] = compass.a.y;
     raw_values[2] = compass.a.z;
@@ -968,9 +977,9 @@ void FreeIMU::getRawValues(int * raw_values) {
   #endif	
 
   #if HAS_LSM9DS0()
-	lsm.readAccel();
-	lsm.readGyro();
-	lsm.readMag();
+	  lsm.readAccel();
+	  lsm.readGyro();
+	  lsm.readMag();
     raw_values[0] = lsm.ax;
     raw_values[1] = lsm.ay;
     raw_values[2] = lsm.az;
@@ -980,9 +989,9 @@ void FreeIMU::getRawValues(int * raw_values) {
     raw_values[3] = lsm.gx;
     raw_values[4] = lsm.gy;
     raw_values[5] = lsm.gz;	
-	lsm.readTemp();
-	DTemp = lsm.temperature;
-	raw_values[9] = DTemp;
+	  lsm.readTemp();
+	  DTemp = lsm.temperature;
+	  raw_values[9] = DTemp;
   #endif
 }
 
@@ -999,16 +1008,16 @@ void FreeIMU::getValues(float * values) {
   #if HAS_ITG3200()  //assumes adxl3345
     int accval[3];
     acc.readAccel(&accval[0], &accval[1], &accval[2]);
-	accval[0] = mfilter_accx.filter((float) accval[0]);
+	  accval[0] = mfilter_accx.filter((float) accval[0]);
     accval[1] = mfilter_accy.filter((float) accval[1]);
     accval[2] = mfilter_accz.filter((float) accval[2]);
 	
     gyro.readGyro(&values_cal[3]);	
-	gyro.readTemp(&senTemp);
-	if(temp_corr_on == 1) {
-		if(senTemp < senTemp_break) {
-			for(i = 0; i < 9; i++) { 
-				acgyro_corr[i] = c3[i]*(senTemp*senTemp*senTemp) + c2[i]*(senTemp*senTemp) + c1[i]*senTemp + c0[i];
+	  gyro.readTemp(&senTemp);
+    	if(temp_corr_on == 1) {
+    		if(senTemp < senTemp_break) {
+    			for(i = 0; i < 9; i++) { 
+    				acgyro_corr[i] = c3[i]*(senTemp*senTemp*senTemp) + c2[i]*(senTemp*senTemp) + c1[i]*senTemp + c0[i];
 			}		
 		} 
 	} else {
@@ -1025,7 +1034,7 @@ void FreeIMU::getValues(float * values) {
 	values_cal[4] = (values_cal[4] - gyro_off_y)/gyro_sensitivity;
 	values_cal[5] = (values_cal[5] - gyro_off_z)/gyro_sensitivity;
 
-  #elif HAS_ALTIMU10()
+  #elif HAS_ALTIMU10() || HAS_ADA_10_DOF()
 	gyro.read();
 	compass.read();
 	values_cal[0] = (float) compass.a.x;
@@ -1037,18 +1046,18 @@ void FreeIMU::getValues(float * values) {
 	values_cal[3] = (float) gyro.g.x;
 	values_cal[4] = (float) gyro.g.y;
 	values_cal[5] = (float) gyro.g.z;
-    values_cal[6] = (float) compass.m.x;
-    values_cal[7] = (float) compass.m.y; 
-    values_cal[8] = (float) compass.m.z;
+  values_cal[6] = (float) compass.m.x;
+  values_cal[7] = (float) compass.m.y; 
+  values_cal[8] = (float) compass.m.z;
 	
 	values_cal[3] = (values_cal[3] - gyro_off_x) / gyro_sensitivity;  //Sensitivity set at 70 for +/-2000 deg/sec, L3GD20H
 	values_cal[4] = (values_cal[4] - gyro_off_y) / gyro_sensitivity;
 	values_cal[5] = (values_cal[5] - gyro_off_z) / gyro_sensitivity;
 
   #elif HAS_LSM9DS0()
-	lsm.readAccel();
-	lsm.readGyro();
-	lsm.readMag();
+	  lsm.readAccel();
+	  lsm.readGyro();
+	  lsm.readMag();
     values_cal[0] = (float) lsm.ax;
     values_cal[1] = (float) lsm.ay;
     values_cal[2] = (float) lsm.az;
@@ -1059,12 +1068,12 @@ void FreeIMU::getValues(float * values) {
     values_cal[4] = (float) lsm.gy;
     values_cal[5] = (float) lsm.gz;	 
 	
-	values_cal[3] = (values_cal[3] - gyro_off_x) / gyro_sensitivity;  //Sensitivity set at 70 for +/-2000 deg/sec, L3GD20H
-	values_cal[4] = (values_cal[4] - gyro_off_y) / gyro_sensitivity;
-	values_cal[5] = (values_cal[5] - gyro_off_z) / gyro_sensitivity;
-
-	lsm.readTemp();
-	DTemp = lsm.temperature;
+  	values_cal[3] = (values_cal[3] - gyro_off_x) / gyro_sensitivity;  //Sensitivity set at 70 for +/-2000 deg/sec, L3GD20H
+  	values_cal[4] = (values_cal[4] - gyro_off_y) / gyro_sensitivity;
+  	values_cal[5] = (values_cal[5] - gyro_off_z) / gyro_sensitivity;
+  
+  	lsm.readTemp();
+  	DTemp = lsm.temperature;
   #else  // MPU6050
     int16_t accgyroval[9];
 	#if HAS_MPU9150() || HAS_MPU9250()
@@ -1460,16 +1469,16 @@ float def_sea_press = 1013.25;
 	
 #endif
 
-#if HAS_LPS331()
-	// Returns temperature from LPS331 - added by MJS
+#if HAS_LPS()
+	// Returns temperature from LPS - added by MJS
 	float FreeIMU::getBaroTemperature() {
-		float temp1 = baro331.readTemperatureC();		
+		float temp1 = baroLPS.readTemperatureC();		
 		return(temp1);
 	}
 
 	float FreeIMU::getBaroPressure() {
-        //float new_press = kPress.measureRSSI(baro331.readPressureMillibars());
-		float new_press = baro331.readPressureMillibars();
+        //float new_press = kPress.measureRSSI(baroLPS.readPressureMillibars());
+		float new_press = baroLPS.readPressureMillibars();
 		return(new_press);
 	}
 
@@ -1477,8 +1486,8 @@ float def_sea_press = 1013.25;
 	* Returns an altitude estimate from baromether readings only using a default sea level pressure
 	*/
 	float FreeIMU::getBaroAlt() {        
-        //float new_press = kPress.measureRSSI(baro331.readPressureMillibars());
-		//float temp3 = baro331.pressureToAltitudeMeters(def_sea_press);
+        //float new_press = kPress.measureRSSI(baroLPS.readPressureMillibars());
+		//float temp3 = baroLPS.pressureToAltitudeMeters(def_sea_press);
 		return getBaroAlt(def_sea_press);
 	}
 
@@ -1486,8 +1495,8 @@ float def_sea_press = 1013.25;
 	* Returns an altitude estimate from barometer readings only using sea_press as current sea level pressure
 	*/
 	float FreeIMU::getBaroAlt(float sea_press) {
-		float temp = baro331.readTemperatureC();
-		float press = baro331.readPressureMillibars();
+		float temp = baroLPS.readTemperatureC();
+		float press = baroLPS.readPressureMillibars();
         float new_press = kPress.measureRSSI(press);
 		return ((pow((sea_press / new_press), 1/5.257) - 1.0) * (temp + 273.15)) / 0.0065;
 	}
