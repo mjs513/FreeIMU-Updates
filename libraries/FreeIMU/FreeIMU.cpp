@@ -292,7 +292,7 @@ GNU General Public License for more details.
 #include "FreeIMU.h"
 
 // #include "WireUtils.h"
-#include "DebugUtils.h"
+////#include "DebugUtils.h"
 #include <Filter.h>             // Filter library
 #include <Butter.h>
 
@@ -1021,9 +1021,10 @@ void FreeIMU::getValues(float * values) {
 			}		
 		} 
 	} else {
-		for(i = 0; i < 9; i++) { 
-			acgyro_corr[i] = 0.0f;
-		}
+		// for(i = 0; i < 9; i++) { 
+		// 	acgyro_corr[i] = 0.0f;
+		// }
+		memset(acgyro_corr, 0.0f, sizeof(acgyro_corr));
 	}
 
 	values_cal[0] = (float) accval[0] - acgyro_corr[0];
@@ -1105,9 +1106,10 @@ void FreeIMU::getValues(float * values) {
 			}
 		} 
 	} else {
-		for( i = 0; i < 9; i++) { 
-			acgyro_corr[i] = 0.0f;
-	  }
+		// for( i = 0; i < 9; i++) { 
+		// 	acgyro_corr[i] = 0.0f;
+		// }
+		memset(acgyro_corr, 0.0f, sizeof(acgyro_corr));
 	}
 	
     // remove offsets from the gyroscope
@@ -1163,7 +1165,7 @@ void FreeIMU::getValues(float * values) {
 	}
   #endif
   
-  for(int i = 0; i < 9; i++) {
+  for(uint8_t i = 0; i < 9; i++) {
 	values[i] = sensor_sign[i] * values_cal[sensor_order[i]];
   }
 }
@@ -1178,7 +1180,7 @@ void FreeIMU::zeroGyro() {
   float values[11]; 
   float tmpOffsets[] = {0,0,0};
   
-  for (int i = 0; i < totSamples; i++){
+  for (uint8_t i = 0; i < totSamples; i++){
 	#if HAS_ITG3200()
 		gyro.readGyro(&values[3]);
 		tmpOffsets[0] += values[3];
@@ -2145,6 +2147,7 @@ Posted by Tobias Simon on November 2, 2012
 //int instability_fix = 1;
 
 float FreeIMU::invSqrt(float x) {
+		
         if (instability_fix == 0)
         {
              union {

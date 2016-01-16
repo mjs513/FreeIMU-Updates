@@ -41,7 +41,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define ARDUIMU_v3 //  DIYDrones ArduIMU+ V3 http://store.diydrones.com/ArduIMU_V3_p/kt-arduimu-30.htm or https://www.sparkfun.com/products/11055
 //#define GEN_MPU6050 // Generic MPU6050 breakout board. Compatible with GY-521, SEN-11028 and other MPU6050 wich have the MPU6050 AD0 pin connected to GND.
 //#define DFROBOT  //DFROBOT 10DOF SEN-1040 IMU
-//#define MPU9250_5611  //MPU-9250 IMU with MS5611 Altimeter from eBay
+#define MPU9250_5611  //MPU-9250 IMU with MS5611 Altimeter from eBay
 //#define GEN_MPU9150
 //#define GEN_MPU9250  // Use for Invensense MPU-9250 breakout board
 //#define Altimu10  // Pololu AltIMU v10 - (L3GD20H / LSM303D) - http://www.pololu.com/product/1269	(LPS331AP)	   https://www.pololu.com/product/2470	(LPS25H)
@@ -51,7 +51,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define APM_2_5  //  APMM 2.5.2 (EBAY)
 //#define Microduino
 //#define ST_LSM9DS0   //Note this includes the MS5637 pressure sensor  board
-#define LSM9DS0_MS5637 //Note this includes the MS5637 pressure sensor  board
+//#define LSM9DS0_MS5637 //Note this includes the MS5637 pressure sensor  board
 //#define ADA_10_DOF // Adafruit 10-DOF IMU - (L3GD20H / LSM303 /  BMP180) - http://www.adafruit.com/product/1604
 
 //#define DISABLE_MAGN // Uncomment this line to disable the magnetometer in the sensor fusion algorithm
@@ -189,7 +189,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // ****************************************************
 #define FREEIMU_LIB_VERSION "DEV"
 
-#define FREEIMU_DEVELOPER "Fabio Varesano - varesano.net"
+#define FREEIMU_DEVELOPER "FreeIMU Community"
 
 #if F_CPU == 16000000L
   #define FREEIMU_FREQ "16 MHz"

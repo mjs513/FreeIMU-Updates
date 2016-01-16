@@ -6,6 +6,8 @@ https://github.com/sebnil/Moving-Avarage-Filter--Arduino-Library-
 
 #define MAX_DATA_POINTS 20
 
+#include "Arduino.h"
+
 class MovingAvarageFilter {
 public:
   //construct without coefs
