@@ -41,7 +41,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define ARDUIMU_v3 //  DIYDrones ArduIMU+ V3 http://store.diydrones.com/ArduIMU_V3_p/kt-arduimu-30.htm or https://www.sparkfun.com/products/11055
 //#define GEN_MPU6050 // Generic MPU6050 breakout board. Compatible with GY-521, SEN-11028 and other MPU6050 wich have the MPU6050 AD0 pin connected to GND.
 //#define DFROBOT  //DFROBOT 10DOF SEN-1040 IMU
-//#define MPU9250_5611  //MPU-9250 IMU with MS5611 Altimeter from eBay
+#define MPU9250_5611  //MPU-9250 IMU with MS5611 Altimeter from eBay
 //#define GEN_MPU9150
 //#define GEN_MPU9250  // Use for Invensense MPU-9250 breakout board
 //#define Altimu10  // Pololu AltIMU v10 - (L3GD20H / LSM303D) - http://www.pololu.com/product/1269	(LPS331AP)	   https://www.pololu.com/product/2470	(LPS25H)
@@ -51,7 +51,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define APM_2_5  //  APMM 2.5.2 (EBAY)
 //#define Microduino
 //#define ST_LSM9DS0   //Note this includes the MS5637 pressure sensor  board
-#define LSM9DS0_MS5637 //Note this includes the MS5637 pressure sensor  board
+//#define LSM9DS0_MS5637 //Note this includes the MS5637 pressure sensor  board
 //#define ADA_10_DOF // Adafruit 10-DOF IMU - (L3GD20H / LSM303 /  BMP180) - http://www.adafruit.com/product/1604
 
 //#define DISABLE_MAGN // Uncomment this line to disable the magnetometer in the sensor fusion algorithm
@@ -67,7 +67,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // Set filter type: 1 = Madgwick Gradient Descent, 0 - Madgwick implementation of Mahoney DCM
 // in Quaternion form, 3 = Madwick Original Paper AHRS, 4 - DCM Implementation
-#define MARG 4
+#define MARG 4 // Set to zero (0) on AVR devices with small flash storage (ATMega32U4, I'm looking at you.)
 
 // proportional gain governs rate of convergence to accelerometer/magnetometer
 // integral gain governs rate of convergence of gyroscope biases
@@ -189,7 +189,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // ****************************************************
 #define FREEIMU_LIB_VERSION "DEV"
 
-#define FREEIMU_DEVELOPER "Fabio Varesano - varesano.net"
+#define FREEIMU_DEVELOPER "FreeIMU Community"
 
 #if F_CPU == 16000000L
   #define FREEIMU_FREQ "16 MHz"
@@ -350,7 +350,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #include "I2Cdev.h"
   #include "MPU60X0.h"
   #include "AK8975.h"
-  #include "iCompass.h"
+    #ifndef EXCLUDE_ICOMPASS
+        #include "iCompass.h"
+    #endif
   //MPU Address Select 
   //Use following define if MPU60X0 address is set to 0x69
   //otherwise the default address is used = 0x68
@@ -362,7 +364,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #include "I2Cdev.h"
   #include "MPU60X0.h"
   #include "AK8963.h"
-  #include "iCompass.h"
+    #ifndef EXCLUDE_ICOMPASS
+        #include "iCompass.h"
+    #endif
   //MPU Address Select 
   //Use following define if MPU60X0 address is set to 0x69
   //otherwise the default address is used = 0x68
@@ -373,7 +377,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #include <Wire.h>
 #elif HAS_LSM9DS0()
   #include "SFE_LSM9DS0.h"
-  #include "iCompass.h"
+  #ifndef EXCLUDE_ICOMPASS
+    #include "iCompass.h"
+  #endif
   #define LSM9DS0_XM  0x1D // Would be 0x1E if SDO_XM is LOW
   #define LSM9DS0_G   0x6B // Would be 0x6A if SDO_G is LOW
 #endif
@@ -383,7 +389,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //gyro
 #if HAS_LSM303()  
   #include <LSM303.h>
-  #include "iCompass.h"
+  #ifndef EXCLUDE_ICOMPASS
+    #include "iCompass.h"
+  #endif
 #endif
 
 #if HAS_PRESS()  //Setup pressure sensors and .h files
@@ -431,7 +439,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #if HAS_HMC5883L()  //Magnetometer
   #include <HMC58X3.h>
-  #include "iCompass.h"
+  #ifndef EXCLUDE_ICOMPASS
+    #include "iCompass.h"
+  #endif
   // HMC5843 address is fixed so don't bother to define it
 #endif
 
@@ -532,7 +542,9 @@ class FreeIMU
     
   #if HAS_HMC5883L()
     HMC58X3 magn;
-	  iCompass maghead;	
+      #ifndef EXCLUDE_ICOMPASS
+	    iCompass maghead;	
+      #endif
   #endif
     
   #if HAS_ITG3200()
@@ -543,7 +555,9 @@ class FreeIMU
 	
 	#if HAS_LSM303()
 	  LSM303 compass;  // accelerometer, magnetometer and heading - same as iCompass
-	  iCompass maghead;
+      #ifndef EXCLUDE_ICOMPASS
+	    iCompass maghead;
+      #endif
 	#endif
 	
   #if HAS_MPU6050()
@@ -553,16 +567,23 @@ class FreeIMU
 	#elif HAS_MPU9150()
 	  MPU60X0 accgyro;
 	  AK8975 mag;
-	  iCompass maghead;	  
+      #ifndef EXCLUDE_ICOMPASS
+	    iCompass maghead;
+      #endif
 	#elif HAS_MPU9250()
 	  MPU60X0 accgyro;
 	  AK8963 mag;
-	  iCompass maghead;	
+
+      #ifndef EXCLUDE_ICOMPASS
+	   iCompass maghead;
+      #endif
 	#elif HAS_LSM9DS0() 
 	  LSM9DS0 lsm;
-	  iCompass maghead;	
+      #ifndef EXCLUDE_ICOMPASS
+	    iCompass maghead;
+      #endif
   #endif
-      
+
   #if HAS_PRESS()
     KalmanFilter kPress; // Altitude Kalman Filter.
     AltComp altComp; // Altitude Complementary Filter.
