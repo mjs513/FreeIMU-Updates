@@ -67,7 +67,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // Set filter type: 1 = Madgwick Gradient Descent, 0 - Madgwick implementation of Mahoney DCM
 // in Quaternion form, 3 = Madwick Original Paper AHRS, 4 - DCM Implementation
-#define MARG 4
+#define MARG 4 // Set to zero (0) on AVR devices with small flash storage (ATMega32U4, I'm looking at you.)
 
 // proportional gain governs rate of convergence to accelerometer/magnetometer
 // integral gain governs rate of convergence of gyroscope biases
@@ -350,7 +350,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #include "I2Cdev.h"
   #include "MPU60X0.h"
   #include "AK8975.h"
-  #include "iCompass.h"
+    #ifndef EXCLUDE_ICOMPASS
+        #include "iCompass.h"
+    #endif
   //MPU Address Select 
   //Use following define if MPU60X0 address is set to 0x69
   //otherwise the default address is used = 0x68
@@ -362,7 +364,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #include "I2Cdev.h"
   #include "MPU60X0.h"
   #include "AK8963.h"
-  #include "iCompass.h"
+    #ifndef EXCLUDE_ICOMPASS
+        #include "iCompass.h"
+    #endif
   //MPU Address Select 
   //Use following define if MPU60X0 address is set to 0x69
   //otherwise the default address is used = 0x68
@@ -373,7 +377,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #include <Wire.h>
 #elif HAS_LSM9DS0()
   #include "SFE_LSM9DS0.h"
-  #include "iCompass.h"
+  #ifndef EXCLUDE_ICOMPASS
+    #include "iCompass.h"
+  #endif
   #define LSM9DS0_XM  0x1D // Would be 0x1E if SDO_XM is LOW
   #define LSM9DS0_G   0x6B // Would be 0x6A if SDO_G is LOW
 #endif
@@ -383,7 +389,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //gyro
 #if HAS_LSM303()  
   #include <LSM303.h>
-  #include "iCompass.h"
+  #ifndef EXCLUDE_ICOMPASS
+    #include "iCompass.h"
+  #endif
 #endif
 
 #if HAS_PRESS()  //Setup pressure sensors and .h files
@@ -431,7 +439,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #if HAS_HMC5883L()  //Magnetometer
   #include <HMC58X3.h>
-  #include "iCompass.h"
+  #ifndef EXCLUDE_ICOMPASS
+    #include "iCompass.h"
+  #endif
   // HMC5843 address is fixed so don't bother to define it
 #endif
 
@@ -532,7 +542,9 @@ class FreeIMU
     
   #if HAS_HMC5883L()
     HMC58X3 magn;
-	  iCompass maghead;	
+      #ifndef EXCLUDE_ICOMPASS
+	    iCompass maghead;	
+      #endif
   #endif
     
   #if HAS_ITG3200()
@@ -543,7 +555,9 @@ class FreeIMU
 	
 	#if HAS_LSM303()
 	  LSM303 compass;  // accelerometer, magnetometer and heading - same as iCompass
-	  iCompass maghead;
+      #ifndef EXCLUDE_ICOMPASS
+	    iCompass maghead;
+      #endif
 	#endif
 	
   #if HAS_MPU6050()
@@ -553,16 +567,23 @@ class FreeIMU
 	#elif HAS_MPU9150()
 	  MPU60X0 accgyro;
 	  AK8975 mag;
-	  iCompass maghead;	  
+      #ifndef EXCLUDE_ICOMPASS
+	    iCompass maghead;
+      #endif
 	#elif HAS_MPU9250()
 	  MPU60X0 accgyro;
 	  AK8963 mag;
-	  iCompass maghead;	
+
+      #ifndef EXCLUDE_ICOMPASS
+	   iCompass maghead;
+      #endif
 	#elif HAS_LSM9DS0() 
 	  LSM9DS0 lsm;
-	  iCompass maghead;	
+      #ifndef EXCLUDE_ICOMPASS
+	    iCompass maghead;
+      #endif
   #endif
-      
+
   #if HAS_PRESS()
     KalmanFilter kPress; // Altitude Kalman Filter.
     AltComp altComp; // Altitude Complementary Filter.

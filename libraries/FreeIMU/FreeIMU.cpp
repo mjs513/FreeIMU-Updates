@@ -377,12 +377,16 @@ FreeIMU::FreeIMU() {
   
   #if HAS_HMC5883L()
     magn = HMC58X3();
-    maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);
+    #ifndef EXCLUDE_ICOMPASS
+      maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);
+    #endif
   #endif
   
   #if HAS_LSM303()
     compass = LSM303();
-    maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);	
+    #ifndef EXCLUDE_ICOMPASS
+      maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);
+    #endif
   #endif
   
   #if HAS_ITG3200()
@@ -396,15 +400,21 @@ FreeIMU::FreeIMU() {
   #elif HAS_MPU9150()
     accgyro = MPU60X0();
     mag = AK8975();
-    maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);
+    #ifndef EXCLUDE_ICOMPASS
+      maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);
+    #endif
   #elif HAS_MPU9250()
     accgyro = MPU60X0();
     mag = AK8963();
-    maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);
+    #ifndef EXCLUDE_ICOMPASS
+      maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);
+    #endif
   #elif HAS_LSM9DS0()
     //lsm = LSM9DS0(MODE_I2C, LSM9DS0_G, LSM9DS0_XM);
     lsm = LSM9DS0(MODE_I2C, LSM9DS0_G, LSM9DS0_XM);
-    maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);	
+    #ifndef EXCLUDE_ICOMPASS
+    maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);
+    #endif
   #endif
     
   #if HAS_PRESS()
@@ -844,14 +854,16 @@ void FreeIMU::RESET_Q() {
 
   
   RESET_Q();
-
+  
   float values[11];
 
   //DCM filter implementation set here so we can intit with calibrated values.  All initializations have to be done first.
   #if(MARG == 4)
     dcm = DCM();
     getValues( values);
-    values[9] = maghead.iheading(1, 0, 0, values[0], values[1], values[2], values[6], values[7], values[8]);
+    #ifndef EXCLUDE_ICOMPASS
+      values[9] = maghead.iheading(1, 0, 0, values[0], values[1], values[2], values[6], values[7], values[8]);
+    #endif
     dcm.setSensorVals(values);
     dcm.DCM_init(Kp_ROLLPITCH, Ki_ROLLPITCH, Kp_YAW, Ki_YAW);
   #endif
@@ -1322,7 +1334,10 @@ void FreeIMU::getQ(float * q, float * val) {
 		#else
 			MARGUpdateFilter(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
 		#endif
-		val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[6], val[7], val[8]);
+
+		#ifndef EXCLUDE_ICOMPASS
+		    val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[6], val[7], val[8]);
+		#endif
 	#else
 		#if MARG == 0
 			AHRSupdateIMU(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2]);
@@ -1342,7 +1357,9 @@ void FreeIMU::getQ(float * q, float * val) {
   #endif
   
   #if (MARG == 4 && IS_9DOM() && not defined(DISABLE_MAGN))
-    val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[6], val[7], val[8]);
+  	#ifndef EXCLUDE_ICOMPASS
+      val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[6], val[7], val[8]);
+    #endif;
 	dcm.setSensorVals(val);
 	dcm.G_Dt = 1./ sampleFreq;
   	dcm.calDCM();
