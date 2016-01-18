@@ -854,8 +854,11 @@ void FreeIMU::RESET_Q() {
 
   
   RESET_Q();
-  
-  float values[11];
+  #ifndef EXCLUDE_ICOMPASS
+    float values[11];
+  #else
+    float values[9];
+  #endif
 
   //DCM filter implementation set here so we can intit with calibrated values.  All initializations have to be done first.
   #if(MARG == 4)
