@@ -1,8 +1,11 @@
 #/**
  * FreeIMU library serial communication protocol
 */
-//These are optional depending on your IMU configuration
 
+#include <Wire.h>
+#include <SPI.h>
+
+//These are optional depending on your IMU configuration
 #include <ADXL345.h>
 #include <HMC58X3.h>
 #include <LSM303.h>
@@ -27,20 +30,21 @@
 #include <iCompass.h>
 #include <MovingAvarageFilter.h>
 
-#include <Wire.h>
-#include <SPI.h>
-
-#if defined(__AVR__)
-	#include <EEPROM.h>
-#endif
-
 //#define DEBUG
 #include "DebugUtils.h"
 #include "CommunicationUtils.h"
-#include "FreeIMU.h"
 #include "DCM.h"
 #include "FilteringScheme.h"
 #include "RunningAverage.h"
+#include "FreeIMU.h"
+
+//Intel Edison, Arduino 101, Arduino Due, Arduino Zero: no eeprom 
+#if defined(__SAMD21G18A__) || defined(__SAM3X8E__) || defined(__ARDUINO_ARC__) || defined(__SAMD21G18A__)
+  #define HAS_EEPPROM 0
+#else
+  #include <EEPROM.h>
+  #define HAS_EEPPROM 1
+#endif
 
 #define BaudRate 57600
 
@@ -214,7 +218,7 @@ void loop() {
         #endif
         //writeArr(raw_values, 6, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
         
-        #if IS_9DOM() && (!HAS_MPU9150()  && !HAS_MPU9250() && !HAS_ALTIMU10() && !HAS_LSM9DS0())
+        #if IS_9DOM() && (!HAS_MPU9150()  && !HAS_MPU9250() && !HAS_ALTIMU10() && !HAS_ADA_10_DOF() && !HAS_LSM9DS0())
           my3IMU.magn.getValues(&raw_values[0], &raw_values[1], &raw_values[2]);
           writeArr(raw_values, 3, sizeof(int));
         #endif

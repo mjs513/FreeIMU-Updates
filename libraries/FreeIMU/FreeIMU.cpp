@@ -291,8 +291,8 @@ GNU General Public License for more details.
 //#define DEBUG
 #include "FreeIMU.h"
 
-// #include "WireUtils.h"
-#include "DebugUtils.h"
+//#include "WireUtils.h"
+//#include "DebugUtils.h"
 #include <Filter.h>             // Filter library
 #include <Butter.h>
 
@@ -364,6 +364,8 @@ MovingAvarageFilter motion_detect_ma(7);
 //Set-up constants for gyro calibration
 uint8_t num_gyros = 1;
 uint8_t INS_MAX_INSTANCES = 2;
+
+#define M_PI 3.14159265359
 
 FreeIMU::FreeIMU() {
 
@@ -1021,9 +1023,10 @@ void FreeIMU::getValues(float * values) {
 			}		
 		} 
 	} else {
-		for(i = 0; i < 9; i++) { 
-			acgyro_corr[i] = 0.0f;
-		}
+		//for(i = 0; i < 9; i++) { 
+		//	acgyro_corr[i] = 0.0f;
+		//}
+		memset(acgyro_corr, 0.0f, sizeof(acgyro_corr));
 	}
 
 	values_cal[0] = (float) accval[0] - acgyro_corr[0];
@@ -1105,9 +1108,10 @@ void FreeIMU::getValues(float * values) {
 			}
 		} 
 	} else {
-		for( i = 0; i < 9; i++) { 
-			acgyro_corr[i] = 0.0f;
-	  }
+		//for( i = 0; i < 9; i++) { 
+		//	acgyro_corr[i] = 0.0f;
+	    //}
+		memset(acgyro_corr, 0.0f, sizeof(acgyro_corr));
 	}
 	
     // remove offsets from the gyroscope
@@ -1163,7 +1167,7 @@ void FreeIMU::getValues(float * values) {
 	}
   #endif
   
-  for(int i = 0; i < 9; i++) {
+  for(uint8_t i = 0; i < 9; i++) {
 	values[i] = sensor_sign[i] * values_cal[sensor_order[i]];
   }
 }
@@ -1227,7 +1231,7 @@ void FreeIMU::initGyros() {
 	for (int16_t j = 0; j <= 30 && num_converged < num_gyros; j++) {
 		Vector3f gyro_sum[INS_MAX_INSTANCES], gyro_avg[INS_MAX_INSTANCES], gyro_diff[INS_MAX_INSTANCES];
 		float diff_norm[INS_MAX_INSTANCES];
-		
+		float ToRad = 0.05f * M_PI/180.0f;
 		//For FreeIMU and most boards we are using only one gyro
 		//if you have more change code to match Arduimu
 		zeroGyro();
@@ -1243,7 +1247,7 @@ void FreeIMU::initGyros() {
             if (j == 0) {
                 best_diff[k] = diff_norm[k];
                 best_avg[k] = gyro_avg[k];
-            } else if (gyro_diff[k].length() < ToRad(0.05f)) {
+            } else if (gyro_diff[k].length() < ToRad) {
                 // we want the average to be within 0.1 bit, which is 0.04 degrees/s
                 last_average[k] = (gyro_avg[k] * 0.5f) + (last_average[k] * 0.5f);
                 gyro_offset[k] = last_average[k];            
@@ -1432,7 +1436,7 @@ float def_sea_press = 1013.25;
 
 #if HAS_BMP085()
 	//used for BMP085
-	long Temperature = 0, Pressure = 0, Altitude = 0;
+	int32_t Temperature = 0, Pressure = 0, Altitude = 0;
 	
 	// Returns temperature from BMP085 - added by MJS
 	float FreeIMU::getBaroTemperature() {

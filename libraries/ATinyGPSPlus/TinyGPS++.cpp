@@ -127,14 +127,14 @@ int32_t TinyGPSPlus::parseDecimal(const char *term)
 
 // static
 // Parse degrees in that funny NMEA format DDMM.MMMM
-void TinyGPSPlus::parseDegrees(const char *term, int16_t &degrees, uint32_t &billionths)
+void TinyGPSPlus::parseDegrees(const char *term, RawDegrees &deg)
 {
   uint32_t leftOfDecimal = (uint32_t)atol(term);
   uint16_t minutes = (uint16_t)(leftOfDecimal % 100);
   uint32_t multiplier = 10000000UL;
   uint32_t tenMillionthsOfMinutes = minutes * multiplier;
 
-  degrees = (int16_t)(leftOfDecimal / 100);
+  deg.deg = (int16_t)(leftOfDecimal / 100);
 
   while (isdigit(*term))
     ++term;
@@ -146,7 +146,8 @@ void TinyGPSPlus::parseDegrees(const char *term, int16_t &degrees, uint32_t &bil
       tenMillionthsOfMinutes += (*term - '0') * multiplier;
     }
 
-  billionths = (5 * tenMillionthsOfMinutes + 1) / 3;
+  deg.billionths = (5 * tenMillionthsOfMinutes + 1) / 3;
+  deg.negative = false;
 }
 
 #define COMBINE(sentence_type, term_number) (((unsigned)(sentence_type) << 5) | term_number)
@@ -233,12 +234,11 @@ bool TinyGPSPlus::endOfTermHandler()
       break;
     case COMBINE(GPS_SENTENCE_GPRMC, 3): // Latitude
     case COMBINE(GPS_SENTENCE_GPGGA, 2):
-       location.setLatitude(term);
+      location.setLatitude(term);
       break;
     case COMBINE(GPS_SENTENCE_GPRMC, 4): // N/S
     case COMBINE(GPS_SENTENCE_GPGGA, 3):
-      if (term[0] == 'S')
-        location.iNewLatDegrees = -location.iNewLatDegrees;
+      location.rawNewLatData.negative = term[0] == 'S';
       break;
     case COMBINE(GPS_SENTENCE_GPRMC, 5): // Longitude
     case COMBINE(GPS_SENTENCE_GPGGA, 4):
@@ -246,8 +246,7 @@ bool TinyGPSPlus::endOfTermHandler()
       break;
     case COMBINE(GPS_SENTENCE_GPRMC, 6): // E/W
     case COMBINE(GPS_SENTENCE_GPGGA, 5):
-      if (term[0] == 'W')
-        location.iNewLngDegrees = -location.iNewLngDegrees;
+      location.rawNewLngData.negative = term[0] == 'W';
       break;
     case COMBINE(GPS_SENTENCE_GPRMC, 7): // Speed (GPRMC)
       speed.set(term);
@@ -288,11 +287,11 @@ double TinyGPSPlus::distanceBetween(double lat1, double long1, double lat2, doub
   // distance computation for hypothetical sphere of radius 6372795 meters.
   // Because Earth is no exact sphere, rounding errors may be up to 0.5%.
   // Courtesy of Maarten Lamers
-  double delta = radians(long1-long2);
+  double delta = (long1-long2)*PI/180.0f;
   double sdlong = sin(delta);
   double cdlong = cos(delta);
-  lat1 = radians(lat1);
-  lat2 = radians(lat2);
+  lat1 = (lat1)*PI/180.0f;
+  lat2 = (lat2)*PI/180.0f;
   double slat1 = sin(lat1);
   double clat1 = cos(lat1);
   double slat2 = sin(lat2);
@@ -312,9 +311,9 @@ double TinyGPSPlus::courseTo(double lat1, double long1, double lat2, double long
   // both specified as signed decimal-degrees latitude and longitude.
   // Because Earth is no exact sphere, calculated course may be off by a tiny fraction.
   // Courtesy of Maarten Lamers
-  double dlon = radians(long2-long1);
-  lat1 = radians(lat1);
-  lat2 = radians(lat2);
+  double dlon = (long2-long1)*PI/180.0f;
+  lat1 = (lat1)*PI/180.0f;
+  lat2 = (lat2)*PI/180.0f;
   double a1 = sin(dlon) * cos(lat2);
   double a2 = sin(lat1) * cos(lat2) * cos(dlon);
   a2 = cos(lat1) * sin(lat2) - a2;
@@ -323,7 +322,7 @@ double TinyGPSPlus::courseTo(double lat1, double long1, double lat2, double long
   {
     a2 += TWO_PI;
   }
-  return degrees(a2);
+  return (a2*180.0f/PI);
 }
 
 const char *TinyGPSPlus::cardinal(double course)
@@ -335,38 +334,34 @@ const char *TinyGPSPlus::cardinal(double course)
 
 void TinyGPSLocation::commit()
 {
-   iLatDegrees = iNewLatDegrees;
-   uLatBillionths = uNewLatBillionths;
-   iLngDegrees = iNewLngDegrees;
-   uLngBillionths = uNewLngBillionths;
+   rawLatData = rawNewLatData;
+   rawLngData = rawNewLngData;
    lastCommitTime = millis();
    valid = updated = true;
 }
 
 void TinyGPSLocation::setLatitude(const char *term)
 {
-   TinyGPSPlus::parseDegrees(term, iNewLatDegrees, uNewLatBillionths);
+   TinyGPSPlus::parseDegrees(term, rawNewLatData);
 }
 
 void TinyGPSLocation::setLongitude(const char *term)
 {
-   TinyGPSPlus::parseDegrees(term, iNewLngDegrees, uNewLngBillionths);
+   TinyGPSPlus::parseDegrees(term, rawNewLngData);
 }
 
 double TinyGPSLocation::lat()
 {
    updated = false;
-   return iLatDegrees > 0 ? 
-      (iLatDegrees + uLatBillionths / 1000000000.0) :
-      (iLatDegrees - uLatBillionths / 1000000000.0);
+   double ret = rawLatData.deg + rawLatData.billionths / 1000000000.0;
+   return rawLatData.negative ? -ret : ret;
 }
 
 double TinyGPSLocation::lng()
 {
    updated = false;
-   return iLngDegrees > 0 ? 
-      (iLngDegrees + uLngBillionths / 1000000000.0) :
-      (iLngDegrees - uLngBillionths / 1000000000.0);
+   double ret = rawLngData.deg + rawLngData.billionths / 1000000000.0;
+   return rawLngData.negative ? -ret : ret;
 }
 
 void TinyGPSDate::commit()
@@ -504,3 +499,4 @@ void TinyGPSPlus::insertCustom(TinyGPSCustom *pElt, const char *sentenceName, in
    pElt->next = *ppelt;
    *ppelt = pElt;
 }
+

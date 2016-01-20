@@ -29,6 +29,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 //These are optional depending on your IMU configuration
 
+#include <Wire.h>
+#include <SPI.h>
+
+//These are optional depending on your IMU configuration
 #include <ADXL345.h>
 #include <HMC58X3.h>
 #include <LSM303.h>
@@ -53,20 +57,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <iCompass.h>
 #include <MovingAvarageFilter.h>
 
-#include <Wire.h>
-#include <SPI.h>
-
-#if defined(__AVR__)
-	#include <EEPROM.h>
-#endif
-
 //#define DEBUG
 #include "DebugUtils.h"
 #include "CommunicationUtils.h"
-#include "FreeIMU.h"
 #include "DCM.h"
 #include "FilteringScheme.h"
 #include "RunningAverage.h"
+#include "FreeIMU.h"
+
+//Intel Edison, Arduino 101, Arduino Due, Arduino Zero: no eeprom 
+#if defined(__SAMD21G18A__) || defined(__SAM3X8E__) || defined(__ARDUINO_ARC__) || defined(__SAMD21G18A__)
+  #define HAS_EEPPROM 0
+#else
+  #include <EEPROM.h>
+  #define HAS_EEPPROM 1
+#endif
 
 float val[11];
 

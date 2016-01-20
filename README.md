@@ -2,7 +2,12 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Sunday, October 11, 2015
+Wednesday, January 20, 2016
+
+01-20-16
+Updated several libraries, FreeIMU.cpp/FreeIMU.h, etc to make compatible with Arduino IDE 1.6.7.  In addition, sketches should run on all boards except for Arduino 101 which will be hit or miss depending on the IMU configuration.  Still working on this.
+
+Also, incorporated pull requests and bug fixes.
 
 12-01-15
 Replace LPS331 library by LPS libray for compatibility with ALTIMU10 v3 (LPS331AP) and AltIMU-10 v4 (LPS25H).

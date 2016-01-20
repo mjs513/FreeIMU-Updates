@@ -34,25 +34,25 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define FREEIMU_v04
 
 // 3rd party boards. Please consider donating or buying a FreeIMU board to support this library development.
-//#define SEN_10121 //IMU Digital Combo Board - 6 Degrees of Freedom ITG3200/ADXL345 SEN-10121 http://www.sparkfun.com/products/10121
-//#define SEN_10736 //9 Degrees of Freedom - Razor IMU SEN-10736 http://www.sparkfun.com/products/10736/
-//#define SEN_10724 //9 Degrees of Freedom - Sensor Stick SEN-10724 http://www.sparkfun.com/products/10724
-//#define SEN_10183 //9 Degrees of Freedom - Sensor Stick  SEN-10183 http://www.sparkfun.com/products/10183
-//#define ARDUIMU_v3 //  DIYDrones ArduIMU+ V3 http://store.diydrones.com/ArduIMU_V3_p/kt-arduimu-30.htm or https://www.sparkfun.com/products/11055
-//#define GEN_MPU6050 // Generic MPU6050 breakout board. Compatible with GY-521, SEN-11028 and other MPU6050 wich have the MPU6050 AD0 pin connected to GND.
-//#define DFROBOT  //DFROBOT 10DOF SEN-1040 IMU
+//#define SEN_10121 	//IMU Digital Combo Board - 6 Degrees of Freedom ITG3200/ADXL345 SEN-10121 http://www.sparkfun.com/products/10121
+//#define SEN_10736 	//9 Degrees of Freedom - Razor IMU SEN-10736 http://www.sparkfun.com/products/10736/
+//#define SEN_10724 	//9 Degrees of Freedom - Sensor Stick SEN-10724 http://www.sparkfun.com/products/10724
+//#define SEN_10183 	//9 Degrees of Freedom - Sensor Stick  SEN-10183 http://www.sparkfun.com/products/10183
+//#define ARDUIMU_v3 	//  DIYDrones ArduIMU+ V3 http://store.diydrones.com/ArduIMU_V3_p/kt-arduimu-30.htm or https://www.sparkfun.com/products/11055
+//#define GEN_MPU6050 	// Generic MPU6050 breakout board. Compatible with GY-521, SEN-11028 and other MPU6050 wich have the MPU6050 AD0 pin connected to GND.
+//#define DFROBOT  		//DFROBOT 10DOF SEN-1040 IMU
 //#define MPU9250_5611  //MPU-9250 IMU with MS5611 Altimeter from eBay
 //#define GEN_MPU9150
-//#define GEN_MPU9250  // Use for Invensense MPU-9250 breakout board
-//#define Altimu10  // Pololu AltIMU v10 - (L3GD20H / LSM303D) - http://www.pololu.com/product/1269	(LPS331AP)	   https://www.pololu.com/product/2470	(LPS25H)
-//#define GY_88  //GY-88 Sensor Board from eBay
-//#define GY_87  //GY-87 Sensor Board from eBay, NOTE: Pressusre sensor is BMP180 but BMP085 library should work
-//#define Mario   // MPU-9150 plus Altitude/Pressure Sensor Breakout - MPL3115A2  https://www.sparkfun.com/products/11084
-//#define APM_2_5  //  APMM 2.5.2 (EBAY)
+//#define GEN_MPU9250  	// Use for Invensense MPU-9250 breakout board
+//#define Altimu10  	// Pololu AltIMU v10 - (L3GD20H / LSM303D) - http://www.pololu.com/product/1269	(LPS331AP)	   https://www.pololu.com/product/2470	(LPS25H)
+//#define GY_88  		//GY-88 Sensor Board from eBay
+//#define GY_87  		//GY-87 Sensor Board from eBay, NOTE: Pressusre sensor is BMP180 but BMP085 library should work
+//#define Mario   		// MPU-9150 plus Altitude/Pressure Sensor Breakout - MPL3115A2  https://www.sparkfun.com/products/11084
+//#define APM_2_5  		//  APMM 2.5.2 (EBAY)
 //#define Microduino
-//#define ST_LSM9DS0   //Note this includes the MS5637 pressure sensor  board
-#define LSM9DS0_MS5637 //Note this includes the MS5637 pressure sensor  board
-//#define ADA_10_DOF // Adafruit 10-DOF IMU - (L3GD20H / LSM303 /  BMP180) - http://www.adafruit.com/product/1604
+//#define ST_LSM9DS0   	//Note this includes the MS5637 pressure sensor  board
+//#define LSM9DS0_MS5637 //Note this includes the MS5637 pressure sensor  board
+#define ADA_10_DOF 		// Adafruit 10-DOF IMU - (L3GD20H / LSM303 /  BMP180) - http://www.adafruit.com/product/1604
 
 //#define DISABLE_MAGN // Uncomment this line to disable the magnetometer in the sensor fusion algorithm
 
@@ -67,6 +67,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // Set filter type: 1 = Madgwick Gradient Descent, 0 - Madgwick implementation of Mahoney DCM
 // in Quaternion form, 3 = Madwick Original Paper AHRS, 4 - DCM Implementation
+// Set to zero (0) on AVR devices with small flash storage (ATMega32U4)
 #define MARG 4
 
 // proportional gain governs rate of convergence to accelerometer/magnetometer
@@ -187,9 +188,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // *** Define Marg= 3 factors: go to line 491       ***
 // *** Define IMU Axis Alignment: go to line 500    ***
 // ****************************************************
-#define FREEIMU_LIB_VERSION "DEV"
+#define FREEIMU_LIB_VERSION "V2"
 
-#define FREEIMU_DEVELOPER "Fabio Varesano - varesano.net"
+//#define FREEIMU_DEVELOPER "Fabio Varesano - varesano.net"
+#define FREEIMU_DEVELOPER "Fabio Varesano/Michael J Smorto (this version)"
 
 #if F_CPU == 16000000L
   #define FREEIMU_FREQ "16 MHz"

@@ -152,7 +152,7 @@ uint32_t MS561101BA::getConversion(uint8_t command) {
   
   // start read sequence
   Wire.beginTransmission(_addr);
-  Wire.write(0);
+  Wire.write((uint8_t) 0);
   Wire.endTransmission();
   
   Wire.beginTransmission(_addr);

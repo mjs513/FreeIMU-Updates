@@ -168,7 +168,7 @@ uint32_t BaroSensorClass::takeReading(uint8_t trigger_cmd, BaroOversampleLevel o
   delay(sampling_delay);
 
   Wire.beginTransmission(BARO_ADDR);
-  Wire.write(CMD_READ_ADC);
+  Wire.write((uint8_t) CMD_READ_ADC);
   err = _endTransmission(false);
   if(err)
     return 0;

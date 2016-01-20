@@ -1,5 +1,7 @@
-//These are optional depending on your IMU configuration
+#include <Wire.h>
+#include <SPI.h>
 
+//These are optional depending on your IMU configuration
 #include <ADXL345.h>
 #include <HMC58X3.h>
 #include <LSM303.h>
@@ -14,8 +16,9 @@
 #include <AK8963.h>
 #include <L3G.h>
 #include <SFE_LSM9DS0.h>
-#include <BaroSensor.h> // MS5637-1 pressure sensor
+#include <BaroSensor.h>
 //#include <AP_Baro_MS5611.h>  //Uncomment for APM2.5
+
 
 //These are mandatory
 #include <AP_Math_freeimu.h>
@@ -26,17 +29,21 @@
 //#define DEBUG
 #include "DebugUtils.h"
 #include "CommunicationUtils.h"
-#include "FreeIMU.h"
 #include "DCM.h"
 #include "FilteringScheme.h"
 #include "RunningAverage.h"
+#include "FreeIMU.h"
 
-#include <Wire.h>
-#include <SPI.h>  
+//Intel Edison, Arduino 101, Arduino Due, Arduino Zero: no eeprom 
+#if defined(__SAMD21G18A__) || defined(__SAM3X8E__) || defined(__ARDUINO_ARC__) || defined(__SAMD21G18A__)
+  #define HAS_EEPPROM 0
+#else
+  #include <EEPROM.h>
+  #define HAS_EEPPROM 1
+#endif
 
 
 //Comment these lines out for ARM processors such as DUE and Teensy 3.1
-  //#include <EEPROM.h>
   //#include <stlport.h>
   //#include <iostream>
   //#include <Eigen30.h>

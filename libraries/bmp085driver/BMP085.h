@@ -63,7 +63,7 @@
 // unused registers
 #define SOFTRESET         0xE0
 #define VERSION           0xD1  // ML_VERSION  pos=0 len=4 msk=0F  AL_VERSION pos=4 len=4 msk=f0
-#define CHIPID            0xD0  // pos=0 mask=FF len=8
+#define CHIPID1            0xD0  // pos=0 mask=FF len=8
                                 // BMP085_CHIP_ID=0x55
 
 /************************************/

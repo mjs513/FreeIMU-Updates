@@ -1,8 +1,10 @@
 /**
  * FreeIMU library serial communication protocol
 */
-//These are optional depending on your IMU configuration
+#include <Wire.h>
+#include <SPI.h>
 
+//These are optional depending on your IMU configuration
 #include <ADXL345.h>
 #include <HMC58X3.h>
 #include <LSM303.h>
@@ -17,7 +19,7 @@
 #include <AK8963.h>
 #include <L3G.h>
 #include <SFE_LSM9DS0.h>
-#include <BaroSensor.h> // MS5637-1 pressure sensor
+#include <BaroSensor.h>
 //#include <AP_Baro_MS5611.h>  //Uncomment for APM2.5
 
 
@@ -27,26 +29,27 @@
 #include <iCompass.h>
 #include <MovingAvarageFilter.h>
 
-#include <Wire.h>
-#include <SPI.h>
-
-#if defined(__AVR__)
-	#include <EEPROM.h>
-#endif
-
 //#define DEBUG
 #include "DebugUtils.h"
 #include "CommunicationUtils.h"
-#include "FreeIMU.h"
 #include "DCM.h"
 #include "FilteringScheme.h"
 #include "RunningAverage.h"
+#include "FreeIMU.h"
+
+//Intel Edison, Arduino 101, Arduino Due, Arduino Zero: no eeprom 
+#if defined(__SAMD21G18A__) || defined(__SAM3X8E__) || defined(__ARDUINO_ARC__) || defined(__SAMD21G18A__)
+  #define HAS_EEPPROM 0
+#else
+  #include <EEPROM.h>
+  #define HAS_EEPPROM 1
+#endif
 
 #define Has_LSM303 0
 #define HAS_GPS 0
 
 float q[4];
-int16_t raw_values[11];
+int raw_values[11];
 float ypr[3]; // yaw pitch roll
 char str[128];
 float val[11];
@@ -168,7 +171,7 @@ void loop() {
         #endif
         //writeArr(raw_values, 6, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
         
-        #if IS_9DOM() && (!HAS_MPU9150()  && !HAS_MPU9250() && !HAS_ALTIMU10() && !HAS_LSM9DS0())
+        #if IS_9DOM() && (!HAS_MPU9150()  && !HAS_MPU9250() && !HAS_ALTIMU10() && !HAS_ADA_10_DOF() && !HAS_LSM9DS0())
           my3IMU.magn.getValues(&raw_values[0], &raw_values[1], &raw_values[2]);
           writeArr(raw_values, 3, sizeof(int));
         #endif
@@ -247,25 +250,23 @@ void loop() {
     } 
 
     //******************************************************/
-    #ifndef CALIBRATION_H
-    else if(cmd == 'c') {
-      const uint8_t eepromsize = sizeof(float) * 6 + sizeof(int) * 6;
-      while(Serial.available() < eepromsize) ; // wait until all calibration data are received
-      EEPROM.write(FREEIMU_EEPROM_BASE, FREEIMU_EEPROM_SIGNATURE);
-      for(uint8_t i = 1; i<(eepromsize + 1); i++) {
-        EEPROM.write(FREEIMU_EEPROM_BASE + i, (char) Serial.read());
+    #if HAS_EEPPROM
+      #ifndef CALIBRATION_H
+      else if(cmd == 'c') {
+        const uint8_t eepromsize = sizeof(float) * 6 + sizeof(int) * 6;
+        while(Serial.available() < eepromsize) ; // wait until all calibration data are received
+        EEPROM.write(FREEIMU_EEPROM_BASE, FREEIMU_EEPROM_SIGNATURE);
+        for(uint8_t i = 1; i<(eepromsize + 1); i++) {
+          EEPROM.write(FREEIMU_EEPROM_BASE + i, (char) Serial.read());
+        }
+        my3IMU.calLoad(); // reload calibration
+        // toggle LED after calibration store.
+        digitalWrite(13, HIGH);
+        delay(1000);
+        digitalWrite(13, LOW);
       }
-      my3IMU.calLoad(); // reload calibration
-      // toggle LED after calibration store.
-      digitalWrite(13, HIGH);
-      delay(1000);
-      digitalWrite(13, LOW);
-    }
-    else if(cmd == 'x') {
-      EEPROM.write(FREEIMU_EEPROM_BASE, 0); // reset signature
-      my3IMU.calLoad(); // reload calibration
-    }
-    #endif
+	  #endif
+	#endif
     else if(cmd == 'C') { // check calibration values
       Serial.print("acc offset: ");
       Serial.print(my3IMU.acc_off_x);
@@ -299,6 +300,7 @@ void loop() {
       Serial.print(my3IMU.magn_scale_z);
       Serial.print("\n");
     }
+	
     else if(cmd == 'd') { // debugging outputs
       while(1) {
         my3IMU.getRawValues(raw_values);
@@ -328,25 +330,28 @@ char serial_busy_wait() {
   return Serial.read();
 }
 
-const int EEPROM_MIN_ADDR = 0;
-const int EEPROM_MAX_ADDR = 511;
+#if HAS_EEPPROM
+  const int EEPROM_MIN_ADDR = 0;
+  const int EEPROM_MAX_ADDR = 511;
 
-void eeprom_serial_dump_column() {
-  // counter
-  int i;
+  void eeprom_serial_dump_column() {
+    // counter
+    int i;
 
-  // byte read from eeprom
-  byte b;
+    // byte read from eeprom
+    byte b;
 
-  // buffer used by sprintf
-  char buf[10];
+    // buffer used by sprintf
+    char buf[10];
 
-  for (i = EEPROM_MIN_ADDR; i <= EEPROM_MAX_ADDR; i++) {
-    b = EEPROM.read(i);
-    sprintf(buf, "%03X: %02X", i, b);
-    Serial.println(buf);
+    for (i = EEPROM_MIN_ADDR; i <= EEPROM_MAX_ADDR; i++) {
+      b = EEPROM.read(i);
+      sprintf(buf, "%03X: %02X", i, b);
+      Serial.println(buf);
+    }
   }
-}
+#endif
+
 
 // This custom version of delay() ensures that the gps object
 // is being "fed".
