@@ -2,6 +2,7 @@
 https://github.com/sebnil/Moving-Avarage-Filter--Arduino-Library-
 */
 #include <stdlib.h>
+#include "Arduino.h"
 #include "MovingAvarageFilter.h"
 
 MovingAvarageFilter::MovingAvarageFilter(unsigned int newDataPointsCount) {
