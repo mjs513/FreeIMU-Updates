@@ -1285,8 +1285,6 @@ void FreeIMU::initGyros() {
 	gyro_off_z = gyro_offset[0].z;
 	
 	//digitalWrite(12,LOW);
-	
-	
 
 }
 
