@@ -42,8 +42,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define GEN_MPU6050 	// Generic MPU6050 breakout board. Compatible with GY-521, SEN-11028 and other MPU6050 wich have the MPU6050 AD0 pin connected to GND.
 //#define DFROBOT  		//DFROBOT 10DOF SEN-1040 IMU
 //#define MPU9250_5611  //MPU-9250 IMU with MS5611 Altimeter from eBay
+#define Drotek10Dof
 //#define GEN_MPU9150
-#define GEN_MPU9250  	// Use for Invensense MPU-9250 breakout board
+//#define GEN_MPU9250  	// Use for Invensense MPU-9250 breakout board
 //#define Altimu10  	// Pololu AltIMU v10 - (L3GD20H / LSM303D) - http://www.pololu.com/product/1269	(LPS331AP)	   https://www.pololu.com/product/2470	(LPS25H)
 //#define GY_88  		//GY-88 Sensor Board from eBay
 //#define GY_87  		//GY-87 Sensor Board from eBay, NOTE: Pressusre sensor is BMP180 but BMP085 library should work
@@ -123,7 +124,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	const float Ki_ROLLPITCH = 0.0234f;
 	const float Kp_YAW = 1.75f;   // was 1.2 and 0.02
 	const float Ki_YAW = 0.002f;
-#elif defined(GEN_MPU9250) || defined(MPU9250_5611)
+#elif defined(GEN_MPU9250) || defined(MPU9250_5611) || defined(Drotek10Dof)
 	#define twoKpDef  (2.0f * 1.75f) // was 0.95
 	#define twoKiDef  (2.0f * 0.05f) // was 0.05	
 	#define betaDef	  0.015f
@@ -262,7 +263,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #elif defined(ST_LSM9DS0) || defined(LSM9DS0_MS5637)
   #define FREEIMU_ID "LSM9DS0 IMU"
 #elif defined(ADA_10_DOF)
-  #define FREEIMU_ID "Adafruit 10-DOF IMU"  
+  #define FREEIMU_ID "Adafruit 10-DOF IMU" 
+#elif defined(Drotek10Dof)
+  #define FREEIMU_ID "Drotek 10-DOF IMU"
 #endif
 
 // define imu sensors
@@ -276,7 +279,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define HAS_BMA180() (defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP))
 #define HAS_MPU6050() (defined(Microduino) || defined(GY_87) ||defined(GY_88) || defined(FREEIMU_v04) || defined(GEN_MPU6050))
 #define HAS_MPU9150() (defined(GEN_MPU9150) )
-#define HAS_MPU9250() (defined(MPU9250_5611) || defined(GEN_MPU9250)  || defined(Mario) || defined(MPU9250_5611)) 
+#define HAS_MPU9250() (defined(MPU9250_5611) || defined(GEN_MPU9250)  || defined(Mario) \
+                       || defined(MPU9250_5611) || defined(Drotek10Dof)) 
 #define HAS_HMC5883L() (defined(GY_87) ||defined(GY_88) || defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) \
 					   || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) \
 					   || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10736) \
@@ -291,7 +295,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define HAS_LSM9DS0() (defined(ST_LSM9DS0) || defined(LSM9DS0_MS5637))
 
 #define HAS_MS5611() (defined(MPU9250_5611) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v04) \
-					 || defined(APM_2_5))
+					 || defined(APM_2_5) || defined(Drotek10Dof))
 #define HAS_BMP085() (defined(GY_88) || defined(GY_88) || defined(DFROBOT) || defined(Microduino) || defined(ADA_10_DOF))
 #define HAS_LPS() (defined(Altimu10))
 #define HAS_MPL3115A2() defined(Mario)
@@ -300,20 +304,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 					|| defined(FREEIMU_v04) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) \
 					|| defined(FREEIMU_v035_BMP) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v04) \
 					|| defined(GY_87) ||defined(GY_88) || defined(DFROBOT) || defined(APM_2_5) \
-					|| defined(Mario) || defined(Microduino) || defined(LSM9DS0_MS5637) || defined(ADA_10_DOF))
-					
+					|| defined(Mario) || defined(Microduino) || defined(LSM9DS0_MS5637) \
+					|| defined(ADA_10_DOF) || defined(Drotek10Dof))
 #define IS_6DOM() (defined(SEN_10121) || defined(GEN_MPU6050))
 #define IS_9DOM() (defined(GY_87) ||defined(GY_88) || defined(Altimu10) || defined(GEN_MPU9250) || defined(MPU9250_5611) \
 				   || defined(GEN_MPU9150) || defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) \
 				   || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) \
 				   || defined(FREEIMU_v04) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183) \
 				   || defined(ARDUIMU_v3)  || defined(APM_2_5) || defined(Mario) || defined(Microduino) \
-				   || defined(ST_LSM9DS0) || defined(LSM9DS0_MS5637) || defined(ADA_10_DOF))
+				   || defined(ST_LSM9DS0) || defined(LSM9DS0_MS5637) || defined(ADA_10_DOF) || defined(Drotek10Dof))
 #define HAS_AXIS_ALIGNED() (defined(Altimu10) || defined(GY_88) || defined(GEN_MPU6050) \
 							|| defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) \
 							|| defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) \
 							|| defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10121) \
-							|| defined(SEN_10736) || defined(GY_87) || defined(Microduino) || defined(ADA_10_DOF))
+							|| defined(SEN_10736) || defined(GY_87) || defined(Microduino) \
+							|| defined(ADA_10_DOF))
 
 #include <Wire.h>
 #include "Arduino.h"
@@ -370,7 +375,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   //otherwise the default address is used = 0x68
   //uncomment following line and comment out successor line
   //#define FIMU_ACCGYRO_ADDR MPU60X0_ADDRESS_AD0_HIGH
-  #define FIMU_ACCGYRO_ADDR MPU60X0_DEFAULT_ADDRESS
+  #if defined(Drotek10Dof)
+	#define FIMU_ACCGYRO_ADDR MPU60X0_ADDRESS_AD0_HIGH
+  #else
+	#define FIMU_ACCGYRO_ADDR MPU60X0_DEFAULT_ADDRESS
+  #endif
 #elif HAS_ALTIMU10()
   #include <Wire.h>
 #elif HAS_LSM9DS0()
@@ -628,7 +637,8 @@ class FreeIMU
 	#elif defined(ARDUIMU_v3)
 		int sensor_order[9] = {0,1,2,3,4,5,6,7,8};
 		int sensor_sign[9] = {1,1,1,1,1,1,-1,-1,1};	
-	#elif defined(GEN_MPU9150) || defined(MPU9250_5611) || defined(GEN_MPU9250)
+	#elif defined(GEN_MPU9150) || defined(MPU9250_5611) || defined(GEN_MPU9250) \
+	      || defined(Drotek10Dof)
 		int sensor_order[9] = {0,1,2,3,4,5,7,6,8};
 		int sensor_sign[9] = {1,1,1,1,1,1,1,-1};	
 	#elif defined(APM_2_5)	

@@ -212,7 +212,7 @@ void loop() {
           //my3IMU.accgyro.getMotion6(&raw_values[0], &raw_values[1], &raw_values[2], &raw_values[3], &raw_values[4], &raw_values[5]);
           my3IMU.getRawValues(raw_values);
           writeArr(raw_values, 6, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
-        #elif HAS_ALTIMU10()
+        #elif HAS_ALTIMU10() || HAS_ADA_10_DOF()
           my3IMU.getRawValues(raw_values);
           writeArr(raw_values, 9, sizeof(int)); // writes accelerometer, gyro values & mag of Altimu 10        
         #endif
