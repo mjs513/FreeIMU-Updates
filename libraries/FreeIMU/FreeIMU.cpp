@@ -1093,7 +1093,6 @@ void FreeIMU::getValues(float * values) {
 		values_cal[6] = mfilter_mx.filter((float) accgyroval[6]);
 		values_cal[7] = mfilter_my.filter((float) accgyroval[7]);
 		values_cal[8] = mfilter_mz.filter((float) accgyroval[8]); 
-
 	#else
 		accgyro.getMotion6(&accgyroval[0], &accgyroval[1], &accgyroval[2], 
 						   &accgyroval[3], &accgyroval[4], &accgyroval[5]);
@@ -1163,13 +1162,14 @@ void FreeIMU::getValues(float * values) {
 		#warning Magnetometer calibration active: have you calibrated your device?
 		values_cal[6] = (values_cal[6] - magn_off_x) / magn_scale_x;
 		values_cal[7] = (values_cal[7] - magn_off_y) / magn_scale_y;
-		values_cal[8] = (values_cal[8] - magn_off_z) / magn_scale_z;	
+		values_cal[8] = (values_cal[8] - magn_off_z) / magn_scale_z;
 	}
   #endif
   
   for(uint8_t i = 0; i < 9; i++) {
 	values[i] = sensor_sign[i] * values_cal[sensor_order[i]];
   }
+
 }
 
 

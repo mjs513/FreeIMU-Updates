@@ -69,7 +69,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Set filter type: 1 = Madgwick Gradient Descent, 0 - Madgwick implementation of Mahoney DCM
 // in Quaternion form, 3 = Madwick Original Paper AHRS, 4 - DCM Implementation
 // Set to zero (0) on AVR devices with small flash storage (ATMega32U4)
-#define MARG 0
+#define MARG 3
 
 // proportional gain governs rate of convergence to accelerometer/magnetometer
 // integral gain governs rate of convergence of gyroscope biases
@@ -640,7 +640,7 @@ class FreeIMU
 	#elif defined(GEN_MPU9150) || defined(MPU9250_5611) || defined(GEN_MPU9250) \
 	      || defined(Drotek10Dof)
 		int sensor_order[9] = {0,1,2,3,4,5,7,6,8};
-		int sensor_sign[9] = {1,1,1,1,1,1,1,-1};	
+		int sensor_sign[9] = {1,1,1,1,1,1,1,1,-1};	
 	#elif defined(APM_2_5)	
 		int sensor_order[9] = {1,0,2,4,3,5,7,6,8};
 		int sensor_sign[9] = {1,-1,1,1,-1,1,-1,1,1};
