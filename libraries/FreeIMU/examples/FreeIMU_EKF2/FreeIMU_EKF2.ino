@@ -79,9 +79,11 @@ float dt;
 // Set the FreeIMU object and LSM303 Compass
 FreeIMU my3IMU = FreeIMU();
 
-
 //The command from the PC
 char cmd, tempCorr;
+
+void getYawPitchRollDeg(QuaternionClass* q);
+void getYawPitchRoll180(QuaternionClass* q);
 
 extern "C"{
   int _getpid(){ return -1;}
@@ -113,7 +115,7 @@ void loop() {
         //Serial.print(str);
         //Serial.println("-------");
         
-	now = micros();
+	      now = micros();
         dt = ((now - lastUpdate) / 1000000.0);
            
         calibratedData.x =  (val[0]);
@@ -136,7 +138,7 @@ void loop() {
         //Serial.println(dt,4);
         
         //if(dt/100 < 0.06) {
-	    quaternion = EKF.predict(&calibratedData, dt);
+	        quaternion = EKF.predict(&calibratedData, dt);
         //}
         my3IMU.getValues(val);
         quaternion = EKF.update(&calibratedData, dt);
