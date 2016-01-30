@@ -70,14 +70,18 @@ float iCompass::iheading(int ix, int iy, int iz, float ax, float ay, float az, f
     }
     
     heading = clamp360(iround(heading,1)+declinationAngle);
+	
+    if(maxSamples > 1) {
+		myRA.addValue(heading);
+		myRA.addValue(HeadingAvgCorr(heading, oldHeading));
+		oldHeading = heading;
+    
+		samples++;
 
-    myRA.addValue(heading);
-    myRA.addValue(HeadingAvgCorr(heading, oldHeading));
-    oldHeading = heading;
-    
-    samples++;
-    
-    return myRA.getAverage();
+		return myRA.getAverage();
+	} else {
+		return heading;
+	}
 }
 
 template <typename Ta, typename Tb, typename To> void iCompass::vector_cross(const vector<Ta> *a,const vector<Tb> *b, vector<To> *out)

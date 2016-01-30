@@ -379,12 +379,12 @@ FreeIMU::FreeIMU() {
   
   #if HAS_HMC5883L()
     magn = HMC58X3();
-    maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);
+    maghead = iCompass(MAG_DEC, WINDOW_SIZE, SAMPLE_SIZE);
   #endif
   
   #if HAS_LSM303()
     compass = LSM303();
-    maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);	
+    maghead = iCompass(MAG_DEC, WINDOW_SIZE, SAMPLE_SIZE);	
   #endif
   
   #if HAS_ITG3200()
@@ -398,15 +398,15 @@ FreeIMU::FreeIMU() {
   #elif HAS_MPU9150()
     accgyro = MPU60X0();
     mag = AK8975();
-    maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);
+    maghead = iCompass(MAG_DEC, WINDOW_SIZE, SAMPLE_SIZE);
   #elif HAS_MPU9250()
     accgyro = MPU60X0();
     mag = AK8963();
-    maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);
+    maghead = iCompass(MAG_DEC, WINDOW_SIZE, SAMPLE_SIZE);
   #elif HAS_LSM9DS0()
     //lsm = LSM9DS0(MODE_I2C, LSM9DS0_G, LSM9DS0_XM);
     lsm = LSM9DS0(MODE_I2C, LSM9DS0_G, LSM9DS0_XM);
-    maghead = iCompass(MAG_DEC, WINDOW_SIZE, 500);	
+    maghead = iCompass(MAG_DEC, WINDOW_SIZE, SAMPLE_SIZE);	
   #endif
     
   #if HAS_PRESS()

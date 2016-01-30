@@ -42,8 +42,9 @@ void RunningAverage::clear()
     _cnt = 0;
     _idx = 0;
     _sum = 0.0;
-    for (int i = 0; i< _size; i++) _ar[i] = 0.0;  // needed to keep addValue simple
-}
+    //for (int i = 0; i< _size; i++) _ar[i] = 0.0;  // needed to keep addValue simple
+	memset(_ar, 0.0, sizeof(_ar));
+	}
 
 // adds a new value to the data-set
 void RunningAverage::addValue(float f)

@@ -59,7 +59,7 @@ class iCompass
     float iround(float number, float decimal) {
       //int ix;
       //ix = round(number*pow(10, decimal));
-      // return float(ix)/pow(10, decimal);
+      //return float(ix)/pow(10, decimal);
       return float(round(number*pow(10, decimal)))/pow(10, decimal);
     }
 
