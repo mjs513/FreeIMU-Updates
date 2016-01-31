@@ -73,7 +73,7 @@ float ypr[3]; // yaw pitch roll
 char str[128];
 float val[11];
 float val_array[18]; 
-unsigned long lastUpdate, now; 			// sample period expressed in milliseconds
+unsigned long lastUpdate, now;       // sample period expressed in milliseconds
 float dt;
 
 // Set the FreeIMU object and LSM303 Compass
@@ -98,7 +98,7 @@ void setup() {
   //#if HAS_MPU6050()
   //    my3IMU.RESET();
   //#endif
-	
+  
   my3IMU.init(true);
   
   delay(200);
@@ -115,7 +115,7 @@ void loop() {
         //Serial.print(str);
         //Serial.println("-------");
         
-	      now = micros();
+        now = micros();
         dt = ((now - lastUpdate) / 1000000.0);
            
         calibratedData.x =  (val[0]);
@@ -138,7 +138,7 @@ void loop() {
         //Serial.println(dt,4);
         
         //if(dt/100 < 0.06) {
-	        quaternion = EKF.predict(&calibratedData, dt);
+          quaternion = EKF.predict(&calibratedData, dt);
         //}
         my3IMU.getValues(val);
         quaternion = EKF.update(&calibratedData, dt);
@@ -148,7 +148,7 @@ void loop() {
         
         //getYawPitchRollDeg(&quaternion);
         getYawPitchRoll180(&quaternion);
-        lastUpdate = now; 	
+        lastUpdate = now;   
         //SerialPrintFloatArr(val_array,18);
 } 
 
@@ -184,31 +184,31 @@ void getYawPitchRollDeg(QuaternionClass* q) {
 
 
 void getYawPitchRoll180(QuaternionClass* q) {
-	float gx, gy, gz;		// estimated gravity direction
+  float gx, gy, gz;   // estimated gravity direction
 
-	gx = 2 * (q->x*q->z - q->w*q->y);
-	gy = 2 * (q->w*q->x + q->y*q->z);
-	gz = q->w*q->w - q->x*q->x - q->y*q->y + q->z*q->z;
+  gx = 2 * (q->x*q->z - q->w*q->y);
+  gy = 2 * (q->w*q->x + q->y*q->z);
+  gz = q->w*q->w - q->x*q->x - q->y*q->y + q->z*q->z;
 
-	//calculating yaw
-	ypr[0] = (180./PI)*atan2(2 * q->x * q->y - 2 * q->w * q->z, 2 * q->w*q->w + 2 * q->x * q->x - 1);	
-	//ypr[0] = val[9];
-	if(ypr[0] > 180.) ypr[0] = ypr[0] - 360.;
-	ypr[0] = ypr[0] * 0.0174532925;
-	
-	//calculating Pitch
-	//Serial.print(gx); Serial.print("       "); Serial.print(gz); Serial.print("       ");
-	if(gx > 0 && gz > 0) {
-		ypr[1] = atan(gx / sqrt(gy*gy + gz*gz));
-	} else if(gx > 0 && gz <= 0) {
-		ypr[1] = PI - atan(gx / sqrt(gy*gy + gz*gz));
-	} else if(gx < 0 && gz < 0) {
-		ypr[1] = (-PI - atan(gx / sqrt(gy*gy + gz*gz)));
-	} else  {
-		ypr[1] =  atan(gx / sqrt(gy*gy + gz*gz));
-	}
-	
-	//Calculating Roll1
+  //calculating yaw
+  ypr[0] = (180./PI)*atan2(2 * q->x * q->y - 2 * q->w * q->z, 2 * q->w*q->w + 2 * q->x * q->x - 1); 
+  //ypr[0] = val[9];
+  if(ypr[0] > 180.) ypr[0] = ypr[0] - 360.;
+  ypr[0] = ypr[0] * 0.0174532925;
+  
+  //calculating Pitch
+  //Serial.print(gx); Serial.print("       "); Serial.print(gz); Serial.print("       ");
+  if(gx > 0 && gz > 0) {
+    ypr[1] = atan(gx / sqrt(gy*gy + gz*gz));
+  } else if(gx > 0 && gz <= 0) {
+    ypr[1] = PI - atan(gx / sqrt(gy*gy + gz*gz));
+  } else if(gx < 0 && gz < 0) {
+    ypr[1] = (-PI - atan(gx / sqrt(gy*gy + gz*gz)));
+  } else  {
+    ypr[1] =  atan(gx / sqrt(gy*gy + gz*gz));
+  }
+  
+  //Calculating Roll1
         ypr[2] = atan(gy / sqrt(gx*gx + gz*gz));
         
         ypr[0]= ypr[0]*180./PI;

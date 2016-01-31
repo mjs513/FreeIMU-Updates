@@ -37,7 +37,7 @@ class LSM303
       REFERENCE_Y       = 0x1D, // D
       REFERENCE_Z       = 0x1E, // D
 
-      CTRL0             = 0x1F, // D
+      CTRL00             = 0x1F, // D
       CTRL1             = 0x20, // D
       CTRL_REG1_A       = 0x20, // DLH, DLM, DLHC
       CTRL2             = 0x21, // D
