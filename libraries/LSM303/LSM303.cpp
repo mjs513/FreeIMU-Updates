@@ -17,6 +17,8 @@
 #define D_WHO_ID    0x49
 #define DLM_WHO_ID  0x3C
 
+#define M_PI 3.14159265358979
+
 // Constructors ////////////////////////////////////////////////////////////////
 
 LSM303::LSM303(void)

@@ -43,13 +43,14 @@
 #endif
 
 
-//Comment these lines out for ARM processors such as DUE and Teensy 3.1
-  //#include <stlport.h>
-  //#include <iostream>
-  //#include <Eigen30.h>
-
-//Comment this line out for AVR boards such as ARduino Mega or Mircoduino
+#if defined(ARDUINO_ARCH_AVR) && !(defined(__MK20DX256__) \
+                              || defined(__MK20DX128__) || defined(__MKL26Z64__))
+  #include <stlport.h>
+  #include <iostream>
+  #include <Eigen30.h>
+#else
   #include <EigenArm.h>
+#endif
 
 #include <ExtendedKalman.h>
 
