@@ -282,6 +282,7 @@ GNU General Public License for more details.
 ------- https://github.com/pololu/lps-arduino
 ------- Add support for the Dadafruit 10-DOF IMU (L3GD20H / LSM303 / BMP180).
 ---------------------------------------------------------------------------
+02-01-16 Adding support for CurieIMU - BMI160
 
 */
 
@@ -406,7 +407,9 @@ FreeIMU::FreeIMU() {
   #elif HAS_LSM9DS0()
     //lsm = LSM9DS0(MODE_I2C, LSM9DS0_G, LSM9DS0_XM);
     lsm = LSM9DS0(MODE_I2C, LSM9DS0_G, LSM9DS0_XM);
-    maghead = iCompass(MAG_DEC, WINDOW_SIZE, SAMPLE_SIZE);	
+    maghead = iCompass(MAG_DEC, WINDOW_SIZE, SAMPLE_SIZE);
+  #elif HAS_CurieBMI160()
+      accgyro = CurieIMU; 
   #endif
     
   #if HAS_PRESS()
@@ -494,6 +497,8 @@ void FreeIMU::init() {
     init0(true);	
   #elif HAS_ADA_10_DOF()
     init0(false);
+  #elif HAS_CurieBMI160()
+	init0(false);
   #else
     init(FIMU_ACCGYRO_ADDR, false);
   #endif
@@ -502,16 +507,14 @@ void FreeIMU::init() {
 void FreeIMU::init(bool fastmode) {
   #if HAS_ITG3200()
     init(FIMU_ACC_ADDR, FIMU_ITG3200_DEF_ADDR, fastmode);
-  #elif HAS_ALTIMU10()
+  #elif HAS_ALTIMU10() || HAS_LSM9DS0() || HAS_ADA_10_DOF()
     init0(fastmode);
   #elif HAS_APM25()
     //As per APM standard code, stop the barometer from holding the SPI bus
     pinMode(40, OUTPUT);
     digitalWrite(40, HIGH);
     init(53, fastmode);
-  #elif HAS_LSM9DS0()
-    init0(fastmode);
-  #elif HAS_ADA_10_DOF()
+  #elif HAS_CurieBMI160()
     init0(fastmode);
   #else
     init(FIMU_ACCGYRO_ADDR, fastmode);
@@ -563,7 +566,7 @@ void FreeIMU::RESET_Q() {
 */
 #if HAS_ITG3200()
 	void FreeIMU::init(int acc_addr, int gyro_addr, bool fastmode) {
-#elif HAS_ALTIMU10() || HAS_LSM9DS0() || HAS_ADA_10_DOF()
+#elif HAS_ALTIMU10() || HAS_LSM9DS0() || HAS_ADA_10_DOF() || HAS_CurieBMI160()
 	void FreeIMU::init0(bool fastmode) {
 #else
 	void FreeIMU::init(int accgyro_addr, bool fastmode) {
@@ -712,6 +715,21 @@ void FreeIMU::RESET_Q() {
 	  gyro_sensitivity = 70.0f;
   #endif
   
+  #if HAS_CurieBMI160()
+	  accgyro.initialize();
+	  accgyro.setFullScaleGyroRange(BMI160_GYRO_RANGE_2000);
+	  accgyro.setFullScaleAccelRange(BMI160_ACCEL_RANGE_2G);
+	  /*
+	  * | Full Scale Range   | LSB Sensitivity
+	  * +--------------------+----------------
+	  * | +/- 125 degrees/s  | 262.4 LSB/deg/s
+	  * | +/- 250 degrees/s  | 131.2 LSB/deg/s
+	  * | +/- 500 degrees/s  | 65.6 LSB/deg/s
+	  * | +/- 1000 degrees/s | 32.8 LSB/deg/s
+	  * | +/- 2000 degrees/s | 16.4 LSB/deg/s
+	  */
+	  gyro_sensitivity = 16.4f;
+	#endif
   #if HAS_HMC5883L()
 	  // init HMC5843
 	  magn.init(false); // Don't set mode yet, we'll do that later on.
@@ -927,7 +945,7 @@ void FreeIMU::getRawValues(int * raw_values) {
     gyro.readGyroRaw(&raw_values[3], &raw_values[4], &raw_values[5]);
 	  gyro.readTemp(&senTemp);
 	  raw_values[9] = senTemp*100;
-  #elif HAS_MPU6050() || HAS_MPU6000() || HAS_MPU9150() || HAS_MPU9250()
+  #elif HAS_MPU6050() || HAS_MPU6000() || HAS_MPU9150() || HAS_MPU9250() || HAS_CurieBMI160()
     #ifdef __AVR__
       accgyro.getMotion6(&raw_values[0], &raw_values[1], &raw_values[2], &raw_values[3], &raw_values[4], &raw_values[5]);  	  
  	  #if HAS_MPU9150() || HAS_MPU9250()
@@ -1077,7 +1095,7 @@ void FreeIMU::getValues(float * values) {
   
   	lsm.readTemp();
   	DTemp = lsm.temperature;
-  #else  // MPU6050
+  #else  // MPU6050 or other 6dof
     int16_t accgyroval[9];
 	#if HAS_MPU9150() || HAS_MPU9250()
 		mag.getHeading(&accgyroval[6], &accgyroval[7], &accgyroval[8]);	

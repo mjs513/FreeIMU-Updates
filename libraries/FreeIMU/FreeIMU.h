@@ -41,7 +41,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define ARDUIMU_v3 //  DIYDrones ArduIMU+ V3 http://store.diydrones.com/ArduIMU_V3_p/kt-arduimu-30.htm or https://www.sparkfun.com/products/11055
 //#define GEN_MPU6050 // Generic MPU6050 breakout board. Compatible with GY-521, SEN-11028 and other MPU6050 wich have the MPU6050 AD0 pin connected to GND.
 //#define DFROBOT  //DFROBOT 10DOF SEN-1040 IMU
-#define MPU9250_5611  //MPU-9250 IMU with MS5611 Altimeter from eBay
+//#define MPU9250_5611  //MPU-9250 IMU with MS5611 Altimeter from eBay
 //#define GEN_MPU9150
 //#define GEN_MPU9250  // Use for Invensense MPU-9250 breakout board
 //#define Altimu10  // Pololu AltIMU v10 - 10 DOF IMU - http://www.pololu.com/product/1269
@@ -53,8 +53,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define ST_LSM9DS0   //Note this includes the MS5637 pressure sensor  board
 //#define LSM9DS0_MS5637 //Note this includes the MS5637 pressure sensor  board
 //#define ADA_10_DOF
+#define CurieIMU
 
-//#define DISABLE_MAGN // Uncomment this line to disable the magnetometer in the sensor fusion algorithm
+#define DISABLE_MAGN // Uncomment this line to disable the magnetometer in the sensor fusion algorithm
 
 //Magnetic declination angle for iCompass
 //#define MAG_DEC 4 //+4.0 degrees for Israel
@@ -260,6 +261,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #define FREEIMU_ID "LSM9DS0 IMU"
 #elif defined(ADA_10_DOF)
   #define FREEIMU_ID "Adafruit 10 Dof"
+#elif defined(CurieIMU)
+  #define FREEIMU_ID "CurieIMU"
 #endif
 
 // define imu sensors
@@ -275,6 +278,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define HAS_MPU9150() (defined(GEN_MPU9150) )
 #define HAS_MPU9250() (defined(MPU9250_5611) || defined(GEN_MPU9250)  || defined(Mario) \
                        || defined(MPU9250_5611)) 
+#define HAS_CurieBMI160() (defined(CurrieIMU))
 #define HAS_HMC5883L() (defined(GY_87) ||defined(GY_88) || defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) \
 					   || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) \
 					   || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10736) \
@@ -300,7 +304,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 					|| defined(GY_87) ||defined(GY_88) || defined(DFROBOT) || defined(APM_2_5) \
 					|| defined(Mario) || defined(Microduino) || defined(LSM9DS0_MS5637) \
 					|| defined(ADA_10_DOF) ) 
-#define IS_6DOM() (defined(SEN_10121) || defined(GEN_MPU6050))
+#define IS_6DOM() (defined(SEN_10121) || defined(GEN_MPU6050) || defined(CurrieIMU))
 #define IS_9DOM() (defined(GY_87) ||defined(GY_88) || defined(Altimu10) || defined(GEN_MPU9250) || defined(MPU9250_5611) \
 				   || defined(GEN_MPU9150) || defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) \
 				   || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) \
@@ -312,7 +316,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 							|| defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) \
 							|| defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10121) \
 							|| defined(SEN_10736) || defined(GY_87) || defined(Microduino) \
-							|| defined(ADA_10_DOF))
+							|| defined(ADA_10_DOF) || defined(CurrieIMU))
 
 #include <Wire.h>
 #include "Arduino.h"
@@ -377,6 +381,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #include "iCompass.h"
   #define LSM9DS0_XM  0x1D // Would be 0x1E if SDO_XM is LOW
   #define LSM9DS0_G   0x6B // Would be 0x6A if SDO_G is LOW
+#elif HAS_CurieBMI160()
+  #include "CurieImu.h"
 #endif
 
 //Magnetometer and Accelerometer combo, made this standalone
@@ -442,6 +448,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class FreeIMU
 {
+
   public:
     FreeIMU();
 	void init();
@@ -455,6 +462,9 @@ class FreeIMU
 		void init(bool fastmode);
 		void init(int acc_addr, int gyro_addr, bool fastmode);
 	#elif HAS_ALTIMU10() || HAS_LSM9DS0()
+		void init(bool fastmode);
+		void init0(bool fastmode);
+	#elif HAS_CurieBMI160()
 		void init(bool fastmode);
 		void init0(bool fastmode);
 	#else
@@ -562,6 +572,8 @@ class FreeIMU
 	#elif HAS_LSM9DS0() 
 	  LSM9DS0 lsm;
 	  iCompass maghead;	
+	#elif HAS_CurieBMI160()
+	  CurrieIMU accgyro;
     #endif
       
     #if HAS_PRESS()
@@ -678,6 +690,7 @@ class FreeIMU
 		void MARGUpdateFilter(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz);
 		void MARGUpdateFilterIMU(float gx, float gy, float gz, float ax, float ay, float az);
 	#endif
+
 };
 
 float invSqrt(float number);
