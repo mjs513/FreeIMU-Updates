@@ -408,8 +408,8 @@ FreeIMU::FreeIMU() {
     //lsm = LSM9DS0(MODE_I2C, LSM9DS0_G, LSM9DS0_XM);
     lsm = LSM9DS0(MODE_I2C, LSM9DS0_G, LSM9DS0_XM);
     maghead = iCompass(MAG_DEC, WINDOW_SIZE, SAMPLE_SIZE);
-  #elif HAS_CurieBMI160()
-      accgyro = CurieIMU; 
+  #elif HAS_CURIE()
+      accgyro = CurieImuClass(); 
   #endif
     
   #if HAS_PRESS()
@@ -497,7 +497,7 @@ void FreeIMU::init() {
     init0(true);	
   #elif HAS_ADA_10_DOF()
     init0(false);
-  #elif HAS_CurieBMI160()
+  #elif HAS_CURIE()
 	init0(false);
   #else
     init(FIMU_ACCGYRO_ADDR, false);
@@ -514,7 +514,7 @@ void FreeIMU::init(bool fastmode) {
     pinMode(40, OUTPUT);
     digitalWrite(40, HIGH);
     init(53, fastmode);
-  #elif HAS_CurieBMI160()
+  #elif HAS_CURIE()
     init0(fastmode);
   #else
     init(FIMU_ACCGYRO_ADDR, fastmode);
@@ -566,7 +566,7 @@ void FreeIMU::RESET_Q() {
 */
 #if HAS_ITG3200()
 	void FreeIMU::init(int acc_addr, int gyro_addr, bool fastmode) {
-#elif HAS_ALTIMU10() || HAS_LSM9DS0() || HAS_ADA_10_DOF() || HAS_CurieBMI160()
+#elif HAS_ALTIMU10() || HAS_LSM9DS0() || HAS_ADA_10_DOF() || HAS_CURIE()
 	void FreeIMU::init0(bool fastmode) {
 #else
 	void FreeIMU::init(int accgyro_addr, bool fastmode) {
@@ -715,7 +715,7 @@ void FreeIMU::RESET_Q() {
 	  gyro_sensitivity = 70.0f;
   #endif
   
-  #if HAS_CurieBMI160()
+  #if HAS_CURIE()
 	  accgyro.initialize();
 	  accgyro.setFullScaleGyroRange(BMI160_GYRO_RANGE_2000);
 	  accgyro.setFullScaleAccelRange(BMI160_ACCEL_RANGE_2G);
@@ -945,7 +945,7 @@ void FreeIMU::getRawValues(int * raw_values) {
     gyro.readGyroRaw(&raw_values[3], &raw_values[4], &raw_values[5]);
 	  gyro.readTemp(&senTemp);
 	  raw_values[9] = senTemp*100;
-  #elif HAS_MPU6050() || HAS_MPU6000() || HAS_MPU9150() || HAS_MPU9250() || HAS_CurieBMI160()
+  #elif HAS_MPU6050() || HAS_MPU6000() || HAS_MPU9150() || HAS_MPU9250() || HAS_CURIE()
     #ifdef __AVR__
       accgyro.getMotion6(&raw_values[0], &raw_values[1], &raw_values[2], &raw_values[3], &raw_values[4], &raw_values[5]);  	  
  	  #if HAS_MPU9150() || HAS_MPU9250()
