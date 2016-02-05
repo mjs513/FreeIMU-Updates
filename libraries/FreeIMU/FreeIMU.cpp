@@ -717,8 +717,99 @@ void FreeIMU::RESET_Q() {
   
   #if HAS_CURIE()
 	  accgyro.initialize();
-	  accgyro.setFullScaleGyroRange(BMI160_GYRO_RANGE_2000);
 	  accgyro.setFullScaleAccelRange(BMI160_ACCEL_RANGE_2G);
+	  /** Set accelerometer output data rate.
+	   * The acc_odr parameter allows setting the output data rate of the accelerometer
+	   * as described in the table below.
+	   *
+	   * <pre>
+	   *  5 =  25/2Hz
+	   *  6 =    25Hz
+	   *  7 =    50Hz
+	   *  8 =   100Hz
+	   *  9 =   200Hz
+	   * 10 =   400Hz
+	   * 11 =   800Hz
+	   * 12 =  1600Hz
+	   * 13 =  3200Hz
+	   * </pre>
+	   *
+	  */
+	  accgyro.setAccelRate(BMI160_ACCEL_RATE_50HZ);
+
+	  /** Get accelerometer digital low-pass filter mode.
+	   * The acc_bwp parameter sets the accelerometer digital low pass filter configuration.
+	   *
+	   * When the filter mode is set to Normal (@see BMI160_DLPF_MODE_NORM), the filter
+	   * bandwidth for each respective accelerometer output data rates is shown in the table below:
+	   *
+	   * <pre>
+	   * ODR     | 3dB cut-off
+	   * --------+--------------
+	   *  12.5Hz |  5.06Hz
+	   *    25Hz | 10.12Hz
+	   *    50Hz | 20.25Hz
+	   *   100Hz | 40.5Hz
+	   *   200Hz | 80Hz
+	   *   400Hz | 162Hz (155Hz for Z axis)
+	   *   800Hz | 324Hz (262Hz for Z axis)
+	   *  1600Hz | 684Hz (353Hz for Z axis)
+	   * </pre>
+	   *
+	   * When the filter mode is set to OSR2 (@see BMI160_DLPF_MODE_OSR2), the filter
+	   * bandwidths above are approximately halved.
+	   *
+	   * When the filter mode is set to OSR4 (@see BMI160_DLPF_MODE_OSR4), the filter
+	   * bandwidths above are approximately 4 times smaller.
+	  */
+	  accgyro.setAccelDLPFMode(BMI160_DLPF_MODE_OSR2);
+
+	  accgyro.setFullScaleGyroRange(BMI160_GYRO_RANGE_2000);
+	  /** Get gyroscope output data rate.
+	   * The gyr_odr parameter allows setting the output data rate of the gyroscope
+	   * as described in the table below.
+	   *
+	   * <pre>
+	   *  6 =   25Hz
+	   *  7 =   50Hz
+	   *  8 =  100Hz
+	   *  9 =  200Hz
+	   * 10 =  400Hz
+	   * 11 =  800Hz
+	   * 12 = 1600Hz
+	   * 13 = 3200Hz
+	   * </pre>
+	  */
+	  accgyro.setGyroRate(BMI160_GYRO_RATE_50HZ);
+	  
+	  /** Get gyroscope digital low-pass filter mode.
+	    * The gyro_bwp parameter sets the gyroscope digital low pass filter configuration.
+	    *
+	    * When the filter mode is set to Normal (@see BMI160_DLPF_MODE_NORM), the filter
+	   	* bandwidth for each respective gyroscope output data rates is shown in the table below:
+	   	*
+	    * <pre>
+	    * ODR     | 3dB cut-off
+	    * --------+------------
+	    *    25Hz | 10.7Hz
+	    *    50Hz | 20.8Hz
+	    *   100Hz | 39.9Hz
+	    *   200Hz | 74.6Hz
+	    *   400Hz | 136.6Hz
+	    *   800Hz | 254.6Hz
+	    *  1600Hz | 523.9Hz
+	    *  3200Hz | 890Hz
+	    * </pre>
+	    *
+	    * When the filter mode is set to OSR2 (@see BMI160_DLPF_MODE_OSR2), the filter
+	    * bandwidths above are approximately halved.
+	    *
+	    * When the filter mode is set to OSR4 (@see BMI160_DLPF_MODE_OSR4), the filter
+	    * bandwidths above are approximately 4 times smaller.
+	   */
+	   accgyro.setGyroDLPFMode(BMI160_DLPF_MODE_OSR2);
+
+	  
 	  /*
 	  * | Full Scale Range   | LSB Sensitivity
 	  * +--------------------+----------------

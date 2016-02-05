@@ -55,7 +55,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define ADA_10_DOF
 #define CurieIMU
 
-//#define DISABLE_MAGN // Uncomment this line to disable the magnetometer in the sensor fusion algorithm
+#define DISABLE_MAGN // Uncomment this line to disable the magnetometer in the sensor fusion algorithm
 
 //Magnetic declination angle for iCompass
 //#define MAG_DEC 4 //+4.0 degrees for Israel
@@ -102,7 +102,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	const float Ki_ROLLPITCH = 0.0234f;
 	const float Kp_YAW = 1.75f;   // was 1.2 and 0.02
 	const float Ki_YAW = 0.002f;
-#elif defined(GEN_MPU9150)
+#elif defined(GEN_MPU9150) 
 	#define twoKpDef  (2.0f * 0.75f)
 	#define twoKiDef  (2.0f * 0.1f)	
 	#define betaDef	  0.01f
@@ -160,6 +160,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	const float Ki_ROLLPITCH = 0.0234f;
 	const float Kp_YAW = 1.2f;   // was 1.2 and 0.02
 	const float Ki_YAW = 0.02f;
+#elif defined(CurieImu)
+	#define twoKpDef  (2.0f * 1.75f)
+	#define twoKiDef  (2.0f * 0.001f)
+	#define betaDef	  2.5f
+	//Used for DCM filter
+	const float Kp_ROLLPITCH = 1.2f;  //was .3423
+	const float Ki_ROLLPITCH = 0.0234f;
+	const float Kp_YAW = 1.75f;   // was 1.2 and 0.02
+	const float Ki_YAW = 0.002f;
 #else
 	#define twoKpDef  (2.0f * 0.5f)
 	#define twoKiDef  (2.0f * 0.1f)
@@ -682,7 +691,7 @@ class FreeIMU
 
 	#if(MARG == 0)
 		void AHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz);
-		//void AHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az);
+		void AHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az);
   	#elif(MARG == 1)
 		void MadgwickAHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz);
 		void MadgwickAHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az);

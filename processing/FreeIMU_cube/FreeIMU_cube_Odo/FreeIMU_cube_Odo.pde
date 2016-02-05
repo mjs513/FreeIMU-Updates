@@ -32,7 +32,7 @@ import processing.opengl.*;
 
 Serial myPort;  // Create object from Serial class
 
-final String serialPort = "COM4"; // replace this with your serial port. On windows you will need something like "COM1".
+final String serialPort = "COM3"; // replace this with your serial port. On windows you will need something like "COM1".
 int BaudRate=57600;
 
 //Settup Stop Watch
@@ -129,7 +129,7 @@ void myDelay(int time) {
 
 void setup() 
 {
-  size(VIEW_SIZE_X, VIEW_SIZE_Y, OPENGL);
+  size(900, 600, OPENGL);
 
   
   myPort = new Serial(this, serialPort, BaudRate);

@@ -199,10 +199,11 @@ void loop() {
         #elif HAS_MPU9150()  || HAS_MPU9250() || HAS_LSM9DS0()
           my3IMU.getRawValues(raw_values);
           writeArr(raw_values, 9, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
-        #elif HAS_MPU6050() || HAS_MPU6000()   // MPU6050
+        #elif HAS_MPU6050() || HAS_MPU6000() || HAS_CURIE()  // MPU6050
           //my3IMU.accgyro.getMotion6(&raw_values[0], &raw_values[1], &raw_values[2], &raw_values[3], &raw_values[4], &raw_values[5]);
+          raw_values[6] = raw_values[7] = raw_values[8] = 0;
           my3IMU.getRawValues(raw_values);
-          writeArr(raw_values, 6, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
+          writeArr(raw_values, 9, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
         #elif HAS_ALTIMU10()
           my3IMU.getRawValues(raw_values);
           writeArr(raw_values, 9, sizeof(int)); // writes accelerometer, gyro values & mag of Altimu 10        
@@ -294,6 +295,7 @@ void loop() {
       }
     }    
   cmd1[0] = '\0';
+  delay(100);
 }
 
 char serial_busy_wait() {
