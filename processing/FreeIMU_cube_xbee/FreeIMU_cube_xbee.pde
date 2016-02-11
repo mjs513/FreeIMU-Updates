@@ -30,12 +30,36 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import processing.serial.*;
 import processing.opengl.*;
 
+import com.digi.xbee.api.RemoteXBeeDevice;
+import com.digi.xbee.api.XBeeDevice;
+import com.digi.xbee.api.XBeeNetwork;
+import com.digi.xbee.api.exceptions.XBeeException;
+import com.digi.xbee.api.utils.HexUtils;
+import com.digi.xbee.api.listeners.IDataReceiveListener;
+import com.digi.xbee.api.models.XBeeMessage;
+ 
+
 Serial myPort;  // Create object from Serial class
 
 final String serialPort = "COM3"; // replace this with your serial port. On windows you will need something like "COM1".
 int BaudRate=57600;
 int HAS_GPS = 1;
 
+int HAS_Xbee = 1;
+// *** REPLACE WITH THE SERIAL PORT (COM PORT) FOR YOUR LOCAL XBEE ***
+String XbeePort = "COM6";
+
+String DATA_TO_SEND = "z";
+String REMOTE_NODE_IDENTIFIER = "END_ROUTER_1";
+int BAUD_RATE = 57600;
+
+XBeeDevice myDevice = new XBeeDevice(XbeePort, BAUD_RATE);
+byte[] dataToSend = DATA_TO_SEND.getBytes();
+XBeeNetwork xbeeNetwork;
+RemoteXBeeDevice remoteDevice;
+
+int packetCnt = 0;
+String [] inputStringArr;
 
 //Settup Stop Watch
 StopWatchTimer sw = new StopWatchTimer();
@@ -126,7 +150,7 @@ int cube_odo = 0;
 PFont font;
 final int VIEW_SIZE_X = 900, VIEW_SIZE_Y = 600;
 
-final int burst = 32;
+final int burst = 8;
 int count = 0;
 
 void myDelay(int time) {
@@ -140,7 +164,7 @@ void setup()
   size(900, 600, OPENGL);
 
   
-  myPort = new Serial(this, serialPort, BaudRate);
+  //myPort = new Serial(this, serialPort, BaudRate);
   myDelay(1000);
   
   // The font must be located in the sketch's "data" directory to load successfully
@@ -148,17 +172,41 @@ void setup()
   
   println("Waiting IMU..");
 
-  myDelay(2000);
-  
+/*  myPort.clear();
+  myDelay(1000);
   while (myPort.available() == 0) {
-    println(myPort.available());
     myPort.write("v");
-    //myPort.write("1");
     myDelay(1000);
+    sw.start();
   }
-  
-  myPort.write("z");
+  //println(myPort.readStringUntil('\n'));
+  myPort.write("f");
+  myPort.write("z" + char(burst));
   myPort.bufferUntil('\n');
+*/
+
+    try {
+      myDevice.open();
+
+      // Obtain the remote XBee device from the XBee network.
+      xbeeNetwork = myDevice.getNetwork();
+      remoteDevice = xbeeNetwork.discoverDevice(REMOTE_NODE_IDENTIFIER);
+      if (remoteDevice == null) {
+        System.out.println("Couldn't find the remote XBee device with '" + REMOTE_NODE_IDENTIFIER + "' Node Identifier.");
+        System.exit(1);
+      }
+      
+      myDevice.addDataListener(new MyDataReceiveListener());
+      
+      DATA_TO_SEND = "z";
+      writePacket();
+      myDevice.sendData(remoteDevice, dataToSend);
+      
+    } catch (XBeeException e) {
+      System.out.println("Error ");
+      e.printStackTrace();
+      System.exit(1);
+    } 
 
 }
 
@@ -175,15 +223,14 @@ float decodeFloat(String inString) {
   int intbits = (inData[3] << 24) | ((inData[2] & 0xff) << 16) | ((inData[1] & 0xff) << 8) | (inData[0] & 0xff);
   return Float.intBitsToFloat(intbits);
 }
-
-////////////////////////////////////////////////////////////////////////
+/*
 void serialEvent(Serial p) {
   if(p.available() >= 17) {
-    String inputString = p.readStringUntil('\n');  
+    String inputString = p.readStringUntil('\n');
     //print(inputString);
     if (inputString != null && inputString.length() > 0) {
       String [] inputStringArr = split(inputString, ",");
-      if(inputStringArr.length >= 18) { // q1,q2,q3,q4,\r\n so we have 5 elements
+      if(inputStringArr.length >= 17) { // q1,q2,q3,q4,\r\n so we have 5 elements
         q[0] = decodeFloat(inputStringArr[0]);
         q[1] = decodeFloat(inputStringArr[1]);
         q[2] = decodeFloat(inputStringArr[2]);
@@ -195,38 +242,37 @@ void serialEvent(Serial p) {
         gyro[1] = decodeFloat(inputStringArr[8]);
         gyro[2] = decodeFloat(inputStringArr[9]);
         magn[0] = decodeFloat(inputStringArr[10]);
-        magn[1] = decodeFloat(inputStringArr[11]);    
+        magn[1] = decodeFloat(inputStringArr[11]);		
         magn[2] = decodeFloat(inputStringArr[12]);
         temp = decodeFloat(inputStringArr[13]);
         press = decodeFloat(inputStringArr[14]);
-        //dt = (1./decodeFloat(inputStringArr[15]))/4;
         dt = (1./decodeFloat(inputStringArr[15]));
         heading = decodeFloat(inputStringArr[16]);
-        //dt = tnew - told;
-        //told = tnew;
         if(heading < -9990) {
             heading = 0;
         }
         altitude = decodeFloat(inputStringArr[17]);
-        //motionDetect = decodeFloat(inputStringArr[18]);
-        
       //read GPS
       if(HAS_GPS == 1){
-          hdop_val = decodeFloat(inputStringArr[1]);
-          lat = decodeFloat(inputStringArr[20]);
-          longt = decodeFloat(inputStringArr[21]);
-          gpsalt = decodeFloat(inputStringArr[22]);
-          cog = decodeFloat(inputStringArr[23]);
-          sog = decodeFloat(inputStringArr[24]);
-  
-       }        
+          hdop = decodeFloat(inputStringArr[19]);
+          hdop_val = decodeFloat(inputStringArr[20]);
+          lat = decodeFloat(inputStringArr[21]);
+          longt = decodeFloat(inputStringArr[22]);
+          loc_val = decodeFloat(inputStringArr[23]);
+          gpsalt = decodeFloat(inputStringArr[24]);
+          gpsalt_val = decodeFloat(inputStringArr[25]);
+          cog = decodeFloat(inputStringArr[26]);
+          cog_val = decodeFloat(inputStringArr[27]);
+          sog = decodeFloat(inputStringArr[28]);
+          sog_val = decodeFloat(inputStringArr[29]);
+          gpschars = decodeFloat(inputStringArr[30]);    
+       }
       }
     }
-    
     count = count + 1;
     if(burst == count) { // ask more data when burst completed
       //1 = RESET MPU-6050, 2 = RESET Q Matrix
-      if(key == '2') {
+      if(key == 'q') {
          myPort.clear();
          myPort.write("2");
          sw.start();
@@ -246,8 +292,7 @@ void serialEvent(Serial p) {
             key = '0';            
       } else if(key == 'R') {
             myPort.clear();
-            //ArtHorFlg = 0;
-            calib = 1;
+            calib = 0;
             sea_press = 1013.25;
             setup();
       } 
@@ -272,12 +317,12 @@ void serialEvent(Serial p) {
       }
 
       myDelay(100);
-      p.write("z");
+      p.write("z" + char(burst));
       count = 0;
     }
   }
 }
-
+*/
 
 void buildBoxShape() {
   //box(60, 10, 40);
@@ -360,6 +405,14 @@ void draw() {
   else {
     quaternionToEuler(q, Euler);
     text("Point FreeIMU's X axis to your monitor then press \"h\"", 20, VIEW_SIZE_Y - 30);
+  }
+
+  if(packetCnt < burst) {
+    //readPacket();
+    packetCnt = packetCnt +1;
+  } else { 
+    packetCnt = 0;
+    requestData();      
   }
 
   fused_alt = altitude + STATIONALTFT/METERS2FT;
@@ -561,3 +614,126 @@ public float iround(float number, float decimal) {
   ix = round(number*pow(10, decimal));
   return float(ix)/pow(10, decimal);
 } 
+
+////////////////////////////////////////////////////////////////////////
+
+/*void readPacket() {
+    XBeeMessage xbeeMessage = myDevice.readData();
+    if (xbeeMessage != null) {
+        inputStringArr = split(new String(xbeeMessage.getData()), ",");
+            decodePacket();
+    } 
+} */
+
+///////////////////////////////////////////////////////////////////////
+
+void writePacket() {
+    try {
+      myDevice.sendData(remoteDevice, dataToSend);
+    } catch (XBeeException e) {
+      System.out.println("Error");
+      e.printStackTrace();
+      System.exit(1);
+    }
+}
+
+///////////////////////////////////////////////////////////////////////
+
+void requestData() {
+      //1 = RESET MPU-6050, 2 = RESET Q Matrix
+      if(key == '2') {
+         DATA_TO_SEND = "2";
+         writePacket();
+         sw.start();
+         println("pressed 2");
+         key = '0';
+      } else if(key == 'r') {
+         DATA_TO_SEND = "1";
+         writePacket();
+         sw.start();
+         println("pressed 1");
+         key = '0';
+      } else if(key == 'g') {
+         DATA_TO_SEND = "g";
+         writePacket();
+         sw.start();
+         println("pressed g");
+         key = '0';            
+      } else if(key == 'R') {
+            //ArtHorFlg = 0;
+            calib = 1;
+            sea_press = 1013.25;
+            setup();
+      } 
+      
+      if(seapresscmd != "99"){
+         DATA_TO_SEND = seapresscmd;
+         writePacket();
+         seapresscmd =  "99";    
+      }   
+      
+      if(calib == 0) {
+         DATA_TO_SEND = "f";
+         writePacket();
+         sw.start();
+         calib = 99;
+      }    
+      if(calib == 1) {
+         DATA_TO_SEND = "t";
+         writePacket();
+         sw.start();
+         calib = 99;
+      }
+
+      //myDelay(100);
+      DATA_TO_SEND = "z";
+      writePacket();
+}
+
+////////////////////////////////////////////////////////////////////////
+
+void decodePacket() {
+ 
+    if (inputStringArr != null) {
+      if(inputStringArr.length >= 18) { // q1,q2,q3,q4,\r\n so we have 5 elements
+        q[0] = decodeFloat(inputStringArr[0]);
+        q[1] = decodeFloat(inputStringArr[1]);
+        q[2] = decodeFloat(inputStringArr[2]);
+        q[3] = decodeFloat(inputStringArr[3]);
+        acc[0] = decodeFloat(inputStringArr[4]);
+        acc[1] = decodeFloat(inputStringArr[5]);
+        acc[2] = decodeFloat(inputStringArr[6]);
+        gyro[0] = decodeFloat(inputStringArr[7]);
+        gyro[1] = decodeFloat(inputStringArr[8]);
+        gyro[2] = decodeFloat(inputStringArr[9]);
+        magn[0] = decodeFloat(inputStringArr[10]);
+        magn[1] = decodeFloat(inputStringArr[11]);    
+        magn[2] = decodeFloat(inputStringArr[12]);
+        temp = decodeFloat(inputStringArr[13]);
+        press = decodeFloat(inputStringArr[14]);
+        //dt = (1./decodeFloat(inputStringArr[15]))/4;
+        dt = (1./decodeFloat(inputStringArr[15]));
+        heading = decodeFloat(inputStringArr[16]);
+        //dt = tnew - told;
+        //told = tnew;
+        if(heading < -9990) {
+          heading = 0;
+        }
+        altitude = decodeFloat(inputStringArr[17]);
+        //motionDetect = decodeFloat(inputStringArr[18]);
+        
+        //read GPS
+        if(HAS_GPS == 1){
+          hdop = decodeFloat(inputStringArr[19]);
+          lat = decodeFloat(inputStringArr[20]);
+          longt = decodeFloat(inputStringArr[21]);
+          gpsalt = decodeFloat(inputStringArr[23]);
+          cog = decodeFloat(inputStringArr[24]);
+          sog = decodeFloat(inputStringArr[25]);
+         } 
+      }
+    }
+       //println(acc[0]+","+acc[1]+","+acc[2]+","+ gyro[0]+","+gyro[1]+","+gyro[2]+","+
+       //  magn[0]+","+magn[1]+","+magn[2] + " --------");
+   
+}
