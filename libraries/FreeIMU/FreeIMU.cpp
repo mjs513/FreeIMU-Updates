@@ -529,35 +529,35 @@ void FreeIMU::RESET() {
 	delay(50);
 	//reset matrix
 	q0 = 1.0f;
-  q1 = 0.0f;
-  q2 = 0.0f;
-  q3 = 0.0f;
-  exInt = 0.0;
-  eyInt = 0.0;
-  ezInt = 0.0;
-  twoKp = twoKpDef;
-  twoKi = twoKiDef;
-  // beta = betaDef;
-  integralFBx = 0.0f,  integralFBy = 0.0f, integralFBz = 0.0f;
-  //lastUpdate = 0;
-  //now = 0;
+	q1 = 0.0f;
+	q2 = 0.0f;
+	q3 = 0.0f;
+	exInt = 0.0;
+	eyInt = 0.0;
+	ezInt = 0.0;
+	twoKp = twoKpDef;
+	twoKi = twoKiDef;
+	// beta = betaDef;
+	integralFBx = 0.0f,  integralFBy = 0.0f, integralFBz = 0.0f;
+	//lastUpdate = 0;
+	//now = 0;
 }
 
 void FreeIMU::RESET_Q() {
 	//reset matrix
 	q0 = 1.0f;
-  q1 = 0.0f;
-  q2 = 0.0f;
-  q3 = 0.0f;
-  exInt = 0.0;
-  eyInt = 0.0;
-  ezInt = 0.0;
-  twoKp = twoKpDef;
-  twoKi = twoKiDef;
-  // beta = betaDef;
-  integralFBx = 0.0f,  integralFBy = 0.0f, integralFBz = 0.0f;
-  //lastUpdate = 0;
-  //now = 0;
+	q1 = 0.0f;
+	q2 = 0.0f;
+	q3 = 0.0f;
+	exInt = 0.0;
+	eyInt = 0.0;
+	ezInt = 0.0;
+	twoKp = twoKpDef;
+	twoKi = twoKiDef;
+	// beta = betaDef;
+	integralFBx = 0.0f,  integralFBy = 0.0f, integralFBz = 0.0f;
+	//lastUpdate = 0;
+	//now = 0;
 }
 
 
@@ -667,160 +667,163 @@ void FreeIMU::RESET_Q() {
 	  accgyro.initialize();
 	  accgyro.setDLPFMode(MPU60X0_DLPF_BW_20);
 	#endif
+	
     accgyro.setI2CMasterModeEnabled(0);
     accgyro.setI2CBypassEnabled(1);
     accgyro.setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);
-	  accgyro.setFullScaleAccelRange(MPU60X0_ACCEL_FS_2);
-	  gyro_sensitivity = 16.4f;
-	  delay(100);
-	  //initialize magnetometer
-	  mag = AK8975(false, AK8975_DEFAULT_ADDRESS);
-	  mag.initialize();
+	accgyro.setFullScaleAccelRange(MPU60X0_ACCEL_FS_2);
+	gyro_sensitivity = 16.4f;
+	delay(100);
+	//initialize magnetometer
+	mag = AK8975(false, AK8975_DEFAULT_ADDRESS);
+	mag.initialize();
   #elif HAS_MPU9250()
-	  //initialize accelerometer and gyroscope
-	  accgyro = MPU60X0(false, accgyro_addr);
-	  accgyro.initialize9250();
-	  accgyro.setDLPFMode(MPU60X0_DLPF_BW_20); 
-	  accgyro.setI2CMasterModeEnabled(0);
-	  accgyro.setI2CBypassEnabled(1);
-	  accgyro.setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);
-	  accgyro.setFullScaleAccelRange(MPU60X0_ACCEL_FS_2);
-	  gyro_sensitivity = 16.4f;
-	  delay(100);
-	  //initialize magnetometer
-	  mag = AK8963(false, AK8963_DEFAULT_ADDRESS);
-	  mag.initialize();  
-	  mag.setModeRes(AK8963_MODE_CONT2, MFS_16BITS);
+	//initialize accelerometer and gyroscope
+	accgyro = MPU60X0(false, accgyro_addr);
+	accgyro.initialize9250();
+	accgyro.setDLPFMode(MPU60X0_DLPF_BW_20); 
+	accgyro.setI2CMasterModeEnabled(0);
+	accgyro.setI2CBypassEnabled(1);
+	accgyro.setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);
+	accgyro.setFullScaleAccelRange(MPU60X0_ACCEL_FS_2);
+	gyro_sensitivity = 16.4f;
+	delay(100);
+	//initialize magnetometer
+	mag = AK8963(false, AK8963_DEFAULT_ADDRESS);
+	mag.initialize();  
+	mag.setModeRes(AK8963_MODE_CONT2, MFS_16BITS);
   #elif HAS_MPU6000()
-	  accgyro = MPU60X0(true, accgyro_addr);
-	  accgyro.initialize();
-	  accgyro.setRate(19);
-	  accgyro.setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);
-	  accgyro.setFullScaleAccelRange(MPU60X0_ACCEL_FS_2);
-	  accgyro.setDLPFMode(MPU60X0_DLPF_BW_20); 
-	  gyro_sensitivity = 16.4f;
-	  delay(5);
+	accgyro = MPU60X0(true, accgyro_addr);
+	accgyro.initialize();
+	accgyro.setRate(19);
+	accgyro.setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);
+	accgyro.setFullScaleAccelRange(MPU60X0_ACCEL_FS_2);
+	accgyro.setDLPFMode(MPU60X0_DLPF_BW_20); 
+	gyro_sensitivity = 16.4f;
+	delay(5);
   #endif 
   
   #if HAS_LSM9DS0()
     // Use the begin() function to initialize the LSM9DS0 library.
-	  // You can either call it with no parameters (the easy way):
-	  uint16_t status = lsm.begin(lsm.G_SCALE_2000DPS, lsm.A_SCALE_2G );
-	  // Or call it with declarations for sensor scales and data rates:  
-	  //uint16_t status = lsm.begin(lsm.G_SCALE_2000DPS, 
-	  //                            lsm.A_SCALE_6G, lsm.M_SCALE_2GS);
-	  //Angular rate FS = ±245 dps, gyro_sensitivity = 8.75
-	  //Angular rate FS = ±500 dps, gyro_sensitivity =  17.50
-	  //Angular rate FS = ±2000 dps, gyro_sensitivity =  70
-	  gyro_sensitivity = 70.0f;
+	// You can either call it with no parameters (the easy way):
+	uint16_t status = lsm.begin(lsm.G_SCALE_2000DPS, lsm.A_SCALE_2G );
+	// Or call it with declarations for sensor scales and data rates:  
+	//uint16_t status = lsm.begin(lsm.G_SCALE_2000DPS, 
+	//                            lsm.A_SCALE_6G, lsm.M_SCALE_2GS);
+	//Angular rate FS = ±245 dps, gyro_sensitivity = 8.75
+	//Angular rate FS = ±500 dps, gyro_sensitivity =  17.50
+	//Angular rate FS = ±2000 dps, gyro_sensitivity =  70
+	gyro_sensitivity = 70.0f;
   #endif
   
   #if HAS_CURIE()
-	  accgyro.initialize();
-	  accgyro.setFullScaleAccelRange(BMI160_ACCEL_RANGE_2G);
-	  /** Set accelerometer output data rate.
-	   * The acc_odr parameter allows setting the output data rate of the accelerometer
-	   * as described in the table below.
-	   *
-	   * <pre>
-	   *  5 =  25/2Hz
-	   *  6 =    25Hz
-	   *  7 =    50Hz
-	   *  8 =   100Hz
-	   *  9 =   200Hz
-	   * 10 =   400Hz
-	   * 11 =   800Hz
-	   * 12 =  1600Hz
-	   * 13 =  3200Hz
-	   * </pre>
-	   *
-	  */
-	  accgyro.setAccelRate(BMI160_ACCEL_RATE_50HZ);
+	accgyro.initialize();
+	accgyro.setFullScaleAccelRange(BMI160_ACCEL_RANGE_2G);
+	/** Set accelerometer output data rate.
+	* The acc_odr parameter allows setting the output data rate of the accelerometer
+	* as described in the table below.
+	*
+	* <pre>
+	*  5 =  25/2Hz
+	*  6 =    25Hz
+	*  7 =    50Hz
+	*  8 =   100Hz
+	*  9 =   200Hz
+	* 10 =   400Hz
+	* 11 =   800Hz
+	* 12 =  1600Hz
+	* 13 =  3200Hz
+	* </pre>
+	*
+	*/
+	accgyro.setAccelRate(BMI160_ACCEL_RATE_100HZ);
 
-	  /** Get accelerometer digital low-pass filter mode.
-	   * The acc_bwp parameter sets the accelerometer digital low pass filter configuration.
-	   *
-	   * When the filter mode is set to Normal (@see BMI160_DLPF_MODE_NORM), the filter
-	   * bandwidth for each respective accelerometer output data rates is shown in the table below:
-	   *
-	   * <pre>
-	   * ODR     | 3dB cut-off
-	   * --------+--------------
-	   *  12.5Hz |  5.06Hz
-	   *    25Hz | 10.12Hz
-	   *    50Hz | 20.25Hz
-	   *   100Hz | 40.5Hz
-	   *   200Hz | 80Hz
-	   *   400Hz | 162Hz (155Hz for Z axis)
-	   *   800Hz | 324Hz (262Hz for Z axis)
-	   *  1600Hz | 684Hz (353Hz for Z axis)
-	   * </pre>
-	   *
-	   * When the filter mode is set to OSR2 (@see BMI160_DLPF_MODE_OSR2), the filter
-	   * bandwidths above are approximately halved.
-	   *
-	   * When the filter mode is set to OSR4 (@see BMI160_DLPF_MODE_OSR4), the filter
-	   * bandwidths above are approximately 4 times smaller.
-	  */
-	  accgyro.setAccelDLPFMode(BMI160_DLPF_MODE_OSR2);
+	/** Get accelerometer digital low-pass filter mode.
+	* The acc_bwp parameter sets the accelerometer digital low pass filter configuration.
+	*
+	* When the filter mode is set to Normal (@see BMI160_DLPF_MODE_NORM), the filter
+	* bandwidth for each respective accelerometer output data rates is shown in the table below:
+	*
+	* <pre>
+	* ODR     | 3dB cut-off
+	* --------+--------------
+	*  12.5Hz |  5.06Hz
+	*    25Hz | 10.12Hz
+	*    50Hz | 20.25Hz
+	*   100Hz | 40.5Hz
+	*   200Hz | 80Hz
+	*   400Hz | 162Hz (155Hz for Z axis)
+	*   800Hz | 324Hz (262Hz for Z axis)
+	*  1600Hz | 684Hz (353Hz for Z axis)
+	* </pre>
+	*
+	* When the filter mode is set to OSR2 (@see BMI160_DLPF_MODE_OSR2), the filter
+	* bandwidths above are approximately halved.
+	*
+	* When the filter mode is set to OSR4 (@see BMI160_DLPF_MODE_OSR4), the filter
+	* bandwidths above are approximately 4 times smaller.
+	*/
+	//accgyro.setAccelDLPFMode(BMI160_DLPF_MODE_OSR2);
 
-	  accgyro.setFullScaleGyroRange(BMI160_GYRO_RANGE_2000);
-	  /** Get gyroscope output data rate.
-	   * The gyr_odr parameter allows setting the output data rate of the gyroscope
-	   * as described in the table below.
-	   *
-	   * <pre>
-	   *  6 =   25Hz
-	   *  7 =   50Hz
-	   *  8 =  100Hz
-	   *  9 =  200Hz
-	   * 10 =  400Hz
-	   * 11 =  800Hz
-	   * 12 = 1600Hz
-	   * 13 = 3200Hz
-	   * </pre>
-	  */
-	  accgyro.setGyroRate(BMI160_GYRO_RATE_50HZ);
+	accgyro.setFullScaleGyroRange(BMI160_GYRO_RANGE_2000);
+	/** Get gyroscope output data rate.
+	* The gyr_odr parameter allows setting the output data rate of the gyroscope
+	* as described in the table below.
+	*
+	* <pre>
+	*  6 =   25Hz
+	*  7 =   50Hz
+	*  8 =  100Hz
+	*  9 =  200Hz
+	* 10 =  400Hz
+	* 11 =  800Hz
+	* 12 = 1600Hz
+	* 13 = 3200Hz
+	* </pre>
+	*/
+	accgyro.setGyroRate(BMI160_GYRO_RATE_100HZ);
 	  
-	  /** Get gyroscope digital low-pass filter mode.
-	    * The gyro_bwp parameter sets the gyroscope digital low pass filter configuration.
-	    *
-	    * When the filter mode is set to Normal (@see BMI160_DLPF_MODE_NORM), the filter
-	   	* bandwidth for each respective gyroscope output data rates is shown in the table below:
-	   	*
-	    * <pre>
-	    * ODR     | 3dB cut-off
-	    * --------+------------
-	    *    25Hz | 10.7Hz
-	    *    50Hz | 20.8Hz
-	    *   100Hz | 39.9Hz
-	    *   200Hz | 74.6Hz
-	    *   400Hz | 136.6Hz
-	    *   800Hz | 254.6Hz
-	    *  1600Hz | 523.9Hz
-	    *  3200Hz | 890Hz
-	    * </pre>
-	    *
-	    * When the filter mode is set to OSR2 (@see BMI160_DLPF_MODE_OSR2), the filter
-	    * bandwidths above are approximately halved.
-	    *
-	    * When the filter mode is set to OSR4 (@see BMI160_DLPF_MODE_OSR4), the filter
-	    * bandwidths above are approximately 4 times smaller.
-	   */
-	   accgyro.setGyroDLPFMode(BMI160_DLPF_MODE_OSR2);
+	/** Get gyroscope digital low-pass filter mode.
+	* The gyro_bwp parameter sets the gyroscope digital low pass filter configuration.
+	*
+	* When the filter mode is set to Normal (@see BMI160_DLPF_MODE_NORM), the filter
+	* bandwidth for each respective gyroscope output data rates is shown in the table below:
+	*
+	* <pre>
+	* ODR     | 3dB cut-off
+	* --------+------------
+	*    25Hz | 10.7Hz
+	*    50Hz | 20.8Hz
+	*   100Hz | 39.9Hz
+	*   200Hz | 74.6Hz
+	*   400Hz | 136.6Hz
+	*   800Hz | 254.6Hz
+	*  1600Hz | 523.9Hz
+	*  3200Hz | 890Hz
+	* </pre>
+	*
+	* When the filter mode is set to OSR2 (@see BMI160_DLPF_MODE_OSR2), the filter
+	* bandwidths above are approximately halved.
+	*
+	* When the filter mode is set to OSR4 (@see BMI160_DLPF_MODE_OSR4), the filter
+	* bandwidths above are approximately 4 times smaller.
+	*/
+	//accgyro.setGyroDLPFMode(BMI160_DLPF_MODE_OSR2);
 
 	  
-	  /*
-	  * | Full Scale Range   | LSB Sensitivity
-	  * +--------------------+----------------
-	  * | +/- 125 degrees/s  | 262.4 LSB/deg/s
-	  * | +/- 250 degrees/s  | 131.2 LSB/deg/s
-	  * | +/- 500 degrees/s  | 65.6 LSB/deg/s
-	  * | +/- 1000 degrees/s | 32.8 LSB/deg/s
-	  * | +/- 2000 degrees/s | 16.4 LSB/deg/s
-	  */
-	  gyro_sensitivity = 16.4f;
-	#endif
+	/*
+	* | Full Scale Range   | LSB Sensitivity
+	* +--------------------+----------------
+	* | +/- 125 degrees/s  | 262.4 LSB/deg/s
+	* | +/- 250 degrees/s  | 131.2 LSB/deg/s
+	* | +/- 500 degrees/s  | 65.6 LSB/deg/s
+	* | +/- 1000 degrees/s | 32.8 LSB/deg/s
+	* | +/- 2000 degrees/s | 16.4 LSB/deg/s // use 20.5
+	*/
+	gyro_sensitivity = 20.5f;
+	delay(100);
+  #endif
+  
   #if HAS_HMC5883L()
 	  // init HMC5843
 	  magn.init(false); // Don't set mode yet, we'll do that later on.
@@ -847,12 +850,12 @@ void FreeIMU::RESET_Q() {
 
   #if HAS_MPL3115A2()
     baro3115.begin();
-	  baro3115.setModeBarometer(); // Measure pressure in Pascals from 20 to 110 kPa
-	  // Set the # of samples from 1 to 128. See datasheet.
-	  // Integer values between 0 < n < 7 give oversample ratios 2^n and 
-	  // sampling intervals of 0=6 ms , 1=10, 2=18, 3=34, 4=66, 5=130, 6=258, and 7=512 
-	  baro3115.setOversampleRate(4); // Set Oversample to the recommended 128 --> 512ms
-	  baro3115.enableEventFlags(); // Enable all three pressure and temp event flags 
+	baro3115.setModeBarometer(); // Measure pressure in Pascals from 20 to 110 kPa
+	// Set the # of samples from 1 to 128. See datasheet.
+	// Integer values between 0 < n < 7 give oversample ratios 2^n and 
+	// sampling intervals of 0=6 ms , 1=10, 2=18, 3=34, 4=66, 5=130, 6=258, and 7=512 
+	baro3115.setOversampleRate(4); // Set Oversample to the recommended 128 --> 512ms
+	baro3115.enableEventFlags(); // Enable all three pressure and temp event flags 
   #endif  
    
   #if HAS_BMP085()
@@ -891,7 +894,7 @@ void FreeIMU::RESET_Q() {
 		compass.writeReg(LSM303::CTRL2, 0x00);
 
 		// Magnetometer
-    // MFS = 01 (+/- 4 gauss full scale),  MFS = 00(+/- 2 gauss full scale)
+		// MFS = 01 (+/- 4 gauss full scale),  MFS = 00(+/- 2 gauss full scale)
 		// MFS = 10 (+/- 8 gauss full scale),  MFS = 11(+/- 12 gauss full scale)
 		compass.writeReg(LSM303::CTRL6, 0x00);
 	}
@@ -900,7 +903,7 @@ void FreeIMU::RESET_Q() {
 		// FS = 00  (+/- 2 g full scale); HR = 1 (high resolution enable)
 		//                                  FS HR
 		//    equates to 0b00 00  1    00 0
-    // FS = 0x01  (+/- 4 g),  0x10: +/- 8 g, 0x11: +/- 16 g 
+		// FS = 0x01  (+/- 4 g),  0x10: +/- 8 g, 0x11: +/- 16 g 
 		//  or: 0x08, 0x18, 0x28, 0x38 respectfully
 		compass.writeAccReg(LSM303::CTRL_REG4_A, 0x08);
 	
@@ -919,7 +922,7 @@ void FreeIMU::RESET_Q() {
 		// 0x00 = 0b00000000
 		// FS = 00 (+/- 2 g full scale), 01 (+/- 4g), 11} (+/- 8g)
 		// 0x00, 0x01, 0x03 respectfully
-    compass.writeAccReg(LSM303::CTRL_REG4_A, 0x00);
+		compass.writeAccReg(LSM303::CTRL_REG4_A, 0x00);
 
 		// Magnetometer Settings
 		// ±1.3ga	(0x20)
@@ -1023,28 +1026,28 @@ void FreeIMU::calLoad() {
  * Populates raw_values with the raw_values from the sensors
 */
 void FreeIMU::getRawValues(int * raw_values) {
-  //Set raw values for Magnetometer, Press, Temp to 0 in case you are only using
+	//Set raw values for Magnetometer, Press, Temp to 0 in case you are only using
 	//an accelerometer and gyro
 	//raw_values[9] will be set to MPU-6050 temp, see zeroGyro to change raw_values dimension
-  raw_values[6] = 0;
-  raw_values[7] = 0;
-  raw_values[8] = 0;
-  raw_values[9] = 0;
+	raw_values[6] = 0;
+	raw_values[7] = 0;
+	raw_values[8] = 0;
+	raw_values[9] = 0;
 	
   #if HAS_ITG3200()
     acc.readAccel(&raw_values[0], &raw_values[1], &raw_values[2]);
     gyro.readGyroRaw(&raw_values[3], &raw_values[4], &raw_values[5]);
-	  gyro.readTemp(&senTemp);
-	  raw_values[9] = senTemp*100;
+	gyro.readTemp(&senTemp);
+	raw_values[9] = senTemp*100;
   #elif HAS_MPU6050() || HAS_MPU6000() || HAS_MPU9150() || HAS_MPU9250() || HAS_CURIE()
     #ifdef __AVR__
-      accgyro.getMotion6(&raw_values[0], &raw_values[1], &raw_values[2], &raw_values[3], &raw_values[4], &raw_values[5]);  	  
+	  accgyro.getMotion6(&raw_values[0], &raw_values[1], &raw_values[2], &raw_values[3], &raw_values[4], &raw_values[5]);  	  
  	  #if HAS_MPU9150() || HAS_MPU9250()
 		  mag.getHeading(&raw_values[6], &raw_values[7], &raw_values[8]);			
 		  delay(10);
 		#endif
 	  rt = accgyro.getTemperature();	  
-    raw_values[9] = rt;
+	  raw_values[9] = rt;
 	 #else
       int16_t ax, ay, az, gx, gy, gz, mx, my, mz, rt;
       accgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
@@ -1054,7 +1057,7 @@ void FreeIMU::getRawValues(int * raw_values) {
 		  raw_values[7] = my;
 		  raw_values[8] = mz;				
 		  delay(10);
-		#endif
+	  #endif
       raw_values[0] = ax;
       raw_values[1] = ay;
       raw_values[2] = az;
@@ -1071,14 +1074,14 @@ void FreeIMU::getRawValues(int * raw_values) {
   #endif  
   
  #if HAS_L3D20()
-	  gyro.read();
+	gyro.read();
     raw_values[3] = gyro.g.x;
     raw_values[4] = gyro.g.y;
     raw_values[5] = gyro.g.z;	
   #endif
 
   #if HAS_LSM303()
-	  compass.read();
+	compass.read();
     raw_values[0] = compass.a.x;
     raw_values[1] = compass.a.y;
     raw_values[2] = compass.a.z;
@@ -1088,9 +1091,9 @@ void FreeIMU::getRawValues(int * raw_values) {
   #endif	
 
   #if HAS_LSM9DS0()
-	  lsm.readAccel();
-	  lsm.readGyro();
-	  lsm.readMag();
+	lsm.readAccel();
+	lsm.readGyro();
+	lsm.readMag();
     raw_values[0] = lsm.ax;
     raw_values[1] = lsm.ay;
     raw_values[2] = lsm.az;
@@ -1100,9 +1103,9 @@ void FreeIMU::getRawValues(int * raw_values) {
     raw_values[3] = lsm.gx;
     raw_values[4] = lsm.gy;
     raw_values[5] = lsm.gz;	
-	  lsm.readTemp();
-	  DTemp = lsm.temperature;
-	  raw_values[9] = DTemp;
+	lsm.readTemp();
+	DTemp = lsm.temperature;
+	raw_values[9] = DTemp;
   #endif
 }
 
@@ -1119,7 +1122,7 @@ void FreeIMU::getValues(float * values) {
   #if HAS_ITG3200()  //assumes adxl3345
     int accval[3];
     acc.readAccel(&accval[0], &accval[1], &accval[2]);
-	  accval[0] = mfilter_accx.filter((float) accval[0]);
+	accval[0] = mfilter_accx.filter((float) accval[0]);
     accval[1] = mfilter_accy.filter((float) accval[1]);
     accval[2] = mfilter_accz.filter((float) accval[2]);
 	
@@ -1158,18 +1161,18 @@ void FreeIMU::getValues(float * values) {
 	values_cal[3] = (float) gyro.g.x;
 	values_cal[4] = (float) gyro.g.y;
 	values_cal[5] = (float) gyro.g.z;
-  values_cal[6] = (float) compass.m.x;
-  values_cal[7] = (float) compass.m.y; 
-  values_cal[8] = (float) compass.m.z;
+	values_cal[6] = (float) compass.m.x;
+	values_cal[7] = (float) compass.m.y; 
+	values_cal[8] = (float) compass.m.z;
 	
 	values_cal[3] = (values_cal[3] - gyro_off_x) / gyro_sensitivity;  //Sensitivity set at 70 for +/-2000 deg/sec, L3GD20H
 	values_cal[4] = (values_cal[4] - gyro_off_y) / gyro_sensitivity;
 	values_cal[5] = (values_cal[5] - gyro_off_z) / gyro_sensitivity;
 
   #elif HAS_LSM9DS0()
-	  lsm.readAccel();
-	  lsm.readGyro();
-	  lsm.readMag();
+	lsm.readAccel();
+	lsm.readGyro();
+	lsm.readMag();
     values_cal[0] = (float) lsm.ax;
     values_cal[1] = (float) lsm.ay;
     values_cal[2] = (float) lsm.az;

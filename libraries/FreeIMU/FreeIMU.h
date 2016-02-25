@@ -53,9 +53,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define ST_LSM9DS0   //Note this includes the MS5637 pressure sensor  board
 //#define LSM9DS0_MS5637 //Note this includes the MS5637 pressure sensor  board
 //#define ADA_10_DOF
-#define CurieIMU
+//#define CurieIMU
+#define CurieIMU_Mag
 
-#define DISABLE_MAGN // Uncomment this line to disable the magnetometer in the sensor fusion algorithm
+//#define DISABLE_MAGN // Uncomment this line to disable the magnetometer in the sensor fusion algorithm
 
 //Magnetic declination angle for iCompass
 //#define MAG_DEC 4 //+4.0 degrees for Israel
@@ -68,7 +69,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // Set filter type: 1 = Madgwick Gradient Descent, 0 - Madgwick implementation of Mahoney DCM
 // in Quaternion form, 3 = Madwick Original Paper AHRS, 4 - DCM Implementation
-#define MARG 3
+#define MARG 1
 
 // proportional gain governs rate of convergence to accelerometer/magnetometer
 // integral gain governs rate of convergence of gyroscope biases
@@ -160,10 +161,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	const float Ki_ROLLPITCH = 0.0234f;
 	const float Kp_YAW = 1.2f;   // was 1.2 and 0.02
 	const float Ki_YAW = 0.02f;
-#elif defined(CurieImu)
-	#define twoKpDef  (2.0f * 1.75f)
-	#define twoKiDef  (2.0f * 0.001f)
-	#define betaDef	  2.5f
+#elif defined(CurieImu) || defined(CurieIMU_Mag)
+	#define twoKpDef  (2.0f * 1.25f)
+	#define twoKiDef  (2.0f * 0.1f)
+	#define betaDef	  0.07f
 	//Used for DCM filter
 	const float Kp_ROLLPITCH = 1.2f;  //was .3423
 	const float Ki_ROLLPITCH = 0.0234f;
@@ -270,7 +271,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #define FREEIMU_ID "LSM9DS0 IMU"
 #elif defined(ADA_10_DOF)
   #define FREEIMU_ID "Adafruit 10 Dof"
-#elif defined(CurieIMU)
+#elif defined(CurieIMU) || defined(CurieIMU_Mag)
   #define FREEIMU_ID "CurieIMU"
 #endif
 
@@ -287,12 +288,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define HAS_MPU9150() (defined(GEN_MPU9150) )
 #define HAS_MPU9250() (defined(MPU9250_5611) || defined(GEN_MPU9250)  || defined(Mario) \
                        || defined(MPU9250_5611)) 
-#define HAS_CURIE() (defined(CurieIMU))
+#define HAS_CURIE() (defined(CurieIMU) || defined(CurieIMU_Mag))
 #define HAS_HMC5883L() (defined(GY_87) ||defined(GY_88) || defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) \
 					   || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) \
 					   || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10736) \
 					   || defined(SEN_10724) || defined(SEN_10183) || defined(ARDUIMU_v3) \
-					   || defined(APM_2_5) || defined(Microduino) )
+					   || defined(APM_2_5) || defined(Microduino)  || defined(CurieIMU_Mag))
 #define HAS_MPU6000() (defined(ARDUIMU_v3) || defined(APM_2_5))
 #define HAS_APM25()	(defined(APM_2_5))
 #define HAS_ALTIMU10() (defined(Altimu10)) 
@@ -319,7 +320,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 				   || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) \
 				   || defined(FREEIMU_v04) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183) \
 				   || defined(ARDUIMU_v3)  || defined(APM_2_5) || defined(Mario) || defined(Microduino) \
-				   || defined(ST_LSM9DS0) || defined(LSM9DS0_MS5637) || defined(ADA_10_DOF) ) 
+				   || defined(ST_LSM9DS0) || defined(LSM9DS0_MS5637) || defined(ADA_10_DOF)  || defined(CurieIMU_Mag)) 
 #define HAS_AXIS_ALIGNED() (defined(Altimu10) || defined(GY_88) || defined(GEN_MPU6050) \
 							|| defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) \
 							|| defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) \
