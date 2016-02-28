@@ -326,7 +326,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 							|| defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) \
 							|| defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10121) \
 							|| defined(SEN_10736) || defined(GY_87) || defined(Microduino) \
-							|| defined(ADA_10_DOF) || defined(CurieIMU))
+							|| defined(ADA_10_DOF) || defined(CurieIMU) || defined(CurieIMU_Mag))
 
 #include <Wire.h>
 #include "Arduino.h"
