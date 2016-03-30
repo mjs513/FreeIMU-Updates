@@ -50,11 +50,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define Mario   // MPU-9150 plus Altitude/Pressure Sensor Breakout - MPL3115A2  https://www.sparkfun.com/products/11084
 //#define APM_2_5  //  APMM 2.5.2 (EBAY)
 //#define Microduino
-//#define ST_LSM9DS0   //Note this includes the MS5637 pressure sensor  board
+//#define ST_LSM9DS0  //Adafruit
+#define ST_LSM9DS1  // Tested on the Tindie version with a MS5611 
 //#define LSM9DS0_MS5637 //Note this includes the MS5637 pressure sensor  board
 //#define ADA_10_DOF
 //#define CurieIMU
-#define CurieIMU_Mag
+//#define CurieIMU_Mag
 
 //#define DISABLE_MAGN // Uncomment this line to disable the magnetometer in the sensor fusion algorithm
 
@@ -69,7 +70,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // Set filter type: 1 = Madgwick Gradient Descent, 0 - Madgwick implementation of Mahoney DCM
 // in Quaternion form, 3 = Madwick Original Paper AHRS, 4 - DCM Implementation
-#define MARG 1
+#define MARG 0
 
 // proportional gain governs rate of convergence to accelerometer/magnetometer
 // integral gain governs rate of convergence of gyroscope biases
@@ -150,12 +151,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	const float Ki_ROLLPITCH = 0.0234f;
 	const float Kp_YAW = 1.75f;   // was 1.2 and 0.02
 	const float Ki_YAW = 0.002f;
-#elif (defined(ST_LSM9DS0) || defined(LSM9DS0_MS5637))
+#elif (defined(ST_LSM9DS0) || defined(LSM9DS0_MS5637) || defined(ST_LSM9DS1))
 	//Madgwick's implementation of Mayhony's AHRS algorithm
 	#define twoKpDef  (2.0f * 1.75f)	//works with and without mag enabled
 	#define twoKiDef  (2.0f * 0.025f)
 	//Implementation of Madgwick's IMU and AHRS algorithms
 	#define betaDef  0.15f
+	//Used for DCM filter
+	const float Kp_ROLLPITCH = 1.2f;  //was .3423
+	const float Ki_ROLLPITCH = 0.0234f;
+	const float Kp_YAW = 1.2f;   // was 1.2 and 0.02
+	const float Ki_YAW = 0.02f;
+#elif defined(ST_LSM9DS1)
+	//Madgwick's implementation of Mayhony's AHRS algorithm
+	#define twoKpDef  (2.0f * 0.75f)	//works with and without mag enabled
+	#define twoKiDef  (2.0f * 0.0025f)
+	//Implementation of Madgwick's IMU and AHRS algorithms
+	#define betaDef  0.055f
 	//Used for DCM filter
 	const float Kp_ROLLPITCH = 1.2f;  //was .3423
 	const float Ki_ROLLPITCH = 0.0234f;
@@ -269,6 +281,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #define FREEIMU_ID "Microduino IMU" 
 #elif defined(ST_LSM9DS0) || defined(LSM9DS0_MS5637)
   #define FREEIMU_ID "LSM9DS0 IMU"
+#elif defined(ST_LSM9DS1)
+  #define FREEIMU_ID "LSM9DS1 IMU"
 #elif defined(ADA_10_DOF)
   #define FREEIMU_ID "Adafruit 10 Dof"
 #elif defined(CurieIMU) || defined(CurieIMU_Mag)
@@ -301,7 +315,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define HAS_L3D20() (defined(Altimu10)|| defined(ADA_10_DOF))
 #define HAS_LSM303() (defined(Altimu10) || defined(ADA_10_DOF))
 #define HAS_LSM9DS0() (defined(ST_LSM9DS0) || defined(LSM9DS0_MS5637))
-
+#define HAS_LSM9DS1() (defined(ST_LSM9DS1))
 #define HAS_MS5611() (defined(MPU9250_5611) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v04) \
 					 || defined(APM_2_5) )
 #define HAS_BMP085() (defined(GY_88) || defined(GY_88) || defined(DFROBOT) || defined(Microduino) || defined(ADA_10_DOF))
@@ -320,7 +334,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 				   || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v035_BMP) \
 				   || defined(FREEIMU_v04) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183) \
 				   || defined(ARDUIMU_v3)  || defined(APM_2_5) || defined(Mario) || defined(Microduino) \
-				   || defined(ST_LSM9DS0) || defined(LSM9DS0_MS5637) || defined(ADA_10_DOF)  || defined(CurieIMU_Mag)) 
+				   || defined(ST_LSM9DS0) || defined(LSM9DS0_MS5637) || defined(ST_LSM9DS1) || defined(ADA_10_DOF) \
+				   || defined(CurieIMU_Mag)) 
 #define HAS_AXIS_ALIGNED() (defined(Altimu10) || defined(GY_88) || defined(GEN_MPU6050) \
 							|| defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) \
 							|| defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) \
@@ -390,7 +405,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #include "SFE_LSM9DS0.h"
   #include "iCompass.h"
   #define LSM9DS0_XM  0x1D // Would be 0x1E if SDO_XM is LOW
-  #define LSM9DS0_G   0x6B // Would be 0x6A if SDO_G is LOW
+  #define LSM9DS0_G   0x6A // Would be 0x6A if SDO_G is LOW
+#elif HAS_LSM9DS1()
+  #include "SparkFunLSM9DS1.h"
+  #include "iCompass.h"
+  #define LSM9DS1_XM  0x1E // Would be 0x1E if SDO_XM is LOW
+  #define LSM9DS1_G   0x6B // Would be 0x6A if SDO_G is LOW
 #elif HAS_CURIE()
   #include "CurieImu.h"
 #endif
@@ -462,9 +482,8 @@ class FreeIMU
   public:
     FreeIMU();
 	void init();
-    /*void init();
-	//void init0(bool fastmode);
-    //void init(bool fastmode); */
+	void init0(bool fastmode);
+    //void init(bool fastmode);
 	void RESET();
 	void RESET_Q();
 	
@@ -582,6 +601,9 @@ class FreeIMU
 	#elif HAS_LSM9DS0() 
 	  LSM9DS0 lsm;
 	  iCompass maghead;	
+	#elif HAS_LSM9DS1() 
+	  LSM9DS1 lsm;
+	  iCompass maghead;	  
 	#elif HAS_CURIE()
 	  CurieImuClass accgyro;
     #endif
@@ -629,7 +651,7 @@ class FreeIMU
 	#define gyroMeasError 3.14159265358979 * (.50f / 180.0f) 	// gyroscope measurement error in rad/s (shown as 5 deg/s)
 	#define gyroMeasDrift 3.14159265358979 * (0.02f / 180.0f) 	// gyroscope measurement error in rad/s/s (shown as 0.2f deg/s/s)
 
-	#if HAS_LSM9DS0()
+	#if HAS_LSM9DS0() || HAS_LSM9DS1
       #define gyroMeasError 3.14159265358979 * (0.15f / 180.0f) 	// gyroscope measurement error in rad/s (shown as 5 deg/s)
       #define gyroMeasDrift 3.14159265358979 * (0.02f/4.0f)	// gyroscope measurement error in rad/s/s (shown as 0.2f deg/s/s)
 	#endif
@@ -657,6 +679,9 @@ class FreeIMU
 		int sensor_order[9] = {1,0,2,4,3,5,7,6,8};
 		int sensor_sign[9] = {1,-1,1,1,-1,1,-1,1,1};
 	#elif defined(ST_LSM9DS0) || defined(LSM9DS0_MS5637)
+		int sensor_order[9] = {0,1,2,3,4,5,6,7,8};
+		int sensor_sign[9] = {1,1,1,1,1,1,1,1,-1};	
+	#elif defined(ST_LSM9DS1)
 		int sensor_order[9] = {0,1,2,3,4,5,6,7,8};
 		int sensor_sign[9] = {1,1,1,1,1,1,1,1,-1};	
 	#endif 	

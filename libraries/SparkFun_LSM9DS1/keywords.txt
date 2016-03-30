@@ -1,0 +1,144 @@
+#########################################################
+# Syntax Coloring Map for SparkFun LSM9DS1 9DOF Library #
+#########################################################
+# Class
+#########################################################
+
+SparkFunLSM9DS1	KEYWORD1
+LSM9DS1	KEYWORD1
+
+#########################################################
+# Methods and Functions
+#########################################################
+
+ax	KEYWORD2
+ay	KEYWORD2
+az	KEYWORD2
+gx	KEYWORD2
+gy	KEYWORD2
+gz	KEYWORD2
+mx	KEYWORD2
+my	KEYWORD2
+mz	KEYWORD2
+temperature	KEYWORD2
+gBias	KEYWORD2
+aBias	KEYWORD2
+mBias	KEYWORD2
+gBiasRaw	KEYWORD2
+aBiasRaw	KEYWORD2
+mBiasRaw	KEYWORD2
+begin	KEYWORD2
+calibrate	KEYWORD2
+calibrateMag	KEYWORD2
+magOffset	KEYWORD2
+accelAvailable	KEYWORD2
+gyroAvailable	KEYWORD2
+tempAvailable	KEYWORD2
+magAvailable	KEYWORD2
+readGyro	KEYWORD2
+readAccel	KEYWORD2
+readMag	KEYWORD2
+readTemp	KEYWORD2
+calcGyro	KEYWORD2
+calcAccel	KEYWORD2
+calcMag	KEYWORD2
+setGyroScale	KEYWORD2
+setAccelScale	KEYWORD2
+setMagScale	KEYWORD2
+setGyroODR	KEYWORD2
+setAccelODR	KEYWORD2
+setMagODR	KEYWORD2
+configInactivity	KEYWORD2
+configAccelInt	KEYWORD2
+configAccelThs	KEYWORD2
+configGyroInt	KEYWORD2
+configGyroThs	KEYWORD2
+configInt	KEYWORD2
+configMagInt	KEYWORD2
+getGyroIntSrc	KEYWORD2
+getAccelIntSrc	KEYWORD2
+getMagIntSrc	KEYWORD2
+getInactivity	KEYWORD2
+sleepGyro	KEYWORD2
+enableFIFO	KEYWORD2
+setFIFO	KEYWORD2
+getFIFOSamples	KEYWORD2
+device	KEYWORD2
+gyro	KEYWORD2
+accel	KEYWORD2
+mag	KEYWORD2
+temp	KEYWORD2
+enabled	KEYWORD2
+operatingMode	KEYWORD2
+scale	KEYWORD2
+sampleRate	KEYWORD2
+tempCompensationEnable	KEYWORD2
+XYPerformance	KEYWORD2
+ZPerformance	KEYWORD2
+lowPowerEnable	KEYWORD2
+enableX	KEYWORD2
+enableY	KEYWORD2
+enableZ	KEYWORD2
+bandwidth	KEYWORD2
+highResEnable	KEYWORD2
+highResBandwidth	KEYWORD2
+commInterface	KEYWORD2
+agAddress	KEYWORD2
+mAddress	KEYWORD2
+HPFEnable	KEYWORD2
+HPFCutoff	KEYWORD2
+flipX	KEYWORD2
+flipY	KEYWORD2
+flipZ	KEYWORD2
+orientation	KEYWORD2
+latchInterrupt	KEYWORD2
+settings	KEYWORD2
+
+#########################################################
+# Constants
+#########################################################
+
+X_AXIS	LITERAL2
+Y_AXIS	LITERAL1
+Z_AXIS	LITERAL1
+ALL_AXIS	LITERAL1
+LSM9DS1_AG_ADDR	LITERAL1
+LSM9DS1_M_ADDR	LITERAL1
+IMU_MODE_SPI	LITERAL1
+IMU_MODE_I2C	LITERAL1
+XG_INT1	LITERAL1
+XG_INT2	LITERAL1
+INT_DRDY_XL	LITERAL1
+INT_DRDY_G	LITERAL1
+INT1_BOOT	LITERAL1
+INT2_DRDY_TEMP	LITERAL1
+INT_FTH	LITERAL1
+INT_OVR	LITERAL1
+INT_FSS5	LITERAL1
+INT_IG_XL	LITERAL1
+INT1_IG_G	LITERAL1
+INT2_INACT	LITERAL1
+XLIE_XL	LITERAL1
+XHIE_XL	LITERAL1
+YLIE_XL	LITERAL1
+YHIE_XL	LITERAL1
+ZLIE_XL	LITERAL1
+ZHIE_XL	LITERAL1
+XLIE_G	LITERAL1
+XHIE_G	LITERAL1
+YLIE_G	LITERAL1
+YHIE_G	LITERAL1
+ZLIE_G	LITERAL1
+ZHIE_G	LITERAL1
+XIEN	LITERAL1
+YIEN	LITERAL1
+ZIEN	LITERAL1
+INT_ACTIVE_HIGH	LITERAL1
+INT_ACTIVE_LOW	LITERAL1
+INT_PUSH_PULL	LITERAL1
+INT_OPEN_DRAIN	LITERAL1
+FIFO_OFF	LITERAL1
+FIFO_THS	LITERAL1
+FIFO_CONT_TRIGGER	LITERAL1
+FIFO_OFF_TRIGGER	LITERAL1
+FIFO_CONT	LITERAL1

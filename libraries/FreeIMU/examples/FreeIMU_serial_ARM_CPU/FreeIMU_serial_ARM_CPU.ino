@@ -16,7 +16,8 @@
 #include <AK8975.h>
 #include <AK8963.h>
 #include <L3G.h>
-#include <SFE_LSM9DS0.h>
+#include <SparkFunLSM9DS1.h>  // Uncomment for LSM9DS1
+//#include <SFE_LSM9DS0.h>  // Uncomment for LSM9DS0 Chosse one or the othe ST IMUs
 #include <BaroSensor.h>
 //#include <AP_Baro_MS5611.h>  //Uncomment for APM2.5
 
@@ -172,7 +173,7 @@ void loop() {
           my3IMU.acc.readAccel(&raw_values[0], &raw_values[1], &raw_values[2]);
           my3IMU.gyro.readGyroRaw(&raw_values[3], &raw_values[4], &raw_values[5]);
           writeArr(raw_values, 6, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
-        #elif HAS_MPU9150()  || HAS_MPU9250() || HAS_LSM9DS0()
+        #elif HAS_MPU9150()  || HAS_MPU9250() || HAS_LSM9DS0() || HAS_LSM9DS1()
           my3IMU.getRawValues(raw_values);
           writeArr(raw_values, 9, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
         #elif HAS_MPU6050() || HAS_MPU6000()   // MPU6050
@@ -185,7 +186,7 @@ void loop() {
         #endif
         //writeArr(raw_values, 6, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
         
-        #if IS_9DOM() && (!HAS_MPU9150()  && !HAS_MPU9250() && !HAS_ALTIMU10() && !HAS_ADA_10_DOF() && !HAS_LSM9DS0())
+        #if IS_9DOM() && (!HAS_MPU9150()  && !HAS_MPU9250() && !HAS_ALTIMU10() && !HAS_ADA_10_DOF() && !HAS_LSM9DS0() && !HAS_LSM9DS1())
           my3IMU.magn.getValues(&raw_values[0], &raw_values[1], &raw_values[2]);
           writeArr(raw_values, 3, sizeof(int));
         #endif
@@ -235,6 +236,8 @@ void loop() {
            val_array[13] = ((float) my3IMU.DTemp) / 333.87 + 21.0;
         #elif HAS_LSM9DS0()
             val_array[13] = 21.0 + (float) my3IMU.DTemp/8.; //degrees C
+        #elif HAS_LSM9DS1()    
+            val_array[13] = ((float) my3IMU.DTemp/256. + 25.0); //degrees C
         #elif HAS_ITG3200()
            val_array[13] = my3IMU.rt;
         #endif
@@ -260,7 +263,9 @@ void loop() {
           smartDelay(20);
         #else
           Serial.print('\n');
-        #endif        
+        #endif  
+        //Add in for teensy and Arduino101
+        delay(10);
       }
     } 
     else if(cmd == 'a') {
@@ -298,6 +303,8 @@ void loop() {
            val_array[13] = ((float) my3IMU.DTemp) / 333.87 + 21.0;
         #elif HAS_LSM9DS0()
             val_array[13] = 21.0 + (float) my3IMU.DTemp/8.; //degrees C
+        #elif HAS_LSM9DS1()    
+            val_array[13] = ((float) my3IMU.DTemp/256. + 25.0); //degrees C
         #elif HAS_ITG3200()
            val_array[13] = my3IMU.rt;
         #endif

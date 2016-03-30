@@ -410,14 +410,14 @@ class SerialWorker(QThread):
           if word == 2:
             reading[i] = unpack('h', self.ser.read(2))[0]            
         self.ser.read(2) # consumes remaining '\r\n'
+        if reading[8] == 0:
+          reading[6] = 1
+          reading[7] = 1
+          reading[8] = 1      
         # prepare readings to store on file
         acc_readings_line = "%d %d %d\r\n" % (reading[0], reading[1], reading[2])
         self.acc_file.write(acc_readings_line)
         magn_readings_line = "%d %d %d\r\n" % (reading[6], reading[7], reading[8])
-        if reading[8] == 0:
-          reading[6] = 1
-          reading[7] = 1
-          reading[8] = 1
         self.magn_file.write(magn_readings_line)
       # every count times we pass some data to the GUI
       self.emit(SIGNAL("new_data(PyQt_PyObject)"), reading)

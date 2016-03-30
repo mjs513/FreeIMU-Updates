@@ -283,6 +283,9 @@ GNU General Public License for more details.
 ------- Add support for the Dadafruit 10-DOF IMU (L3GD20H / LSM303 / BMP180).
 ---------------------------------------------------------------------------
 02-01-16 Adding support for CurieIMU - BMI160
+----------------------------------------------------------------------------
+03-29-16 Added support for the LSM9DS1 IMU
+----------------------------------------------------------------------------
 
 */
 
@@ -408,6 +411,12 @@ FreeIMU::FreeIMU() {
     //lsm = LSM9DS0(MODE_I2C, LSM9DS0_G, LSM9DS0_XM);
     lsm = LSM9DS0(MODE_I2C, LSM9DS0_G, LSM9DS0_XM);
     maghead = iCompass(MAG_DEC, WINDOW_SIZE, SAMPLE_SIZE);
+  #elif HAS_LSM9DS1()
+    //lsm = LSM9DS1(MODE_I2C, LSM9DS0_G, LSM9DS0_XM);
+	lsm.settings.device.commInterface = IMU_MODE_I2C;
+	lsm.settings.device.mAddress = LSM9DS1_XM;
+	lsm.settings.device.agAddress = LSM9DS1_G;
+    maghead = iCompass(MAG_DEC, WINDOW_SIZE, SAMPLE_SIZE);	
   #elif HAS_CURIE()
       accgyro = CurieImuClass(); 
   #endif
@@ -494,7 +503,9 @@ void FreeIMU::init() {
     digitalWrite(40, HIGH);
     init(53, false);
   #elif HAS_LSM9DS0()
-    init0(true);	
+    init0(true);
+  #elif HAS_LSM9DS1()
+    init0(true);
   #elif HAS_ADA_10_DOF()
     init0(false);
   #elif HAS_CURIE()
@@ -507,7 +518,7 @@ void FreeIMU::init() {
 void FreeIMU::init(bool fastmode) {
   #if HAS_ITG3200()
     init(FIMU_ACC_ADDR, FIMU_ITG3200_DEF_ADDR, fastmode);
-  #elif HAS_ALTIMU10() || HAS_LSM9DS0() || HAS_ADA_10_DOF()
+  #elif HAS_ALTIMU10() || HAS_LSM9DS0() || HAS_ADA_10_DOF() || HAS_LSM9DS1()
     init0(fastmode);
   #elif HAS_APM25()
     //As per APM standard code, stop the barometer from holding the SPI bus
@@ -566,7 +577,7 @@ void FreeIMU::RESET_Q() {
 */
 #if HAS_ITG3200()
 	void FreeIMU::init(int acc_addr, int gyro_addr, bool fastmode) {
-#elif HAS_ALTIMU10() || HAS_LSM9DS0() || HAS_ADA_10_DOF() || HAS_CURIE()
+#elif HAS_ALTIMU10() || HAS_LSM9DS0() || HAS_ADA_10_DOF() || HAS_CURIE() || HAS_LSM9DS1()
 	void FreeIMU::init0(bool fastmode) {
 #else
 	void FreeIMU::init(int accgyro_addr, bool fastmode) {
@@ -714,6 +725,120 @@ void FreeIMU::RESET_Q() {
 	//Angular rate FS = ±500 dps, gyro_sensitivity =  17.50
 	//Angular rate FS = ±2000 dps, gyro_sensitivity =  70
 	gyro_sensitivity = 70.0f;
+  #endif
+  
+  #if HAS_LSM9DS1()
+	// Setup Gyro
+	// [enabled] turns the gyro on or off.
+	lsm.settings.gyro.enabled = true;  // Enable the gyro
+	
+	// [scale] sets the full-scale range of the gyroscope.
+	// scale can be set to either 245, 500, or 2000
+	lsm.settings.gyro.scale = 245; // Set scale to +/-245dps
+	
+	// [sampleRate] sets the output data rate (ODR) of the gyro
+	// sampleRate can be set between 1-6
+	// 1 = 14.9    4 = 238
+	// 2 = 59.5    5 = 476
+	// 3 = 119     6 = 952
+	lsm.settings.gyro.sampleRate = 3; // 59.5Hz ODR
+	
+	// [bandwidth] can set the cutoff frequency of the gyro.
+	// Allowed values: 0-3. Actual value of cutoff frequency
+	// depends on the sample rate. (Datasheet section 7.12)
+	lsm.settings.gyro.bandwidth = 0;
+	
+	// [HPFEnable] enables or disables the high-pass filter
+	lsm.settings.gyro.HPFEnable = true; // HPF disabled
+	
+	// [HPFCutoff] sets the HPF cutoff frequency (if enabled)
+	// Allowable values are 0-9. Value depends on ODR.
+	// (Datasheet section 7.14)
+	lsm.settings.gyro.HPFCutoff = 1; // HPF cutoff = 4Hz
+	
+	//Angular rate FS = ±245 dps, gyro_sensitivity = 8.75
+	//Angular rate FS = ±500 dps, gyro_sensitivity =  17.50
+	//Angular rate FS = ±2000 dps, gyro_sensitivity =  70
+	gyro_sensitivity = 70.0f;
+	
+	// Setup Accelerometer -----------------------------------
+	// [scale] sets the full-scale range of the accelerometer.
+	// accel scale can be 2, 4, 8, or 16
+	lsm.settings.accel.scale = 2; // Set accel scale to +/-8g.
+	
+	// [sampleRate] sets the output data rate (ODR) of the
+	// accelerometer. ONLY APPLICABLE WHEN THE GYROSCOPE IS
+	// DISABLED! Otherwise accel sample rate = gyro sample rate.
+	// accel sample rate can be 1-6
+	// 1 = 10 Hz    4 = 238 Hz
+	// 2 = 50 Hz    5 = 476 Hz
+	// 3 = 119 Hz   6 = 952 Hz
+	lsm.settings.accel.sampleRate = 3; // Set accel to 10Hz.
+	
+	// [bandwidth] sets the anti-aliasing filter bandwidth.
+	// Accel cutoff freqeuncy can be any value between -1 - 3. 
+	// -1 = bandwidth determined by sample rate
+	// 0 = 408 Hz   2 = 105 Hz
+	// 1 = 211 Hz   3 = 50 Hz
+	lsm.settings.accel.bandwidth = 0; // BW = 408Hz
+	
+	// [highResEnable] enables or disables high resolution 
+	// mode for the acclerometer.
+	lsm.settings.accel.highResEnable = false; // Disable HR
+	
+	// [highResBandwidth] sets the LP cutoff frequency of
+	// the accelerometer if it's in high-res mode.
+	// can be any value between 0-3
+	// LP cutoff is set to a factor of sample rate
+	// 0 = ODR/50    2 = ODR/9
+	// 1 = ODR/100   3 = ODR/400
+	lsm.settings.accel.highResBandwidth = 0;  
+	
+	// Setup Magnetometer ---------------------------------------
+	// [enabled] turns the magnetometer on or off.
+	lsm.settings.mag.enabled = true; // Enable magnetometer
+	
+	// [scale] sets the full-scale range of the magnetometer
+	// mag scale can be 4, 8, 12, or 16
+	lsm.settings.mag.scale = 4; // Set mag scale to +/-12 Gs
+	
+	// [sampleRate] sets the output data rate (ODR) of the
+	// magnetometer.
+	// mag data rate can be 0-7:
+	// 0 = 0.625 Hz  4 = 10 Hz
+	// 1 = 1.25 Hz   5 = 20 Hz
+	// 2 = 2.5 Hz    6 = 40 Hz
+	// 3 = 5 Hz      7 = 80 Hz
+	lsm.settings.mag.sampleRate = 7; // Set OD rate to 20Hz
+	
+	// [tempCompensationEnable] enables or disables 
+	// temperature compensation of the magnetometer.
+	lsm.settings.mag.tempCompensationEnable = false;
+	
+	// [XYPerformance] sets the x and y-axis performance of the
+	// magnetometer to either:
+	// 0 = Low power mode      2 = high performance
+	// 1 = medium performance  3 = ultra-high performance
+	lsm.settings.mag.XYPerformance = 3; // Ultra-high perform.
+	
+	// [ZPerformance] does the same thing, but only for the z
+	lsm.settings.mag.ZPerformance = 3; // Ultra-high perform.
+	
+	// [lowPowerEnable] enables or disables low power mode in
+	// the magnetometer.
+	lsm.settings.mag.lowPowerEnable = false;
+	
+	// [operatingMode] sets the operating mode of the
+	// magnetometer. operatingMode can be 0-2:
+	// 0 = continuous conversion
+	// 1 = single-conversion
+	// 2 = power down
+	lsm.settings.mag.operatingMode = 0; // Continuous mode
+	
+    // Use the begin() function to initialize the LSM9DS1 library.
+	// You can either call it with no parameters (the easy way):
+	uint16_t status = lsm.begin();
+	
   #endif
   
   #if HAS_CURIE()
@@ -1090,7 +1215,7 @@ void FreeIMU::getRawValues(int * raw_values) {
     raw_values[8] = compass.m.z;
   #endif	
 
-  #if HAS_LSM9DS0()
+  #if HAS_LSM9DS0() || HAS_LSM9DS1()
 	lsm.readAccel();
 	lsm.readGyro();
 	lsm.readMag();
@@ -1169,7 +1294,7 @@ void FreeIMU::getValues(float * values) {
 	values_cal[4] = (values_cal[4] - gyro_off_y) / gyro_sensitivity;
 	values_cal[5] = (values_cal[5] - gyro_off_z) / gyro_sensitivity;
 
-  #elif HAS_LSM9DS0()
+  #elif HAS_LSM9DS0() || HAS_LSM9DS1()
 	lsm.readAccel();
 	lsm.readGyro();
 	lsm.readMag();
@@ -1263,7 +1388,8 @@ void FreeIMU::getValues(float * values) {
     magn.getValues(&values_cal[6]);
   #endif
   
-  #if HAS_HMC5883L() || HAS_MPU9150() || HAS_MPU9250() || HAS_LSM303() || HAS_LSM9DS0()
+  #if HAS_HMC5883L() || HAS_MPU9150() || HAS_MPU9250() || HAS_LSM303() || HAS_LSM9DS0() \
+	  || HAS_LSM9DS1()
     // calibration
 	if(temp_corr_on == 1) {
 		values_cal[6] = (values_cal[6] - acgyro_corr[6] - magn_off_x) / magn_scale_x;

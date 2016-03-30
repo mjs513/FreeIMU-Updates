@@ -19,7 +19,8 @@
 #include <AK8975.h>
 #include <AK8963.h>
 #include <L3G.h>
-#include <SFE_LSM9DS0.h>
+#include <SparkFunLSM9DS1.h>  // Uncomment for LSM9DS1
+//#include <SFE_LSM9DS0.h>  // Uncomment for LSM9DS0 Chosse one or the othe ST IMUs
 #include <BaroSensor.h>
 //#include <AP_Baro_MS5611.h>  //Uncomment for APM2.5
 
@@ -205,7 +206,7 @@ void loop() {
           my3IMU.acc.readAccel(&raw_values[0], &raw_values[1], &raw_values[2]);
           my3IMU.gyro.readGyroRaw(&raw_values[3], &raw_values[4], &raw_values[5]);
           writeArr(raw_values, 6, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
-        #elif HAS_MPU9150()  || HAS_MPU9250() || HAS_LSM9DS0()
+        #elif HAS_MPU9150()  || HAS_MPU9250() || HAS_LSM9DS0() || HAS_LSM9DS1()
           my3IMU.getRawValues(raw_values);
           writeArr(raw_values, 9, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
         #elif HAS_MPU6050() || HAS_MPU6000()   // MPU6050
@@ -218,7 +219,7 @@ void loop() {
         #endif
         //writeArr(raw_values, 6, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
         
-        #if IS_9DOM() && (!HAS_MPU9150()  && !HAS_MPU9250() && !HAS_ALTIMU10() && !HAS_ADA_10_DOF() && !HAS_LSM9DS0())
+        #if IS_9DOM() && (!HAS_MPU9150()  && !HAS_MPU9250() && !HAS_ALTIMU10() && !HAS_ADA_10_DOF() && !HAS_LSM9DS0() && !HAS_LSM9DS1())
           my3IMU.magn.getValues(&raw_values[0], &raw_values[1], &raw_values[2]);
           writeArr(raw_values, 3, sizeof(int));
         #endif
@@ -260,6 +261,8 @@ void loop() {
            val_array[13] = ((float) my3IMU.DTemp) / 333.87 + 21.0;
         #elif HAS_LSM9DS0()
             val_array[13] = 21.0 + (float) my3IMU.DTemp/8.; //degrees C
+        #elif HAS_LSM9DS1()    
+            val_array[13] = ((float) my3IMU.DTemp/256. + 25.0); //degrees C
         #elif HAS_ITG3200()
            val_array[13] = my3IMU.rt;
         #endif
@@ -297,11 +300,75 @@ void loop() {
         #endif
 		
         #if HAS_telem
-	  sendPayload();
+		  sendPayload();
           Serial.print(Message);
         #endif
       }
-    }    
+    }
+    else if(cmd == 'a') {
+      float val_array[19] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+      uint8_t count = serial_busy_wait();
+      for(uint8_t i=0; i < count; i++) {
+        my3IMU.getQ(q, val);
+        val_array[15] = my3IMU.sampleFreq;
+        //my3IMU.getValues(val);        
+        val_array[7] = (val[3] * M_PI/180);
+        val_array[8] = (val[4] * M_PI/180);
+        val_array[9] = (val[5] * M_PI/180);
+        val_array[4] = (val[0]);
+        val_array[5] = (val[1]);
+        val_array[6] = (val[2]);
+        val_array[10] = (val[6]);
+        val_array[11] = (val[7]);
+        val_array[12] = (val[8]);
+        val_array[0] = kFilters[0].measureRSSI(q[0]);
+        val_array[1] = kFilters[1].measureRSSI(q[1]);
+        val_array[2] = kFilters[2].measureRSSI(q[2]);
+        val_array[3] = kFilters[3].measureRSSI(q[3]);
+        //val_array[15] = millis();
+        val_array[16] = val[9];
+        val_array[18] = val[11];
+                
+        #if HAS_PRESS() 
+           // with baro
+           val_array[17] = val[10];
+           val_array[13] = (my3IMU.getBaroTemperature());
+           val_array[14] = (my3IMU.getBaroPressure());
+        #elif HAS_MPU6050()
+           val_array[13] = (my3IMU.DTemp/340.) + 35.;
+        #elif HAS_MPU9150()  || HAS_MPU9250()
+           val_array[13] = ((float) my3IMU.DTemp) / 333.87 + 21.0;
+        #elif HAS_LSM9DS0()
+            val_array[13] = 21.0 + (float) my3IMU.DTemp/8.; //degrees C
+        #elif HAS_LSM9DS1()    
+            val_array[13] = ((float) my3IMU.DTemp/256. + 25.0); //degrees C
+        #elif HAS_ITG3200()
+           val_array[13] = my3IMU.rt;
+        #endif
+        serialPrintFloatArr(val_array, 19);
+        //Serial.print('\n');
+        
+        #if HAS_GPS
+          val_array[0] = (float) gps.hdop.value();
+          val_array[1] = (float) gps.hdop.isValid();
+          val_array[2] = (float) gps.location.lat();
+          val_array[3] = (float) gps.location.lng();
+          val_array[4] = (float) gps.location.isValid();
+          val_array[5] = (float) gps.altitude.meters();
+          val_array[6] = (float) gps.altitude.isValid();
+          val_array[7] = (float) gps.course.deg();
+          val_array[8] = (float) gps.course.isValid();
+          val_array[9] = (float) gps.speed.kmph();
+          val_array[10] = (float) gps.speed.isValid();
+          val_array[11] = (float) gps.charsProcessed();
+          serialPrintFloatArr(val_array,12);
+          Serial.print('\n');
+          smartDelay(20);
+        #else
+          Serial.print('\n');
+        #endif 
+       }
+     }    
   cmd1[0] = '\0';
 }
 
