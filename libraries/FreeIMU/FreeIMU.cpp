@@ -284,7 +284,7 @@ GNU General Public License for more details.
 ---------------------------------------------------------------------------
 02-01-16 Adding support for CurieIMU - BMI160
 ----------------------------------------------------------------------------
-03-29-16 Added support for the LSM9DS1 IMU
+03-29-16 Added support for the LSM9DS1 IMU with and without a co MS5611
 ----------------------------------------------------------------------------
 
 */

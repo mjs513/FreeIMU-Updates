@@ -51,7 +51,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define APM_2_5  //  APMM 2.5.2 (EBAY)
 //#define Microduino
 //#define ST_LSM9DS0  //Adafruit
-#define ST_LSM9DS1  // Tested on the Tindie version with a MS5611 
+//#define ST_LSM9DS1  // Tested on the Tindie version without support for a MS5611 
+#define ST_LSM9DS1_MS5611  // Tested on the Tindie version with support for a MS5611 
 //#define LSM9DS0_MS5637 //Note this includes the MS5637 pressure sensor  board
 //#define ADA_10_DOF
 //#define CurieIMU
@@ -151,7 +152,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	const float Ki_ROLLPITCH = 0.0234f;
 	const float Kp_YAW = 1.75f;   // was 1.2 and 0.02
 	const float Ki_YAW = 0.002f;
-#elif (defined(ST_LSM9DS0) || defined(LSM9DS0_MS5637) || defined(ST_LSM9DS1))
+#elif (defined(ST_LSM9DS0) || defined(LSM9DS0_MS5637))
 	//Madgwick's implementation of Mayhony's AHRS algorithm
 	#define twoKpDef  (2.0f * 1.75f)	//works with and without mag enabled
 	#define twoKiDef  (2.0f * 0.025f)
@@ -162,7 +163,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	const float Ki_ROLLPITCH = 0.0234f;
 	const float Kp_YAW = 1.2f;   // was 1.2 and 0.02
 	const float Ki_YAW = 0.02f;
-#elif defined(ST_LSM9DS1)
+#elif defined(ST_LSM9DS1) || defined(ST_LSM9DS1_MS5611)
 	//Madgwick's implementation of Mayhony's AHRS algorithm
 	#define twoKpDef  (2.0f * 0.75f)	//works with and without mag enabled
 	#define twoKiDef  (2.0f * 0.0025f)
@@ -281,7 +282,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #define FREEIMU_ID "Microduino IMU" 
 #elif defined(ST_LSM9DS0) || defined(LSM9DS0_MS5637)
   #define FREEIMU_ID "LSM9DS0 IMU"
-#elif defined(ST_LSM9DS1)
+#elif defined(ST_LSM9DS1) || defined(ST_LSM9DS1_MS5611)
   #define FREEIMU_ID "LSM9DS1 IMU"
 #elif defined(ADA_10_DOF)
   #define FREEIMU_ID "Adafruit 10 Dof"
@@ -315,9 +316,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define HAS_L3D20() (defined(Altimu10)|| defined(ADA_10_DOF))
 #define HAS_LSM303() (defined(Altimu10) || defined(ADA_10_DOF))
 #define HAS_LSM9DS0() (defined(ST_LSM9DS0) || defined(LSM9DS0_MS5637))
-#define HAS_LSM9DS1() (defined(ST_LSM9DS1))
+#define HAS_LSM9DS1() (defined(ST_LSM9DS1) || defined(ST_LSM9DS1_MS5611))
 #define HAS_MS5611() (defined(MPU9250_5611) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v04) \
-					 || defined(APM_2_5) )
+					 || defined(APM_2_5) || defined(ST_LSM9DS1_MS5611))
 #define HAS_BMP085() (defined(GY_88) || defined(GY_88) || defined(DFROBOT) || defined(Microduino) || defined(ADA_10_DOF))
 #define HAS_LPS() (defined(Altimu10))
 #define HAS_MPL3115A2() defined(Mario)
@@ -327,7 +328,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 					|| defined(FREEIMU_v035_BMP) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v04) \
 					|| defined(GY_87) ||defined(GY_88) || defined(DFROBOT) || defined(APM_2_5) \
 					|| defined(Mario) || defined(Microduino) || defined(LSM9DS0_MS5637) \
-					|| defined(ADA_10_DOF) ) 
+					|| defined(ADA_10_DOF) || defined(ST_LSM9DS1_MS5611) ) 
 #define IS_6DOM() (defined(SEN_10121) || defined(GEN_MPU6050) || defined(CurieIMU))
 #define IS_9DOM() (defined(GY_87) ||defined(GY_88) || defined(Altimu10) || defined(GEN_MPU9250) || defined(MPU9250_5611) \
 				   || defined(GEN_MPU9150) || defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) \
@@ -335,7 +336,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 				   || defined(FREEIMU_v04) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183) \
 				   || defined(ARDUIMU_v3)  || defined(APM_2_5) || defined(Mario) || defined(Microduino) \
 				   || defined(ST_LSM9DS0) || defined(LSM9DS0_MS5637) || defined(ST_LSM9DS1) || defined(ADA_10_DOF) \
-				   || defined(CurieIMU_Mag)) 
+				   || defined(CurieIMU_Mag) || defined(ST_LSM9DS1_MS5611)) 
 #define HAS_AXIS_ALIGNED() (defined(Altimu10) || defined(GY_88) || defined(GEN_MPU6050) \
 							|| defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) \
 							|| defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) \
@@ -681,7 +682,7 @@ class FreeIMU
 	#elif defined(ST_LSM9DS0) || defined(LSM9DS0_MS5637)
 		int sensor_order[9] = {0,1,2,3,4,5,6,7,8};
 		int sensor_sign[9] = {1,1,1,1,1,1,1,1,-1};	
-	#elif defined(ST_LSM9DS1)
+	#elif defined(ST_LSM9DS1) || defined(ST_LSM9DS1_MS5611)
 		int sensor_order[9] = {0,1,2,3,4,5,6,7,8};
 		int sensor_sign[9] = {1,1,1,1,1,1,1,1,-1};	
 	#endif 	
