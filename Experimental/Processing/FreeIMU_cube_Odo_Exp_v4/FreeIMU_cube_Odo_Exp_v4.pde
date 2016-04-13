@@ -58,7 +58,7 @@ Serial myPort;  // Create object from Serial class
 
 final String serialPort = "COM3"; // replace this with your serial port. On windows you will need something like "COM1".
 int BaudRate=57600;
-String File_Name = "IMU-9ds0.txt";
+String File_Name = "IMU-Cuire-MagDefTest.txt";
 int HAS_GPS = 0;
 
 //setting a 1D Kalman filter
@@ -455,7 +455,8 @@ void draw() {
          acc[0]+","+acc[1]+","+acc[2]+","+gyro[0]+","+gyro[1]+","+gyro[2]+","+
          magn[0]+","+magn[1]+","+magn[2] + "," + temp + "," +
          dyn_acc[0]+","+dyn_acc[1]+","+dyn_acc[2]+","+
-         dt+","+corr_heading+","+ypr[0]+","+ypr[1]+","+ypr[2]+","+Euler[0]+","+Euler[1]+","+Euler[2]+","+
+         dt+","+corr_heading+","+ypr[0]*rad2degs+","+ypr[1]*rad2degs+","+ ypr[2]*rad2degs +","
+         +Euler[0]*rad2degs+","+Euler[1]*rad2degs+","+Euler[2]*rad2degs+","+
          motionDetect+","+motionDetect_transition+","+fused_alt+","+q[0]+","+q[1]+","+q[2]+","+q[3]+","+
          positionX[0]+","+positionY[0]+","+positionZ[0]+", "+lat+", "+longt+", "+gpsalt);
   }

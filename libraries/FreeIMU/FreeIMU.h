@@ -51,8 +51,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define APM_2_5  //  APMM 2.5.2 (EBAY)
 //#define Microduino
 //#define ST_LSM9DS0  //Adafruit
-//#define ST_LSM9DS1  // Tested on the Tindie version without support for a MS5611 
-#define ST_LSM9DS1_MS5611  // Tested on the Tindie version with support for a MS5611 
+#define ST_LSM9DS1  // Tested on the Tindie version without support for a MS5611 
+//#define ST_LSM9DS1_MS5611  // Tested on the Tindie version with support for a MS5611 
 //#define LSM9DS0_MS5637 //Note this includes the MS5637 pressure sensor  board
 //#define ADA_10_DOF
 //#define CurieIMU
@@ -71,7 +71,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // Set filter type: 1 = Madgwick Gradient Descent, 0 - Madgwick implementation of Mahoney DCM
 // in Quaternion form, 3 = Madwick Original Paper AHRS, 4 - DCM Implementation
-#define MARG 0
+#define MARG 4
 
 // proportional gain governs rate of convergence to accelerometer/magnetometer
 // integral gain governs rate of convergence of gyroscope biases
@@ -165,10 +165,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	const float Ki_YAW = 0.02f;
 #elif defined(ST_LSM9DS1) || defined(ST_LSM9DS1_MS5611)
 	//Madgwick's implementation of Mayhony's AHRS algorithm
-	#define twoKpDef  (2.0f * 0.75f)	//works with and without mag enabled
-	#define twoKiDef  (2.0f * 0.0025f)
+	#define twoKpDef  (2.0f * 1.75f)	//works with and without mag enabled
+	#define twoKiDef  (2.0f * 0.025f)
 	//Implementation of Madgwick's IMU and AHRS algorithms
-	#define betaDef  0.055f
+	#define betaDef  0.15f
 	//Used for DCM filter
 	const float Kp_ROLLPITCH = 1.2f;  //was .3423
 	const float Ki_ROLLPITCH = 0.0234f;
@@ -684,7 +684,7 @@ class FreeIMU
 		int sensor_sign[9] = {1,1,1,1,1,1,1,1,-1};	
 	#elif defined(ST_LSM9DS1) || defined(ST_LSM9DS1_MS5611)
 		int sensor_order[9] = {0,1,2,3,4,5,6,7,8};
-		int sensor_sign[9] = {1,1,1,1,1,1,1,1,-1};	
+		int sensor_sign[9] = {1,1,1,1,1,1,-1,1,1};	
 	#endif 	
 
 	// --------------------------------------------------------------------

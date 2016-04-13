@@ -728,9 +728,23 @@ void FreeIMU::RESET_Q() {
   #endif
   
   #if HAS_LSM9DS1()
+    // [commInterface] determines whether we'll use I2C or SPI
+	// to communicate with the LSM9DS1.
+	// Use either IMU_MODE_I2C or IMU_MODE_SPI
+	lsm.settings.device.commInterface = IMU_MODE_I2C;
+	// [mAddress] sets the I2C address or SPI CS pin of the
+	// LSM9DS1's magnetometer.
+	lsm.settings.device.mAddress = 0x1E; // Use I2C addres 0x1E
+	// [agAddress] sets the I2C address or SPI CS pin of the
+	// LSM9DS1's accelerometer/gyroscope.
+	lsm.settings.device.agAddress = 0x6B; // I2C address 0x6B
+  
 	// Setup Gyro
 	// [enabled] turns the gyro on or off.
 	lsm.settings.gyro.enabled = true;  // Enable the gyro
+
+    // [lowPowerEnable] turns low-power mode on or off.
+    lsm.settings.gyro.lowPowerEnable = false; // LP mode off
 	
 	// [scale] sets the full-scale range of the gyroscope.
 	// scale can be set to either 245, 500, or 2000
@@ -741,15 +755,15 @@ void FreeIMU::RESET_Q() {
 	// 1 = 14.9    4 = 238
 	// 2 = 59.5    5 = 476
 	// 3 = 119     6 = 952
-	lsm.settings.gyro.sampleRate = 3; // 59.5Hz ODR
+	lsm.settings.gyro.sampleRate = 4; // 59.5Hz ODR
 	
 	// [bandwidth] can set the cutoff frequency of the gyro.
 	// Allowed values: 0-3. Actual value of cutoff frequency
 	// depends on the sample rate. (Datasheet section 7.12)
-	lsm.settings.gyro.bandwidth = 0;
+	lsm.settings.gyro.bandwidth = 1;
 	
 	// [HPFEnable] enables or disables the high-pass filter
-	lsm.settings.gyro.HPFEnable = true; // HPF disabled
+	lsm.settings.gyro.HPFEnable = false; // HPF disabled
 	
 	// [HPFCutoff] sets the HPF cutoff frequency (if enabled)
 	// Allowable values are 0-9. Value depends on ODR.
@@ -759,7 +773,7 @@ void FreeIMU::RESET_Q() {
 	//Angular rate FS = ±245 dps, gyro_sensitivity = 8.75
 	//Angular rate FS = ±500 dps, gyro_sensitivity =  17.50
 	//Angular rate FS = ±2000 dps, gyro_sensitivity =  70
-	gyro_sensitivity = 70.0f;
+	gyro_sensitivity = 8.75f;
 	
 	// Setup Accelerometer -----------------------------------
 	// [scale] sets the full-scale range of the accelerometer.
@@ -773,14 +787,14 @@ void FreeIMU::RESET_Q() {
 	// 1 = 10 Hz    4 = 238 Hz
 	// 2 = 50 Hz    5 = 476 Hz
 	// 3 = 119 Hz   6 = 952 Hz
-	lsm.settings.accel.sampleRate = 3; // Set accel to 10Hz.
+	lsm.settings.accel.sampleRate = 4; // Set accel to 10Hz.
 	
 	// [bandwidth] sets the anti-aliasing filter bandwidth.
 	// Accel cutoff freqeuncy can be any value between -1 - 3. 
 	// -1 = bandwidth determined by sample rate
 	// 0 = 408 Hz   2 = 105 Hz
 	// 1 = 211 Hz   3 = 50 Hz
-	lsm.settings.accel.bandwidth = 0; // BW = 408Hz
+	lsm.settings.accel.bandwidth = 3; // BW = 408Hz
 	
 	// [highResEnable] enables or disables high resolution 
 	// mode for the acclerometer.
@@ -809,7 +823,7 @@ void FreeIMU::RESET_Q() {
 	// 1 = 1.25 Hz   5 = 20 Hz
 	// 2 = 2.5 Hz    6 = 40 Hz
 	// 3 = 5 Hz      7 = 80 Hz
-	lsm.settings.mag.sampleRate = 7; // Set OD rate to 20Hz
+	lsm.settings.mag.sampleRate = 4; // Set OD rate to 20Hz
 	
 	// [tempCompensationEnable] enables or disables 
 	// temperature compensation of the magnetometer.
@@ -819,10 +833,10 @@ void FreeIMU::RESET_Q() {
 	// magnetometer to either:
 	// 0 = Low power mode      2 = high performance
 	// 1 = medium performance  3 = ultra-high performance
-	lsm.settings.mag.XYPerformance = 3; // Ultra-high perform.
+	lsm.settings.mag.XYPerformance = 2; // Ultra-high perform.
 	
 	// [ZPerformance] does the same thing, but only for the z
-	lsm.settings.mag.ZPerformance = 3; // Ultra-high perform.
+	lsm.settings.mag.ZPerformance = 2; // Ultra-high perform.
 	
 	// [lowPowerEnable] enables or disables low power mode in
 	// the magnetometer.
@@ -1154,10 +1168,10 @@ void FreeIMU::getRawValues(int * raw_values) {
 	//Set raw values for Magnetometer, Press, Temp to 0 in case you are only using
 	//an accelerometer and gyro
 	//raw_values[9] will be set to MPU-6050 temp, see zeroGyro to change raw_values dimension
-	raw_values[6] = 0;
-	raw_values[7] = 0;
-	raw_values[8] = 0;
-	raw_values[9] = 0;
+	//raw_values[6] = 0;
+	//raw_values[7] = 0;
+	//raw_values[8] = 0;
+	//raw_values[9] = 0;
 	
   #if HAS_ITG3200()
     acc.readAccel(&raw_values[0], &raw_values[1], &raw_values[2]);
@@ -1217,20 +1231,29 @@ void FreeIMU::getRawValues(int * raw_values) {
 
   #if HAS_LSM9DS0() || HAS_LSM9DS1()
 	lsm.readAccel();
-	lsm.readGyro();
-	lsm.readMag();
-    raw_values[0] = lsm.ax;
-    raw_values[1] = lsm.ay;
-    raw_values[2] = lsm.az;
-    raw_values[6] = lsm.mx;
-    raw_values[7] = lsm.my;
-    raw_values[8] = lsm.mz;
-    raw_values[3] = lsm.gx;
-    raw_values[4] = lsm.gy;
-    raw_values[5] = lsm.gz;	
-	lsm.readTemp();
-	DTemp = lsm.temperature;
-	raw_values[9] = DTemp;
+  
+	if(lsm.gyroAvailable()){ 
+		lsm.readGyro(); 
+		raw_values[3] = lsm.gx;
+		raw_values[4] = lsm.gy;
+		raw_values[5] = lsm.gz;
+		}
+	if(lsm.accelAvailable()){ 	
+		raw_values[0] = lsm.ax;
+		raw_values[1] = lsm.ay;
+		raw_values[2] = lsm.az;
+	}
+	if(lsm.accelAvailable()){ 		
+		lsm.readMag();
+		raw_values[6] = lsm.mx;
+		raw_values[7] = lsm.my;
+		raw_values[8] = lsm.mz;
+	}
+	if(lsm.tempAvailable()){ 	
+		lsm.readTemp();
+		DTemp = lsm.temperature;
+		raw_values[9] = DTemp;
+	}
   #endif
 }
 
@@ -1565,7 +1588,7 @@ void FreeIMU::getQ(float * q, float * val) {
 		#if MARG == 0
 			AHRSupdateIMU(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2]);
 		#elif MARG == 1
-			MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], 0, 0, 0);
+			MadgwickAHRSupdateIMU(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2]);
 		#else
 			MARGUpdateFilterIMU(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2]);
 		#endif
