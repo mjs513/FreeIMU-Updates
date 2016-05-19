@@ -409,6 +409,8 @@ FreeIMU::FreeIMU() {
     maghead = iCompass(MAG_DEC, WINDOW_SIZE, SAMPLE_SIZE);
   #elif HAS_LSM9DS0()
     //lsm = LSM9DS0(MODE_I2C, LSM9DS0_G, LSM9DS0_XM);
+	#define LSM9DS0_XM  0x1D // Would be 0x1E if SDO_XM is LOW
+	#define LSM9DS0_G   0x6B // Would be 0x6A if SDO_G is LOW
     lsm = LSM9DS0(MODE_I2C, LSM9DS0_G, LSM9DS0_XM);
     maghead = iCompass(MAG_DEC, WINDOW_SIZE, SAMPLE_SIZE);
   #elif HAS_LSM9DS1()
@@ -418,7 +420,10 @@ FreeIMU::FreeIMU() {
 	lsm.settings.device.agAddress = LSM9DS1_G;
     maghead = iCompass(MAG_DEC, WINDOW_SIZE, SAMPLE_SIZE);	
   #elif HAS_CURIE()
-      accgyro = CurieImuClass(); 
+    accgyro = CurieImuClass(); 
+  #elif HAS_TPS()
+	amgData = PSMotionSense();
+    maghead = iCompass(MAG_DEC, WINDOW_SIZE, SAMPLE_SIZE);	
   #endif
     
   #if HAS_PRESS()
@@ -429,15 +434,15 @@ FreeIMU::FreeIMU() {
 	    #else
 		    baro = MS561101BA();
 	    #endif
-      #elif HAS_BMP085()
+    #elif HAS_BMP085()
         baro085 = BMP085();
-      #elif HAS_LPS()
+    #elif HAS_LPS()
         baroLPS = LPS();
-      #elif HAS_MPL3115A2()
+    #elif HAS_MPL3115A2()
         baro3115 = MPL3115A2();
-	  #elif HAS_MS5637()
+	#elif HAS_MS5637()
 	    baro5637 = BaroSensorClass();
-      #endif
+    #endif
   #endif
   
   // initialize quaternion
@@ -510,6 +515,8 @@ void FreeIMU::init() {
     init0(false);
   #elif HAS_CURIE()
 	init0(false);
+  #elif HAS_TPS()
+	init0(true);
   #else
     init(FIMU_ACCGYRO_ADDR, false);
   #endif
@@ -527,6 +534,8 @@ void FreeIMU::init(bool fastmode) {
     init(53, fastmode);
   #elif HAS_CURIE()
     init0(fastmode);
+  #elif HAS_TPS()
+	init0(fastmode);
   #else
     init(FIMU_ACCGYRO_ADDR, fastmode);
   #endif
@@ -577,7 +586,8 @@ void FreeIMU::RESET_Q() {
 */
 #if HAS_ITG3200()
 	void FreeIMU::init(int acc_addr, int gyro_addr, bool fastmode) {
-#elif HAS_ALTIMU10() || HAS_LSM9DS0() || HAS_ADA_10_DOF() || HAS_CURIE() || HAS_LSM9DS1()
+#elif HAS_ALTIMU10() || HAS_LSM9DS0() || HAS_ADA_10_DOF() || HAS_CURIE() || HAS_LSM9DS1() \
+	|| HAS_TPS()
 	void FreeIMU::init0(bool fastmode) {
 #else
 	void FreeIMU::init(int accgyro_addr, bool fastmode) {
@@ -852,7 +862,6 @@ void FreeIMU::RESET_Q() {
     // Use the begin() function to initialize the LSM9DS1 library.
 	// You can either call it with no parameters (the easy way):
 	uint16_t status = lsm.begin();
-	
   #endif
   
   #if HAS_CURIE()
@@ -960,6 +969,20 @@ void FreeIMU::RESET_Q() {
 	* | +/- 2000 degrees/s | 16.4 LSB/deg/s // use 20.5
 	*/
 	gyro_sensitivity = 20.5f;
+	delay(100);
+  #endif
+  
+  #if HAS_TPS()
+	amgData.begin();
+	/*
+	* | Full Scale Range   | LSB Sensitivity
+	* +--------------------+----------------
+	* | +/- 250 degrees/s  | 7.8125 LSB/deg/s
+	* | +/- 500 degrees/s  | 15.625 LSB/deg/s
+	* | +/- 1000 degrees/s | 31.25 LSB/deg/s
+	* | +/- 2000 degrees/s | 62.5 LSB/deg/s // use 20.5
+	*/
+	gyro_sensitivity = 62.5f;
 	delay(100);
   #endif
   
@@ -1229,7 +1252,7 @@ void FreeIMU::getRawValues(int * raw_values) {
     raw_values[8] = compass.m.z;
   #endif	
 
-  #if HAS_LSM9DS0() || HAS_LSM9DS1()
+  #if HAS_LSM9DS1()
 	lsm.readAccel();
   
 	if(lsm.gyroAvailable()){ 
@@ -1255,6 +1278,43 @@ void FreeIMU::getRawValues(int * raw_values) {
 		raw_values[9] = DTemp;
 	}
   #endif
+	
+  #if HAS_LSM9DS0() 
+
+	lsm.readGyro(); 
+	raw_values[3] = lsm.gx;
+	raw_values[4] = lsm.gy;
+	raw_values[5] = lsm.gz;
+	
+	lsm.readAccel();
+	raw_values[0] = lsm.ax;
+	raw_values[1] = lsm.ay;
+	raw_values[2] = lsm.az;
+	
+	lsm.readMag();
+	raw_values[6] = lsm.mx;
+	raw_values[7] = lsm.my;
+	raw_values[8] = lsm.mz;
+	
+	lsm.readTemp();
+	DTemp = lsm.temperature;
+	raw_values[9] = DTemp;
+  #endif
+  
+  #if HAS_TPS()
+	int iax, iay, iaz, igx, igy, igz, imx, imy, imz;
+	amgData.readMotionSensor(iax, iay, iaz, igx, igy, igz, imx, imy, imz);
+    raw_values[0] = iax;
+    raw_values[1] = iay;
+    raw_values[2] = iaz;
+	raw_values[3] = igx;
+	raw_values[4] = igy;
+	raw_values[5] = igz;
+    raw_values[6] = imx;
+    raw_values[7] = imy;
+    raw_values[8] = imz;
+  #endif
+		
 }
 
 
@@ -1337,6 +1397,21 @@ void FreeIMU::getValues(float * values) {
   
   	lsm.readTemp();
   	DTemp = lsm.temperature;
+  #elif HAS_TPS()
+	int iax, iay, iaz, igx, igy, igz, imx, imy, imz;
+	amgData.readMotionSensor(iax, iay, iaz, igx, igy, igz, imx, imy, imz);
+	
+    values_cal[0] = (float) iax;
+    values_cal[1] = (float) iay;
+    values_cal[2] = (float) iaz;
+	values_cal[3] = ((float) igx - gyro_off_x)/ gyro_sensitivity;
+	values_cal[4] = ((float) igy - gyro_off_y)/ gyro_sensitivity;
+	values_cal[5] = ((float) igz - gyro_off_z)/ gyro_sensitivity;
+    values_cal[6] = (float) imx;
+    values_cal[7] = (float) imy;
+    values_cal[8] = (float) imz;
+	
+	DTemp = 9999;
   #else  // MPU6050 or other 6dof
     int16_t accgyroval[9];
 	#if HAS_MPU9150() || HAS_MPU9250()
@@ -1399,7 +1474,6 @@ void FreeIMU::getValues(float * values) {
 	  }
     }	
   #endif
-
   
   #warning Accelerometer calibration active: have you calibrated your device?
   // remove offsets and scale accelerometer (calibration)
@@ -1412,7 +1486,7 @@ void FreeIMU::getValues(float * values) {
   #endif
   
   #if HAS_HMC5883L() || HAS_MPU9150() || HAS_MPU9250() || HAS_LSM303() || HAS_LSM9DS0() \
-	  || HAS_LSM9DS1()
+	  || HAS_LSM9DS1() || HAS_TPS()
     // calibration
 	if(temp_corr_on == 1) {
 		values_cal[6] = (values_cal[6] - acgyro_corr[6] - magn_off_x) / magn_scale_x;
@@ -1448,7 +1522,7 @@ void FreeIMU::zeroGyro() {
 		gyro.readGyro(&values[3]);
 		tmpOffsets[0] += values[3];
 		tmpOffsets[1] += values[4];
-		tmpOffsets[2] += values[5];		
+		tmpOffsets[2] += values[5];	
 	#else
 		getRawValues(raw);
 		tmpOffsets[0] += raw[3];
@@ -1489,7 +1563,7 @@ void FreeIMU::initGyros() {
 	
     // we try to get a good calibration estimate for up to 10 seconds
     // if the gyros are stable, we should get it in 1 second
-	for (int16_t j = 0; j <= 30 && num_converged < num_gyros; j++) {
+	for (int16_t j = 0; j <= 50 && num_converged < num_gyros; j++) {
 		Vector3f gyro_sum[INS_MAX_INSTANCES], gyro_avg[INS_MAX_INSTANCES], gyro_diff[INS_MAX_INSTANCES];
 		float diff_norm[INS_MAX_INSTANCES];
 		float ToRad = 0.05f * M_PI/180.0f;
@@ -1507,11 +1581,11 @@ void FreeIMU::initGyros() {
             if (converged[k]) continue;
             if (j == 0) {
                 best_diff[k] = diff_norm[k];
-                best_avg[k] = gyro_avg[k];
+                best_avg[k] = gyro_avg[k];				
             } else if (gyro_diff[k].length() < ToRad) {
                 // we want the average to be within 0.1 bit, which is 0.04 degrees/s
                 last_average[k] = (gyro_avg[k] * 0.5f) + (last_average[k] * 0.5f);
-                gyro_offset[k] = last_average[k];            
+                gyro_offset[k] = last_average[k];
                 converged[k] = true;
                 num_converged++;
             } else if (diff_norm[k] < best_diff[k]) {
@@ -1521,7 +1595,7 @@ void FreeIMU::initGyros() {
             last_average[k] = gyro_avg[k];
         }
     }
-	
+
 	delay(5);
 	
 	if (num_converged == num_gyros) {
@@ -1530,6 +1604,7 @@ void FreeIMU::initGyros() {
 		gyro_off_y = gyro_offset[0].y;
 		gyro_off_z = gyro_offset[0].z;
 		////digitalWrite(12,LOW);
+
 		return;
 	}
 
@@ -1544,6 +1619,7 @@ void FreeIMU::initGyros() {
 	gyro_off_x = gyro_offset[0].x;
 	gyro_off_y = gyro_offset[0].y;
 	gyro_off_z = gyro_offset[0].z;
+	
 	
 	//digitalWrite(12,LOW);
 

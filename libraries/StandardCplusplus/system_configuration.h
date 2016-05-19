@@ -6,13 +6,12 @@
  */
 #define __UCLIBCXX_MAJOR__ 0
 #define __UCLIBCXX_MINOR__ 2
-#define __UCLIBCXX_SUBLEVEL__ 5-git
+#define __UCLIBCXX_SUBLEVEL__ 3
 
 /*
  * Target Features and Options
  */
-#define __UCLIBCXX_HAS_FLOATS__ 1
-#undef __UCLIBCXX_HAS_LONG_DOUBLE__
+#define __UCLIBCXX_HAS_FLOATS__
 #undef __UCLIBCXX_HAS_TLS__
 #define __WARNINGS__ "-Wall"
 #define __BUILD_EXTRA_LIBRARIES__ ""
@@ -25,15 +24,13 @@
 #define __UCLIBCXX_IOSTREAM_BUFSIZE__ 32
 #undef __UCLIBCXX_HAS_LFS__
 #undef __UCLIBCXX_SUPPORT_CDIR__
-#define __UCLIBCXX_SUPPORT_CIN__ 1
-#define __UCLIBCXX_SUPPORT_COUT__ 1
-#define __UCLIBCXX_SUPPORT_CERR__ 1
-#undef __UCLIBCXX_SUPPORT_CLOG__
-
+#define __UCLIBCXX_SUPPORT_COUT__
+#define __UCLIBCXX_SUPPORT_CERR__
 /*
  * STL and Code Expansion
  */
-#define __UCLIBCXX_STL_BUFFER_SIZE__ 32
+//#define __UCLIBCXX_STL_BUFFER_SIZE__ 32
+#define __UCLIBCXX_STL_BUFFER_SIZE__ 8
 #undef __UCLIBCXX_CODE_EXPANSION__
 
 /*

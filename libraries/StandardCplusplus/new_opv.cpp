@@ -17,13 +17,13 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-
-#if ARDUINO < 104 
-
 #include <new>
 #include <cstdlib>
 #include <func_exception>
 
+
+// Arduino now defines this
+#if 0
 _UCXXEXPORT void* operator new[](std::size_t numBytes) throw(std::bad_alloc){
 	//C++ stardard 5.3.4.8 requires that a valid pointer be returned for
 	//a call to new(0). Thus:
@@ -36,5 +36,4 @@ _UCXXEXPORT void* operator new[](std::size_t numBytes) throw(std::bad_alloc){
 	}
 	return p;
 }
-
 #endif

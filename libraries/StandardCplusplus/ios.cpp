@@ -61,6 +61,8 @@ namespace std{
 	_UCXXEXPORT wfilebuf _wclog_filebuf;
 #endif
 
+
+
 //Then create streams
 #ifdef __UCLIBCXX_SUPPORT_COUT__
 	_UCXXEXPORT ostream cout(&_cout_filebuf);
@@ -104,7 +106,7 @@ namespace std{
 	_UCXXEXPORT ios_base::Init::Init(){
 		if(init_cnt == 0){	//Need to construct cout et al
 
-#ifndef __AVR__
+#ifndef ARDUINO
 
 #ifdef __UCLIBCXX_SUPPORT_COUT__
 			_cout_filebuf.fp = stdout;
@@ -149,7 +151,7 @@ namespace std{
 			wcin.tie(&wcout);
 #endif
 
-#endif // not __AVR__
+#endif // not Arduino
 
 #endif // not CDIR 
 		}
