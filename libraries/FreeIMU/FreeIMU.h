@@ -51,12 +51,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define APM_2_5  //  APMM 2.5.2 (EBAY)
 //#define Microduino
 //#define ST_LSM9DS0  //Adafruit
-#define ST_LSM9DS1  // Tested on the Tindie version without support for a MS5611 
+//#define ST_LSM9DS1  // Tested on the Tindie version without support for a MS5611 
 //#define ST_LSM9DS1_MS5611  // Tested on the Tindie version with support for a MS5611 
 //#define LSM9DS0_MS5637 //Note this includes the MS5637 pressure sensor  board
 //#define ADA_10_DOF
-//#define CurieIMU
+#define CurieIMU
 //#define CurieIMU_Mag
+//#define PropShield
 
 //#define DISABLE_MAGN // Uncomment this line to disable the magnetometer in the sensor fusion algorithm
 
@@ -71,7 +72,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // Set filter type: 1 = Madgwick Gradient Descent, 0 - Madgwick implementation of Mahoney DCM
 // in Quaternion form, 3 = Madwick Original Paper AHRS, 4 - DCM Implementation
-#define MARG 4
+#define MARG 1
 
 // proportional gain governs rate of convergence to accelerometer/magnetometer
 // integral gain governs rate of convergence of gyroscope biases
@@ -128,7 +129,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #elif defined(GEN_MPU9250) || defined(MPU9250_5611)
 	#define twoKpDef  (2.0f * 1.75f) // was 0.95
 	#define twoKiDef  (2.0f * 0.05f) // was 0.05	
-	#define betaDef	  0.015f
+	#define betaDef	  0.515f
 	//Used for DCM filter
 	const float Kp_ROLLPITCH = 1.2f;  //was .3423
 	const float Ki_ROLLPITCH = 0.0234f;
@@ -153,10 +154,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	const float Kp_YAW = 1.75f;   // was 1.2 and 0.02
 	const float Ki_YAW = 0.002f;
 #elif (defined(ST_LSM9DS0) || defined(LSM9DS0_MS5637))
-	//Madgwick's implementation of Mayhony's AHRS algorithm
+	//Madgwick's implementation of Mayhony's AHRS algorithm (option 0)
 	#define twoKpDef  (2.0f * 1.75f)	//works with and without mag enabled
 	#define twoKiDef  (2.0f * 0.025f)
-	//Implementation of Madgwick's IMU and AHRS algorithms
+	//Implementation of Madgwick's IMU and AHRS algorithms (option 1)
 	#define betaDef  0.15f
 	//Used for DCM filter
 	const float Kp_ROLLPITCH = 1.2f;  //was .3423
@@ -178,6 +179,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	#define twoKpDef  (2.0f * 1.25f)
 	#define twoKiDef  (2.0f * 0.1f)
 	#define betaDef	  0.07f
+	//Used for DCM filter
+	const float Kp_ROLLPITCH = 1.2f;  //was .3423
+	const float Ki_ROLLPITCH = 0.0234f;
+	const float Kp_YAW = 1.75f;   // was 1.2 and 0.02
+	const float Ki_YAW = 0.002f;
+#elif defined(PropShield)
+	#define twoKpDef  (2.0f * 3.25f) // was 0.95
+	#define twoKiDef  (2.0f * 0.25) // was 0.05	
+	#define betaDef	  0.10
 	//Used for DCM filter
 	const float Kp_ROLLPITCH = 1.2f;  //was .3423
 	const float Ki_ROLLPITCH = 0.0234f;
@@ -227,7 +237,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #elif F_CPU == 84000000L
   #define FREEIMU_FREQ "84 MHz"  
 #elif F_CPU == 96000000L
-  #define FREEIMU_FREQ "96 MHz"  
+  #define FREEIMU_FREQ "96 MHz"
 #else
   #define FREEIMU_FREQ "Not Defined"  
 #endif
@@ -288,9 +298,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #define FREEIMU_ID "Adafruit 10 Dof"
 #elif defined(CurieIMU) || defined(CurieIMU_Mag)
   #define FREEIMU_ID "CurieIMU"
+#elif defined(PropShield)
+  #define FREEIMU_ID "PropShield"
 #endif
 
 // define imu sensors
+#define HAS_TPS() (defined(PropShield))
 #define HAS_ITG3200() (defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) \
 					  || defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) \
 					  || defined(FREEIMU_v035_BMP) || defined(SEN_10121) || defined(SEN_10736) \
@@ -309,6 +322,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 					   || defined(FREEIMU_v035_BMP) || defined(FREEIMU_v04) || defined(SEN_10736) \
 					   || defined(SEN_10724) || defined(SEN_10183) || defined(ARDUIMU_v3) \
 					   || defined(APM_2_5) || defined(Microduino)  || defined(CurieIMU_Mag))
+#define HAS_FXAS21002_G  defined(PropShield)  //nxp gyro
+#define HAS_FXOS8700_AM   defined(PropShield)  //nxp accelerometer/magnetometer
 #define HAS_MPU6000() (defined(ARDUIMU_v3) || defined(APM_2_5))
 #define HAS_APM25()	(defined(APM_2_5))
 #define HAS_ALTIMU10() (defined(Altimu10)) 
@@ -321,14 +336,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 					 || defined(APM_2_5) || defined(ST_LSM9DS1_MS5611))
 #define HAS_BMP085() (defined(GY_88) || defined(GY_88) || defined(DFROBOT) || defined(Microduino) || defined(ADA_10_DOF))
 #define HAS_LPS() (defined(Altimu10))
-#define HAS_MPL3115A2() defined(Mario)
+#define HAS_MPL3115A2() (defined(Mario) || defined(PropShield))
 #define HAS_MS5637() (defined(LSM9DS0_MS5637))
 #define HAS_PRESS() (defined(Altimu10) || defined(MPU9250_5611) || defined(FREEIMU_v035_MS) \
 					|| defined(FREEIMU_v04) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) \
 					|| defined(FREEIMU_v035_BMP) || defined(FREEIMU_v035_MS) || defined(FREEIMU_v04) \
 					|| defined(GY_87) ||defined(GY_88) || defined(DFROBOT) || defined(APM_2_5) \
 					|| defined(Mario) || defined(Microduino) || defined(LSM9DS0_MS5637) \
-					|| defined(ADA_10_DOF) || defined(ST_LSM9DS1_MS5611) ) 
+					|| defined(ADA_10_DOF) || defined(ST_LSM9DS1_MS5611) || defined(PropShield)) 
 #define IS_6DOM() (defined(SEN_10121) || defined(GEN_MPU6050) || defined(CurieIMU))
 #define IS_9DOM() (defined(GY_87) ||defined(GY_88) || defined(Altimu10) || defined(GEN_MPU9250) || defined(MPU9250_5611) \
 				   || defined(GEN_MPU9150) || defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) \
@@ -336,7 +351,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 				   || defined(FREEIMU_v04) || defined(SEN_10736) || defined(SEN_10724) || defined(SEN_10183) \
 				   || defined(ARDUIMU_v3)  || defined(APM_2_5) || defined(Mario) || defined(Microduino) \
 				   || defined(ST_LSM9DS0) || defined(LSM9DS0_MS5637) || defined(ST_LSM9DS1) || defined(ADA_10_DOF) \
-				   || defined(CurieIMU_Mag) || defined(ST_LSM9DS1_MS5611)) 
+				   || defined(CurieIMU_Mag) || defined(ST_LSM9DS1_MS5611) || defined(PropShield)) 
 #define HAS_AXIS_ALIGNED() (defined(Altimu10) || defined(GY_88) || defined(GEN_MPU6050) \
 							|| defined(DFROBOT) || defined(FREEIMU_v01) || defined(FREEIMU_v02) \
 							|| defined(FREEIMU_v03) || defined(FREEIMU_v035) || defined(FREEIMU_v035_MS) \
@@ -414,6 +429,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #define LSM9DS1_G   0x6B // Would be 0x6A if SDO_G is LOW
 #elif HAS_CURIE()
   #include "CurieImu.h"
+#elif HAS_TPS()
+  #include "PSMotionSense.h"
+  #include "iCompass.h"
 #endif
 
 //Magnetometer and Accelerometer combo, made this standalone
@@ -483,7 +501,7 @@ class FreeIMU
   public:
     FreeIMU();
 	void init();
-	void init0(bool fastmode);
+	//void init0(bool fastmode);
     //void init(bool fastmode);
 	void RESET();
 	void RESET_Q();
@@ -495,6 +513,9 @@ class FreeIMU
 		void init(bool fastmode);
 		void init0(bool fastmode);
 	#elif HAS_CURIE()
+		void init(bool fastmode);
+		void init0(bool fastmode);
+	#elif HAS_TPS()
 		void init(bool fastmode);
 		void init0(bool fastmode);
 	#else
@@ -607,6 +628,9 @@ class FreeIMU
 	  iCompass maghead;	  
 	#elif HAS_CURIE()
 	  CurieImuClass accgyro;
+	#elif HAS_TPS()
+	  PSMotionSense amgData;
+	  iCompass maghead;
     #endif
       
     #if HAS_PRESS()
@@ -685,6 +709,9 @@ class FreeIMU
 	#elif defined(ST_LSM9DS1) || defined(ST_LSM9DS1_MS5611)
 		int sensor_order[9] = {0,1,2,3,4,5,6,7,8};
 		int sensor_sign[9] = {1,1,1,1,1,1,-1,1,1};	
+	#elif defined(PropShield)	
+		int sensor_order[9] = {0,1,2,3,4,5,6,7,8};
+		int sensor_sign[9] = {1,1,1,1,1,1,1,1,1};
 	#endif 	
 
 	// --------------------------------------------------------------------
