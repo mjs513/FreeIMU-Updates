@@ -509,7 +509,7 @@ class FreeIMU
     #if HAS_ITG3200()
 		void init(bool fastmode);
 		void init(int acc_addr, int gyro_addr, bool fastmode);
-	#elif HAS_ALTIMU10() || HAS_LSM9DS0()
+	#elif HAS_ALTIMU10() || HAS_LSM9DS0() || HAS_ADA_10_DOF() || HAS_CURIE() || HAS_LSM9DS1() || HAS_TPS()
 		void init(bool fastmode);
 		void init0(bool fastmode);
 	#elif HAS_CURIE()
