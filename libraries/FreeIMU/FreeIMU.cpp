@@ -1042,6 +1042,10 @@ void FreeIMU::RESET_Q() {
     //+/-500:        0x10	17.5
     //+/- 2000:      0x20	70
     gyro.writeReg(0x23, 0x20);
+    
+    // 0x6F = 0b01101111
+    // DR = 01 (200 Hz ODR); BW = 10 (50 Hz bandwidth); PD = 1 (normal mode); Zen = Yen = Xen = 1 (all axes enabled)
+    gyro.writeReg(0x20, 0x6F
     gyro_sensitivity = 70.0f;
   #endif
   
