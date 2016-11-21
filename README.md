@@ -2,7 +2,10 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Wednesday, March 29, 2016
+Sunday, November 20, 2016
+
+11-20-16
+FreeIMU.h should include the default calibration.h header only if none has been loaded yet.
 
 03-29-16
 Added support for the LSM9DS1 IMU using the Sparkfun Library.
