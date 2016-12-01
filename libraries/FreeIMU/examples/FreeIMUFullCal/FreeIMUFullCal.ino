@@ -33,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <HMC58X3.h>
 #include <LSM303.h>
 #include <LPS.h> 
+#include <L3G.h>
 #include <ITG3200.h>
 #include <bma180.h>
 #include <MS561101BA.h>
@@ -41,10 +42,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <MPU60X0.h>
 #include <AK8975.h>
 #include <AK8963.h>
-#include <L3G.h>
 #include <AP_Baro_MS5611.h>
-#include <SparkFunLSM9DS1.h>  // Uncomment for LSM9DS1
-//#include <SFE_LSM9DS0.h>  // Uncomment for LSM9DS0 Chosse one or the othe ST IMUs
+#include "SFE_LSM9DS0.h"
 
 #include <EEPROM.h>
 

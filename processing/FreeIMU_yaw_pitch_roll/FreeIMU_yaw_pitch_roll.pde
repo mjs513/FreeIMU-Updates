@@ -29,7 +29,7 @@ import processing.serial.*;
 
 Serial myPort;  // Create object from Serial class
 
-final String serialPort = "COM4"; // replace this with your serial port. On windows you will need something like "COM1".
+final String serialPort = "COM18"; // replace this with your serial port. On windows you will need something like "COM1".
 int BaudRate=57600;
 
 float [] q = new float [4];
@@ -47,7 +47,7 @@ int calib = 0;
 
 void setup() 
 {
-  size(VIEW_SIZE_X, VIEW_SIZE_Y, P3D);
+  size(800, 600, P3D);
   myPort = new Serial(this, serialPort, BaudRate);  
   
   // The font must be located in the sketch's "data" directory to load successfully
@@ -266,5 +266,3 @@ void quaternionToYawPitchRoll(float [] q, float [] ypr) {
   ypr[1] = atan2(gx, sqrt(gy*gy + gz*gz));
   ypr[2] = atan2(gy, sqrt(gx*gx + gz*gz));
 }
-
-

@@ -37,7 +37,7 @@ class LSM303
       REFERENCE_Y       = 0x1D, // D
       REFERENCE_Z       = 0x1E, // D
 
-      CTRL00             = 0x1F, // D
+      CTRL0             = 0x1F, // D
       CTRL1             = 0x20, // D
       CTRL_REG1_A       = 0x20, // DLH, DLM, DLHC
       CTRL2             = 0x21, // D
@@ -110,8 +110,8 @@ class LSM303
       IRB_REG_M         = 0x0B, // DLH, DLM, DLHC
       IRC_REG_M         = 0x0C, // DLH, DLM, DLHC
 
-      WHO_AM_I_M        = 0x0F, // DLM
       WHO_AM_I          = 0x0F, // D
+      WHO_AM_I_M        = 0x0F, // DLM
 
       TEMP_OUT_H_M      = 0x31, // DLHC
       TEMP_OUT_L_M      = 0x32, // DLHC
@@ -170,17 +170,17 @@ class LSM303
     LSM303(void);
 
     bool init(deviceType device = device_auto, sa0State sa0 = sa0_auto);
-    byte getDeviceType(void) { return _device; }
+    deviceType getDeviceType(void) { return _device; }
 
     void enableDefault(void);
 
-    void writeAccReg(regAddr reg, byte value);
-    byte readAccReg(regAddr reg);
-    void writeMagReg(regAddr reg, byte value);
-    byte readMagReg(regAddr reg);
+    void writeAccReg(byte reg, byte value);
+    byte readAccReg(byte reg);
+    void writeMagReg(byte reg, byte value);
+    byte readMagReg(int reg);
 
-    void writeReg(regAddr reg, byte value);
-    byte readReg(regAddr reg);
+    void writeReg(byte reg, byte value);
+    byte readReg(int reg);
 
     void readAcc(void);
     void readMag(void);
@@ -195,11 +195,11 @@ class LSM303
 
     // vector functions
     template <typename Ta, typename Tb, typename To> static void vector_cross(const vector<Ta> *a, const vector<Tb> *b, vector<To> *out);
-    template <typename Ta, typename Tb> static float vector_dot(const vector<Ta> *a,const vector<Tb> *b);
+    template <typename Ta, typename Tb> static float vector_dot(const vector<Ta> *a, const vector<Tb> *b);
     static void vector_normalize(vector<float> *a);
 
   private:
-    deviceType _device; // chip type (DLH, DLM, or DLHC)
+    deviceType _device; // chip type (D, DLHC, DLM, or DLH)
     byte acc_address;
     byte mag_address;
 
@@ -212,7 +212,52 @@ class LSM303
     int testReg(byte address, regAddr reg);
 };
 
+/*
+Returns the angular difference in the horizontal plane between the
+"from" vector and north, in degrees.
+
+Description of heading algorithm:
+Shift and scale the magnetic reading based on calibration data to find
+the North vector. Use the acceleration readings to determine the Up
+vector (gravity is measured as an upward acceleration). The cross
+product of North and Up vectors is East. The vectors East and North
+form a basis for the horizontal plane. The From vector is projected
+into the horizontal plane and the angle between the projected vector
+and horizontal north is returned.
+*/
+template <typename T> float LSM303::heading(vector<T> from)
+{
+    vector<int32_t> temp_m = {m.x, m.y, m.z};
+
+    // subtract offset (average of min and max) from magnetometer readings
+    temp_m.x -= ((int32_t)m_min.x + m_max.x) / 2;
+    temp_m.y -= ((int32_t)m_min.y + m_max.y) / 2;
+    temp_m.z -= ((int32_t)m_min.z + m_max.z) / 2;
+
+    // compute E and N
+    vector<float> E;
+    vector<float> N;
+    vector_cross(&temp_m, &a, &E);
+    vector_normalize(&E);
+    vector_cross(&a, &E, &N);
+    vector_normalize(&N);
+
+    // compute heading
+    float heading = atan2(vector_dot(&E, &from), vector_dot(&N, &from)) * 180 / PI;
+    if (heading < 0) heading += 360;
+    return heading;
+}
+
+template <typename Ta, typename Tb, typename To> void LSM303::vector_cross(const vector<Ta> *a, const vector<Tb> *b, vector<To> *out)
+{
+  out->x = (a->y * b->z) - (a->z * b->y);
+  out->y = (a->z * b->x) - (a->x * b->z);
+  out->z = (a->x * b->y) - (a->y * b->x);
+}
+
+template <typename Ta, typename Tb> float LSM303::vector_dot(const vector<Ta> *a, const vector<Tb> *b)
+{
+  return (a->x * b->x) + (a->y * b->y) + (a->z * b->z);
+}
+
 #endif
-
-
-

@@ -44,18 +44,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define MPU9250_5611  //MPU-9250 IMU with MS5611 Altimeter from eBay
 //#define GEN_MPU9150
 //#define GEN_MPU9250  // Use for Invensense MPU-9250 breakout board
-//#define Altimu10  // Pololu AltIMU v10 - 10 DOF IMU - http://www.pololu.com/product/1269
+//#define Altimu10  // Pololu AltIMU 10 - 10 DOF IMU - http://www.pololu.com/product/1269
 //#define GY_88  //GY-88 Sensor Board from eBay
 //#define GY_87  //GY-87 Sensor Board from eBay, NOTE: Pressusre sensor is BMP180 but BMP085 library should work
 //#define Mario   // MPU-9150 plus Altitude/Pressure Sensor Breakout - MPL3115A2  https://www.sparkfun.com/products/11084
 //#define APM_2_5  //  APMM 2.5.2 (EBAY)
 //#define Microduino
 //#define ST_LSM9DS0  //Adafruit
-//#define ST_LSM9DS1  // Tested on the Tindie version without support for a MS5611 
+#define ST_LSM9DS1  // Tested on the Tindie version without support for a MS5611 
 //#define ST_LSM9DS1_MS5611  // Tested on the Tindie version with support for a MS5611 
 //#define LSM9DS0_MS5637 //Note this includes the MS5637 pressure sensor  board
 //#define ADA_10_DOF
-#define CurieIMU
+//#define CurieIMU
 //#define CurieIMU_Mag
 //#define PropShield
 
@@ -72,7 +72,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // Set filter type: 1 = Madgwick Gradient Descent, 0 - Madgwick implementation of Mahoney DCM
 // in Quaternion form, 3 = Madwick Original Paper AHRS, 4 - DCM Implementation
-#define MARG 1
+#define MARG 3
 
 // proportional gain governs rate of convergence to accelerometer/magnetometer
 // integral gain governs rate of convergence of gyroscope biases
@@ -185,9 +185,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	const float Kp_YAW = 1.75f;   // was 1.2 and 0.02
 	const float Ki_YAW = 0.002f;
 #elif defined(PropShield)
-	#define twoKpDef  (2.0f * 3.25f) // was 0.95
-	#define twoKiDef  (2.0f * 0.25) // was 0.05	
-	#define betaDef	  0.10
+	#define twoKpDef  (2.0f * 4.25f) // was 0.95, 3.25
+	#define twoKiDef  (2.0f * 0.25) // was 0.05	, 0.25
+	#define betaDef	  0.35
 	//Used for DCM filter
 	const float Kp_ROLLPITCH = 1.2f;  //was .3423
 	const float Ki_ROLLPITCH = 0.0234f;
@@ -428,7 +428,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #define LSM9DS1_XM  0x1E // Would be 0x1E if SDO_XM is LOW
   #define LSM9DS1_G   0x6B // Would be 0x6A if SDO_G is LOW
 #elif HAS_CURIE()
-  #include "CurieImu.h"
+  #include "CurieIMU.h"
 #elif HAS_TPS()
   #include "PSMotionSense.h"
   #include "iCompass.h"
@@ -509,13 +509,8 @@ class FreeIMU
     #if HAS_ITG3200()
 		void init(bool fastmode);
 		void init(int acc_addr, int gyro_addr, bool fastmode);
-	#elif HAS_ALTIMU10() || HAS_LSM9DS0()
-		void init(bool fastmode);
-		void init0(bool fastmode);
-	#elif HAS_CURIE()
-		void init(bool fastmode);
-		void init0(bool fastmode);
-	#elif HAS_TPS()
+	#elif HAS_ALTIMU10() || HAS_LSM9DS0() || HAS_ADA_10_DOF() || HAS_LSM9DS1() || \
+	HAS_CURIE() || HAS_TPS() 
 		void init(bool fastmode);
 		void init0(bool fastmode);
 	#else
@@ -627,7 +622,7 @@ class FreeIMU
 	  LSM9DS1 lsm;
 	  iCompass maghead;	  
 	#elif HAS_CURIE()
-	  CurieImuClass accgyro;
+	  CurieIMUClass accgyro;
 	#elif HAS_TPS()
 	  PSMotionSense amgData;
 	  iCompass maghead;
@@ -646,7 +641,7 @@ class FreeIMU
       #elif HAS_BMP085()
     	BMP085 baro085;
       #elif HAS_LPS()
-		LPS331 baro331;
+		LPS baroLPS;
       #elif HAS_MPL3115A2()
 		MPL3115A2 baro3115;
       #elif HAS_MS5637()
@@ -669,7 +664,9 @@ class FreeIMU
 	float sampleFreq; // half the sample period expressed in seconds
 	byte deviceType;
 	int zeroMotioncount = 0;
-	
+	float ypr[3];
+
+
 	// --------------------------------------------------------------------
 	// Define Marg = 3 factors here
 	// --------------------------------------------------------------------
@@ -679,6 +676,9 @@ class FreeIMU
 	#if HAS_LSM9DS0() || HAS_LSM9DS1
       #define gyroMeasError 3.14159265358979 * (0.15f / 180.0f) 	// gyroscope measurement error in rad/s (shown as 5 deg/s)
       #define gyroMeasDrift 3.14159265358979 * (0.02f/4.0f)	// gyroscope measurement error in rad/s/s (shown as 0.2f deg/s/s)
+	#elif HAS_TPS()
+      #define gyroMeasError 3.14159265358979 * (0.25f / 180.0f) 	// gyroscope measurement error in rad/s (shown as 5 deg/s)
+      #define gyroMeasDrift 3.14159265358979 * (0.02f/4.0f)	// gyroscope measurement error in rad/s/s (shown as 0.2f deg/s/s)	
 	#endif
 
 	#define beta1 sqrt(3.0f / 4.0f) * gyroMeasError 			// compute beta

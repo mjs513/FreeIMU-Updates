@@ -32,7 +32,7 @@ import processing.opengl.*;
 
 Serial myPort;  // Create object from Serial class
 
-final String serialPort = "COM3"; // replace this with your serial port. On windows you will need something like "COM1".
+final String serialPort = "COM18"; // replace this with your serial port. On windows you will need something like "COM1".
 int BaudRate=57600;
 int HAS_GPS = 0;
 

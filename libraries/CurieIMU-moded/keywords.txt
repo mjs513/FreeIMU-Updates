@@ -1,0 +1,109 @@
+#######################################
+# Syntax Coloring Map For CureIMU
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+CurieIMUClass	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+begin	KEYWORD1
+
+getGyroRate	KEYWORD1
+setGyroRate	KEYWORD1
+getAccelerometerRate	KEYWORD1
+setAccelerometerRate	KEYWORD1
+
+getGyroRange	KEYWORD1
+setGyroRange	KEYWORD1
+getAccelerometerRange	KEYWORD1
+setAccelerometerRange	KEYWORD1
+
+autoCalibrateGyroOffset	KEYWORD1
+autoCalibrateAccelerometerOffset	KEYWORD1
+
+noGyroOffset	KEYWORD1
+noAccelerometerOffset	KEYWORD1
+gyroOffsetEnabled	KEYWORD1
+accelerometerOffsetEnabled	KEYWORD1
+
+getGyroOffset	KEYWORD1
+getAccelerometerOffset	KEYWORD1
+
+setGyroOffset	KEYWORD1
+setAccelerometerOffset	KEYWORD1
+
+getDetectionThreshold	KEYWORD1
+setDetectionThreshold	KEYWORD1
+
+getDetectionDuration	KEYWORD1
+setDetectionDuration	KEYWORD1
+
+interrupts	KEYWORD1
+noInterrupts	KEYWORD1
+interruptsEnabled	KEYWORD1
+
+getInterruptBits	KEYWORD1
+getInterruptStatus	KEYWORD1
+
+getStepDetectionMode	KEYWORD1
+setStepDetectionMode	KEYWORD1
+getStepCount	KEYWORD1
+getStepCountEnabled	KEYWORD1
+setStepCountEnabled	KEYWORD1
+resetStepCount	KEYWORD1
+
+readMotionSensor	KEYWORD1
+readMotionSensorScaled	KEYWORD1
+readAcceleration	KEYWORD1
+readRotation	KEYWORD1
+
+readAccelerometer	KEYWORD1
+readAccelerometerScaled KEYWORD1
+readGyro	KEYWORD1
+readGyroScaled	KEYWORD1
+readTemperature	KEYWORD1
+
+shockDetected	KEYWORD1
+motionDetected	KEYWORD1
+tapDetected	KEYWORD1
+stepsDetected	KEYWORD1
+
+#######################################
+# Instances (KEYWORD2)
+#######################################
+
+CurieIMU	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+X_AXIS	LITERAL1
+Y_AXIS	LITERAL1
+Z_AXIS	LITERAL1
+
+POSITIVE	LITERAL1
+NEGATIVE	LITERAL1
+
+CURIE_IMU_FREEFALL	LITERAL1
+CURIE_IMU_SHOCK	LITERAL1
+CURIE_IMU_MOTION	LITERAL1
+CURIE_IMU_ZERO_MOTION	LITERAL1
+CURIE_IMU_STEP	LITERAL1
+CURIE_IMU_TAP	LITERAL1
+CURIE_IMU_TAP_SHOCK	LITERAL1
+CURIE_IMU_TAP_QUIET	LITERAL1
+CURIE_IMU_DOUBLE_TAP	LITERAL1
+CURIE_IMU_FIFO_FULL	LITERAL1
+CURIE_IMU_DATA_READY	LITERAL1
+
+CURIE_IMU_STEP_MODE_NORMAL	LITERAL1
+CURIE_IMU_STEP_MODE_SENSITIVE	LITERAL1
+CURIE_IMU_STEP_MODE_ROBUST	LITERAL1
+CURIE_IMU_STEP_MODE_UNKNOWN	LITERAL1

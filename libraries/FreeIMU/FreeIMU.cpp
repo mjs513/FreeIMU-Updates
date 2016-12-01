@@ -286,6 +286,16 @@ GNU General Public License for more details.
 ----------------------------------------------------------------------------
 03-29-16 Added support for the LSM9DS1 IMU with and without a co MS5611
 ----------------------------------------------------------------------------
+04-10-16 Added a magnectic disturbance algorithm that will detect presence of strong magnetic
+		 fields.  Algorithm is based on discussion at 
+		 https://forum.pjrc.com/threads/33902-Prop-Shield-NXPSensorFusion-observations
+		 References:
+		 Accurate Orientation Estimation Using AHRS under Conditions of Magnetic Distortion
+		 http://www.mdpi.com/1424-8220/14/11/20008
+		 and Unscented Kalman filter and Magnetic Angular Rate Update (MARU) for an improved 
+		 Pedestrian Dead-Reckoning,
+		 https://www.researchgate.net/publication/235634565_Unscented_Kalman_filter_and_Magnetic_Angular_Rate_Update_MARU_for_an_improved_Pedestrian_Dead-Reckoning?enrichId=rgreq-3005504c-ee49-416d-9a75-95eca90fb5e5&enrichSource=Y292ZXJQYWdlOzIzNTYzNDU2NTtBUzoxMDIyMTAxMjU5NTkxNzRAMTQwMTM4MDIwMTQ5Ng%3D%3D&el=1_x_2
+----------------------------------------------------------------------------
 
 */
 
@@ -370,6 +380,7 @@ uint8_t num_gyros = 1;
 uint8_t INS_MAX_INSTANCES = 2;
 
 #define M_PI 3.14159265359
+#define rad2degs 57.295779513082320876798154814105
 
 FreeIMU::FreeIMU() {
 
@@ -420,7 +431,7 @@ FreeIMU::FreeIMU() {
 	lsm.settings.device.agAddress = LSM9DS1_G;
     maghead = iCompass(MAG_DEC, WINDOW_SIZE, SAMPLE_SIZE);	
   #elif HAS_CURIE()
-    accgyro = CurieImuClass(); 
+    accgyro = CurieIMUClass(); 
   #elif HAS_TPS()
 	amgData = PSMotionSense();
     maghead = iCompass(MAG_DEC, WINDOW_SIZE, SAMPLE_SIZE);	
@@ -1647,7 +1658,7 @@ void FreeIMU::getQ(float * q, float * val) {
   now = micros();
   sampleFreq = 1.0 / ((now - lastUpdate) / 1000000.0);
   lastUpdate = now;
-  
+ 
   // Set up call to the appropriate filter using the axes alignment information
   // gyro values are expressed in deg/sec, the * M_PI/180 will convert it to radians/sec
   #if(MARG == 0 || MARG == 1 || MARG == 3)
