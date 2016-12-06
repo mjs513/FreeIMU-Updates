@@ -1047,7 +1047,7 @@ void FreeIMU::RESET_Q() {
   //ALTIMU or Adafruit 10-DOF SENSOR INIT
   #if HAS_L3D20()
     gyro.init();
-    //gyro.enableDefault();
+    gyro.enableDefault();
     //					Sensitivity
     //+/-245:        0x00	8.75	
     //+/-500:        0x10	17.5
