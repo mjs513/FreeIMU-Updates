@@ -6,7 +6,7 @@
 #include <SPI.h>
 
 //These are optional depending on your IMU configuration
-#include "CurieIMU.h"
+#include "CurieImu.h"
 #include <HMC58X3.h>
 #include <MS561101BA.h> //Comment out for APM 2.5
 

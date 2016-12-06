@@ -19,8 +19,8 @@
  *
  */
 
-#ifndef _CURIEIMU_H_
-#define _CURIEIMU_H_
+#ifndef _CurieImu_H_
+#define _CurieImu_H_
 
 #include "BMI160.h"
 
@@ -39,7 +39,7 @@ typedef enum{
     X_AXIS = 0,
     Y_AXIS,
     Z_AXIS,
-} CurieIMUAxis;
+} CurieImuAxis;
 
 /**
  *direction options
@@ -50,7 +50,7 @@ typedef enum{
 typedef enum{
     POSITIVE,
     NEGATIVE,
-} CurieIMUDirection;
+} CurieImuDirection;
 
  /**
  * Features for getThreshold(), getDuration() functions,
@@ -67,7 +67,7 @@ typedef enum {
     CURIE_IMU_DOUBLE_TAP,
     CURIE_IMU_FIFO_FULL,
     CURIE_IMU_DATA_READY,
-} CurieIMUFeature;
+} CurieImuFeature;
 
 /**
  * Step Detection Mode options
@@ -78,11 +78,11 @@ typedef enum {
     CURIE_IMU_STEP_MODE_SENSITIVE = BMI160_STEP_MODE_SENSITIVE,
     CURIE_IMU_STEP_MODE_ROBUST = BMI160_STEP_MODE_ROBUST,
     CURIE_IMU_STEP_MODE_UNKNOWN = BMI160_STEP_MODE_UNKNOWN
-} CurieIMUStepMode;
+} CurieImuStepMode;
 
-/* Note that this CurieIMUClass class inherits methods from the BMI160Class which
+/* Note that this CurieImuClass class inherits methods from the BMI160Class which
  * is defined in BMI160.h.  BMI160Class provides methods for configuring and
- * accessing features of the BMI160 IMU device.  This CurieIMUClass extends that
+ * accessing features of the BMI160 IMU device.  This CurieImuClass extends that
  * class with implementation of details specific to the integration of the BMI160
  * device on the Intel Curie module, such as the serial communication interface
  * and interrupt signalling.
@@ -90,7 +90,7 @@ typedef enum {
  * Please refer to the respective .cpp files for documentation on each of the
  * methods provided by these classes.
  */
-class CurieIMUClass : public BMI160Class {
+class CurieImuClass : public BMI160Class {
     friend void bmi160_pin1_isr(void);
 
     public:
@@ -183,7 +183,7 @@ class CurieIMUClass : public BMI160Class {
 
         bool getInterruptStatus(int feature);
 
-        CurieIMUStepMode getStepDetectionMode();
+        CurieImuStepMode getStepDetectionMode();
         void setStepDetectionMode(int mode);
 
         void readMotionSensor(int& ax, int& ay, int& az, int& gx, int& gy, int& gz);
@@ -245,6 +245,5 @@ class CurieIMUClass : public BMI160Class {
         void (*_user_callback)(void);
 };
 
-//extern CurieIMUClass CurieIMU;
 
-#endif /* _CURIEIMU_H_ */
+#endif /* _CurieImu_H_ */

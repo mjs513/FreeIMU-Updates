@@ -51,12 +51,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define APM_2_5  //  APMM 2.5.2 (EBAY)
 //#define Microduino
 //#define ST_LSM9DS0  //Adafruit
-#define ST_LSM9DS1  // Tested on the Tindie version without support for a MS5611 
+//#define ST_LSM9DS1  // Tested on the Tindie version without support for a MS5611 
 //#define ST_LSM9DS1_MS5611  // Tested on the Tindie version with support for a MS5611 
 //#define LSM9DS0_MS5637 //Note this includes the MS5637 pressure sensor  board
 //#define ADA_10_DOF
 //#define CurieIMU
-//#define CurieIMU_Mag
+#define CurieIMU_Mag
 //#define PropShield
 
 //#define DISABLE_MAGN // Uncomment this line to disable the magnetometer in the sensor fusion algorithm
@@ -428,7 +428,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #define LSM9DS1_XM  0x1E // Would be 0x1E if SDO_XM is LOW
   #define LSM9DS1_G   0x6B // Would be 0x6A if SDO_G is LOW
 #elif HAS_CURIE()
-  #include "CurieIMU.h"
+  #include "CurieImu.h"
 #elif HAS_TPS()
   #include "PSMotionSense.h"
   #include "iCompass.h"
@@ -622,7 +622,7 @@ class FreeIMU
 	  LSM9DS1 lsm;
 	  iCompass maghead;	  
 	#elif HAS_CURIE()
-	  CurieIMUClass accgyro;
+	  CurieImuClass accgyro;
 	#elif HAS_TPS()
 	  PSMotionSense amgData;
 	  iCompass maghead;

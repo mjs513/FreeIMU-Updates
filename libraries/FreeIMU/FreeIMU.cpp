@@ -431,7 +431,7 @@ FreeIMU::FreeIMU() {
 	lsm.settings.device.agAddress = LSM9DS1_G;
     maghead = iCompass(MAG_DEC, WINDOW_SIZE, SAMPLE_SIZE);	
   #elif HAS_CURIE()
-    accgyro = CurieIMUClass(); 
+    accgyro = CurieImuClass(); 
   #elif HAS_TPS()
 	amgData = PSMotionSense();
     maghead = iCompass(MAG_DEC, WINDOW_SIZE, SAMPLE_SIZE);	
@@ -876,8 +876,8 @@ void FreeIMU::RESET_Q() {
   #endif
   
   #if HAS_CURIE()
-	accgyro.initialize();
-	accgyro.setFullScaleAccelRange(BMI160_ACCEL_RANGE_2G);
+	accgyro.begin();
+	accgyro.setFullScaleAccelRange(2);
 	/** Set accelerometer output data rate.
 	* The acc_odr parameter allows setting the output data rate of the accelerometer
 	* as described in the table below.
@@ -895,7 +895,7 @@ void FreeIMU::RESET_Q() {
 	* </pre>
 	*
 	*/
-	accgyro.setAccelRate(BMI160_ACCEL_RATE_100HZ);
+	accgyro.setAccelRate(200);
 
 	/** Get accelerometer digital low-pass filter mode.
 	* The acc_bwp parameter sets the accelerometer digital low pass filter configuration.
@@ -924,7 +924,7 @@ void FreeIMU::RESET_Q() {
 	*/
 	//accgyro.setAccelDLPFMode(BMI160_DLPF_MODE_OSR2);
 
-	accgyro.setFullScaleGyroRange(BMI160_GYRO_RANGE_2000);
+	accgyro.setFullScaleGyroRange(2000);
 	/** Get gyroscope output data rate.
 	* The gyr_odr parameter allows setting the output data rate of the gyroscope
 	* as described in the table below.
@@ -940,7 +940,7 @@ void FreeIMU::RESET_Q() {
 	* 13 = 3200Hz
 	* </pre>
 	*/
-	accgyro.setGyroRate(BMI160_GYRO_RATE_100HZ);
+	accgyro.setGyroRate(100);
 	  
 	/** Get gyroscope digital low-pass filter mode.
 	* The gyro_bwp parameter sets the gyroscope digital low pass filter configuration.
@@ -1212,7 +1212,17 @@ void FreeIMU::getRawValues(int * raw_values) {
     gyro.readGyroRaw(&raw_values[3], &raw_values[4], &raw_values[5]);
 	gyro.readTemp(&senTemp);
 	raw_values[9] = senTemp*100;
-  #elif HAS_MPU6050() || HAS_MPU6000() || HAS_MPU9150() || HAS_MPU9250() || HAS_CURIE()
+  #elif HAS_CURIE()
+    int ax, ay, az, gx, gy, gz, mx, my, mz, rt;
+	accgyro.readMotionSensor(ax, ay, az, gx, gy, gz);
+      raw_values[0] = ax;
+      raw_values[1] = ay;
+      raw_values[2] = az;
+      raw_values[3] = gx;
+      raw_values[4] = gy;
+      raw_values[5] = gz;
+	raw_values[9] = accgyro.readTemperature();
+  #elif HAS_MPU6050() || HAS_MPU6000() || HAS_MPU9150() || HAS_MPU9250()
     #ifdef __AVR__
 	  accgyro.getMotion6(&raw_values[0], &raw_values[1], &raw_values[2], &raw_values[3], &raw_values[4], &raw_values[5]);  	  
  	  #if HAS_MPU9150() || HAS_MPU9250()
