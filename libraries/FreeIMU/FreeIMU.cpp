@@ -286,7 +286,7 @@ GNU General Public License for more details.
 ----------------------------------------------------------------------------
 03-29-16 Added support for the LSM9DS1 IMU with and without a co MS5611
 ----------------------------------------------------------------------------
-04-10-16 Added a magnectic disturbance algorithm that will detect presence of strong magnetic
+12-08-16 Added a magnectic disturbance algorithm that will detect presence of strong magnetic
 		 fields.  Algorithm is based on discussion at 
 		 https://forum.pjrc.com/threads/33902-Prop-Shield-NXPSensorFusion-observations
 		 References:
@@ -296,7 +296,9 @@ GNU General Public License for more details.
 		 Pedestrian Dead-Reckoning,
 		 https://www.researchgate.net/publication/235634565_Unscented_Kalman_filter_and_Magnetic_Angular_Rate_Update_MARU_for_an_improved_Pedestrian_Dead-Reckoning?enrichId=rgreq-3005504c-ee49-416d-9a75-95eca90fb5e5&enrichSource=Y292ZXJQYWdlOzIzNTYzNDU2NTtBUzoxMDIyMTAxMjU5NTkxNzRAMTQwMTM4MDIwMTQ5Ng%3D%3D&el=1_x_2
 ----------------------------------------------------------------------------
+12-08-16 Updated code where necessary for updated Pololu libraries.
 
+----------------------------------------------------------------------------
 */
 
 #include "Arduino.h"
@@ -1121,6 +1123,8 @@ void FreeIMU::RESET_Q() {
   //digitalWrite(12,HIGH);
   
   initGyros(); //}
+  
+  initMagJamCal();
 
   //digitalWrite(12,LOW);
 	
@@ -1221,7 +1225,7 @@ void FreeIMU::getRawValues(int * raw_values) {
       raw_values[3] = gx;
       raw_values[4] = gy;
       raw_values[5] = gz;
-	raw_values[9] = accgyro.readTemperature();
+	  raw_values[9] = accgyro.readTemperature();
   #elif HAS_MPU6050() || HAS_MPU6000() || HAS_MPU9150() || HAS_MPU9250()
     #ifdef __AVR__
 	  accgyro.getMotion6(&raw_values[0], &raw_values[1], &raw_values[2], &raw_values[3], &raw_values[4], &raw_values[5]);  	  
@@ -1647,6 +1651,14 @@ void FreeIMU::initGyros() {
 }
 
 
+void  FreeIMU::initMagJamCal(){
+	for(int sample_size =0; sample_size < 200; sample_size++){
+		getValues(val);
+		sqr_mag = sqr_mag + sqrt(val[6]*val[6]+val[7]*val[7]+val[8]*val[8]);
+	}
+	MagJamCal_mean = sqr_mag/200;
+}
+
 /**
  * Populates array q with a quaternion representing the IMU orientation with respect to the Earth
  * 
@@ -1668,10 +1680,21 @@ void FreeIMU::getQ(float * q, float * val) {
   now = micros();
   sampleFreq = 1.0 / ((now - lastUpdate) / 1000000.0);
   lastUpdate = now;
- 
+
+  sqr_mag = sqrt(val[6]*val[6]+val[7]*val[7]+val[8]*val[8]);
+  if(sqr_mag < MagJamLwrLimit*MagJamCal_mean || sqr_mag > MagJamUprLimit*MagJamCal_mean) {
+		MagJamFlag = 1;
+	} else {
+		MagJamFlag = 0;
+		getYawPitchRollRadAHRS(ypr,q);
+		old_Yaw = ypr[0]*rad2degs;
+	}
+  //Serial.print(MagJamFlag); Serial.print(", ");
+  //Serial.print(MagJamCal_mean,5);Serial.print(", "); Serial.println(sqr_mag,5);
+  
   // Set up call to the appropriate filter using the axes alignment information
   // gyro values are expressed in deg/sec, the * M_PI/180 will convert it to radians/sec
-  #if(MARG == 0 || MARG == 1 || MARG == 3)
+  /* #if(MARG == 0 || MARG == 1 || MARG == 3)
 	#if IS_9DOM() && not defined(DISABLE_MAGN)
 		#if MARG == 0
 			AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
@@ -1681,6 +1704,40 @@ void FreeIMU::getQ(float * q, float * val) {
 			MARGUpdateFilter(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
 		#endif
 		val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[6], val[7], val[8]);
+   */
+  #if(MARG == 0 || MARG == 1 || MARG == 3)
+	#if IS_9DOM() && not defined(DISABLE_MAGN)
+		if(MagJamFlag == 0) {
+			#if(MARG == 0)
+				AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
+				val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[6], val[7], val[8]);
+				old_compass_head = val[9];
+			#elif(MARG == 1)
+				MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
+				val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[6], val[7], val[8]);
+				old_compass_head = val[9];
+			#elif(MARG == 3)
+				MARGUpdateFilter(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
+				val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[6], val[7], val[8]);
+				old_compass_head = val[9];
+			#endif
+		} else if(MagJamFlag == 1) {
+			#if MARG == 0
+				AHRSupdateIMU(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2]);
+				getYawPitchRollRadAHRS(ypr,q);
+				val[9] = ypr[0]*rad2degs-old_Yaw + old_compass_head;
+			#elif MARG == 1		
+				MadgwickAHRSupdateIMU(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2]);
+				getYawPitchRollRadAHRS(ypr,q);
+				val[9] = ypr[0]*rad2degs-old_Yaw + old_compass_head;
+			#elif MARG == 3
+				MARGUpdateFilterIMU(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2]);
+				getYawPitchRollRadAHRS(ypr,q);
+				val[9] = ypr[0]*rad2degs-old_Yaw + old_compass_head;
+			#endif		
+		}
+		//val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[6], val[7], val[8]);
+
 	#else
 		#if MARG == 0
 			AHRSupdateIMU(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2]);

@@ -2,7 +2,20 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Wednesday, March 29, 2016
+Thursday, December 08, 2016
+12-08-16 Added a magnectic disturbance algorithm that will detect presence of strong magnetic
+		 fields.  Algorithm is based on discussion at 
+		 https://forum.pjrc.com/threads/33902-Prop-Shield-NXPSensorFusion-observations
+		 References:
+		 Accurate Orientation Estimation Using AHRS under Conditions of Magnetic Distortion
+		 http://www.mdpi.com/1424-8220/14/11/20008
+		 and Unscented Kalman filter and Magnetic Angular Rate Update (MARU) for an improved 
+		 Pedestrian Dead-Reckoning,
+		 https://www.researchgate.net/publication/235634565_Unscented_Kalman_filter_and_Magnetic_Angular_Rate_Update_MARU_for_an_improved_Pedestrian_Dead-Reckoning?enrichId=rgreq-3005504c-ee49-416d-9a75-95eca90fb5e5&enrichSource=Y292ZXJQYWdlOzIzNTYzNDU2NTtBUzoxMDIyMTAxMjU5NTkxNzRAMTQwMTM4MDIwMTQ5Ng%3D%3D&el=1_x_2
+----------------------------------------------------------------------------
+12-08-16 Updated code where necessary for updated Pololu libraries.
+
+----------------------------------------------------------------------------
 
 03-29-16
 Added support for the LSM9DS1 IMU using the Sparkfun Library.

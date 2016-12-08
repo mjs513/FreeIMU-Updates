@@ -542,6 +542,8 @@ class FreeIMU
 	float calcMagHeading(float q0, float q1, float q2, float q3, float bx, float by, float bz);
 	void getQ_simple(float* q, float * val);
 	void MotionDetect(float * val);
+	
+	void initMagJamCal();
    
 	#if HAS_PRESS()
       //float getEstAltitude();
@@ -665,7 +667,15 @@ class FreeIMU
 	byte deviceType;
 	int zeroMotioncount = 0;
 	float ypr[3];
-
+	
+	float MagJamCal_mean;
+	int MagJamFlag;
+	
+	//Experimental Magnetic Jamming Avoidance algorithm thresholds
+	float MagJamLwrLimit = 0.9;  //orig 0.985
+	float MagJamUprLimit = 1.1;	// orig 1.05
+	float sqr_mag = 0.0f;
+	float old_Yaw, old_compass_head;
 
 	// --------------------------------------------------------------------
 	// Define Marg = 3 factors here
