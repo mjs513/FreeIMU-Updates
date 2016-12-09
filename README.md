@@ -2,10 +2,13 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Thursday, December 08, 2016
-12-08-16 Added a magnectic disturbance algorithm that will detect presence of strong magnetic
-		 fields.  Algorithm is based on discussion at 
-		 https://forum.pjrc.com/threads/33902-Prop-Shield-NXPSensorFusion-observations
+Friday, December 09, 2016
+
+12-09-16 Made the Magnetic Disturbance algorithm optional.  If you want to enable uncomment the following line in the FreeIMU.h file:
+#define DISABLE_MAGJAM  // Uncomment this line to disable the magnetic disturbance
+--------------------------------------------------------
+
+12-08-16 Added a magnectic disturbance algorithm that will detect presence of strong magnetic fields.  Algorithm is based on discussion at https://forum.pjrc.com/threads/33902-Prop-Shield-NXPSensorFusion-observations
 		 References:
 		 Accurate Orientation Estimation Using AHRS under Conditions of Magnetic Distortion
 		 http://www.mdpi.com/1424-8220/14/11/20008
