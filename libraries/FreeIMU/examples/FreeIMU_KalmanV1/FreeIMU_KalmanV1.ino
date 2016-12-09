@@ -68,7 +68,7 @@
 #include <Kalman.h> // Source: https://github.com/TKJElectronics/KalmanFilter
  
 float output[6];
-float val[12];
+float val[13];
 
 // Set the FreeIMU object and LSM303 Compass
 FreeIMU my3IMU = FreeIMU();

@@ -1124,8 +1124,10 @@ void FreeIMU::RESET_Q() {
   
   initGyros(); //}
   
-  initMagJamCal();
-
+  #if defined(DISABLE_MAGJAM)
+	initMagJamCal();
+  #endif
+  
   //digitalWrite(12,LOW);
 	
   #ifndef CALIBRATION_H
@@ -1539,7 +1541,7 @@ void FreeIMU::getValues(float * values) {
 void FreeIMU::zeroGyro() {
   const int totSamples = nsamples;
   int raw[11];
-  float values[11]; 
+  float values[12]; 
   float tmpOffsets[] = {0,0,0};
   
   for (int i = 0; i < totSamples; i++){
@@ -1665,7 +1667,7 @@ void  FreeIMU::initMagJamCal(){
  * @param q the quaternion to populate
 */
 void FreeIMU::getQ(float * q, float * val) {
-  //float val[12];
+  //float val[13];
   getValues(val);
   //DEBUG_PRINT(val[3] * M_PI/180);
   //DEBUG_PRINT(val[4] * M_PI/180);
@@ -1680,22 +1682,26 @@ void FreeIMU::getQ(float * q, float * val) {
   now = micros();
   sampleFreq = 1.0 / ((now - lastUpdate) / 1000000.0);
   lastUpdate = now;
-
-  sqr_mag = sqrt(val[6]*val[6]+val[7]*val[7]+val[8]*val[8]);
-  if(sqr_mag < MagJamLwrLimit*MagJamCal_mean || sqr_mag > MagJamUprLimit*MagJamCal_mean) {
+  
+  val[12] = 0 ;
+  #if defined(DISABLE_MAGJAM)
+	sqr_mag = sqrt(val[6]*val[6]+val[7]*val[7]+val[8]*val[8]);
+	if(sqr_mag < MagJamLwrLimit*MagJamCal_mean || sqr_mag > MagJamUprLimit*MagJamCal_mean) {
 		MagJamFlag = 1;
 	} else {
 		MagJamFlag = 0;
 		getYawPitchRollRadAHRS(ypr,q);
 		old_Yaw = ypr[0]*rad2degs;
 	}
+	val[12] = MagJamFlag ;
+  #endif
   //Serial.print(MagJamFlag); Serial.print(", ");
   //Serial.print(MagJamCal_mean,5);Serial.print(", "); Serial.println(sqr_mag,5);
   
   // Set up call to the appropriate filter using the axes alignment information
   // gyro values are expressed in deg/sec, the * M_PI/180 will convert it to radians/sec
-  /* #if(MARG == 0 || MARG == 1 || MARG == 3)
-	#if IS_9DOM() && not defined(DISABLE_MAGN)
+	/*#if(MARG == 0 || MARG == 1 || MARG == 3 && not defined(DISABLE_MAGJAM))
+	  #if IS_9DOM() && not defined(DISABLE_MAGN)
 		#if MARG == 0
 			AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
 		#elif MARG == 1
@@ -1703,10 +1709,10 @@ void FreeIMU::getQ(float * q, float * val) {
 		#else
 			MARGUpdateFilter(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
 		#endif
-		val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[6], val[7], val[8]);
-   */
-  #if(MARG == 0 || MARG == 1 || MARG == 3)
-	#if IS_9DOM() && not defined(DISABLE_MAGN)
+	*/	val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[6], val[7], val[8]);
+	#if(MARG == 0 || MARG == 1 || MARG == 3 )
+	  #if IS_9DOM() && (not defined(DISABLE_MAGN) && defined(DISABLE_MAGJAM))
+		Serial.println("MAGJAM Defined");
 		if(MagJamFlag == 0) {
 			#if(MARG == 0)
 				AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
@@ -1737,7 +1743,16 @@ void FreeIMU::getQ(float * q, float * val) {
 			#endif		
 		}
 		//val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[6], val[7], val[8]);
-
+	#elif IS_9DOM() && (not defined(DISABLE_MAGN) && not defined(DISABLE_MAGJAM))
+		Serial.println("MAGJAM Not Defined");  
+		#if MARG == 0
+			AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
+		#elif MARG == 1
+			MadgwickAHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
+		#else
+			MARGUpdateFilter(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
+		#endif
+		val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[6], val[7], val[8]);
 	#else
 		#if MARG == 0
 			AHRSupdateIMU(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2]);
@@ -2047,7 +2062,7 @@ float FreeIMU::getEstAltitude(float * q1, float * val, float dt2) {
 */
 void FreeIMU::getEulerRad(float * angles) {
   float q[4]; // quaternion
-  float val[12];
+  float val[13];
   
   getQ(q, val);
   angles[0] = atan2(2 * q[1] * q[2] - 2 * q[0] * q[3], 2 * q[0]*q[0] + 2 * q[1] * q[1] - 1); // psi
@@ -2079,7 +2094,7 @@ void FreeIMU::getEuler360deg(float * angles) {
   float m11, m12, m21, m31, m32;
   float gx, gy, gz; // estimated gravity direction
   float q[4]; // quaternion
-  float val[12];
+  float val[13];
   
   getQ(q, val);
   
@@ -2129,7 +2144,7 @@ void FreeIMU::getEuler360degAttitude(float * angles, float * q, float * val) {
   float m11, m12, m21, m31, m32;
   float gx, gy, gz; // estimated gravity direction
   //float q[4]; // quaternion
-  //float val[12];
+  //float val[13];
   
   getQ(q, val);
   
@@ -2194,7 +2209,7 @@ void FreeIMU::getEuler360(float * angles) {
 */
 void FreeIMU::getYawPitchRollRad(float * ypr) {
   float q[4]; // quaternion
-  float val[12];
+  float val[13];
   float gx, gy, gz; // estimated gravity direction
   getQ(q, val);
   
@@ -2219,7 +2234,7 @@ void FreeIMU::getYawPitchRollRad(float * ypr) {
 */
 void FreeIMU::getYawPitchRollRadAHRS(float * ypr, float * q) {
   //float q[4]; // quaternion
-  //float val[12];
+  //float val[13];
   float gx, gy, gz; // estimated gravity direction
   //getQ(q, val);
   
@@ -2246,7 +2261,7 @@ void FreeIMU::getYawPitchRollRadAHRS(float * ypr, float * q) {
 */
 void FreeIMU::getYawPitchRoll180(float * ypr) {
 	float q[4];				// quaternion
-	float val[12];
+	float val[13];
 	float gx, gy, gz;		// estimated gravity direction
 	
 	getQ(q, val);

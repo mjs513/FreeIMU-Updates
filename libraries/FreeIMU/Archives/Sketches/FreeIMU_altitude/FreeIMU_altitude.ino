@@ -73,7 +73,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #define HAS_EEPPROM 1
 #endif
 
-float val[11];
+float val[13];
 
 //define sea level for the day - if too different than standard
 //altitude will be way off

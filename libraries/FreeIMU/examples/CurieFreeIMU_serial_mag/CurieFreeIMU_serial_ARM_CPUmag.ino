@@ -50,8 +50,8 @@ float q[4];
 int raw_values[11];
 float ypr[3]; // yaw pitch roll
 char str[128];
-float val[12];
-float val_array[19]; 
+float val[13];
+float val_array[20]; 
 
 
 // Set the FreeIMU object and LSM303 Compass
@@ -174,7 +174,7 @@ void loop() {
       }
     }
     else if(cmd == 'z') {
-      float val_array[19] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+      float val_array[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
       uint8_t count = serial_busy_wait();
       for(uint8_t i=0; i<count; i++) {
         my3IMU.getQ(q, val);
@@ -196,6 +196,7 @@ void loop() {
         //val_array[15] = millis();
         val_array[16] = val[9];
         val_array[18] = val[11];
+        val_array[19] = val[12];
         
         #if HAS_PRESS()
            // with baro
@@ -210,9 +211,11 @@ void loop() {
             val_array[13] = 21.0 + (float) my3IMU.DTemp/8.; //degrees C
         #elif HAS_ITG3200()
            val_array[13] = my3IMU.rt;
+        #elif HAS_CURIE()
+           val_array[13] = (my3IMU.DTemp/512.0) + 23.0;
         #endif
 
-        serialPrintFloatArr(val_array,19);
+        serialPrintFloatArr(val_array,20);
         //Serial.print('\n');
         
         #if HAS_GPS
@@ -237,7 +240,7 @@ void loop() {
       }
     } 
     else if(cmd == 'a') {
-      float val_array[19] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+      float val_array[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
       uint8_t count = serial_busy_wait();
       for(uint8_t i=0; i < count; i++) {
         my3IMU.getQ(q, val);
@@ -259,6 +262,7 @@ void loop() {
         //val_array[15] = millis();
         val_array[16] = val[9];
         val_array[18] = val[11];
+        val_array[19] = val[12];
                 
         #if HAS_PRESS() 
            // with baro
@@ -274,7 +278,7 @@ void loop() {
         #elif HAS_ITG3200()
            val_array[13] = my3IMU.rt;
         #endif
-        serialPrintFloatArr(val_array, 19);
+        serialPrintFloatArr(val_array, 20);
         //Serial.print('\n');
         
         #if HAS_GPS
@@ -305,7 +309,17 @@ void loop() {
         Serial.print('\n');
       }
     }
-     
+    
+    else if(cmd == 'j'){
+      uint8_t count = serial_busy_wait();
+      for(uint8_t i=0; i < count; i++) {
+       my3IMU.getQ(q, val);
+       for(int ic = 0; ic < 13; ic++){
+         Serial.print(val[ic], 4); Serial.print(", ");
+       }
+       Serial.print('\n'); 
+      }
+    }
      
     #if HAS_EEPPROM
       #ifndef CALIBRATION_H

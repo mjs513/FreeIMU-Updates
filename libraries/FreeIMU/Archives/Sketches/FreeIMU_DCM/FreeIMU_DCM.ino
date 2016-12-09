@@ -48,7 +48,7 @@
 #endif
 
 float output[6];
-float val[12];
+float val[13];
 float ypr[3];
 float q[4];
 

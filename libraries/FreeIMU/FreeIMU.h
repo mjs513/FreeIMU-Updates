@@ -60,6 +60,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define PropShield
 
 //#define DISABLE_MAGN // Uncomment this line to disable the magnetometer in the sensor fusion algorithm
+#define DISABLE_MAGJAM  // Uncomment this line to disable the magnetic disturbance
+
 
 //Magnetic declination angle for iCompass
 //#define MAG_DEC 4 //+4.0 degrees for Israel
@@ -659,7 +661,7 @@ class FreeIMU
     int16_t gyro_off_x, gyro_off_y, gyro_off_z;
     int16_t acc_off_x, acc_off_y, acc_off_z, magn_off_x, magn_off_y, magn_off_z;
     float acc_scale_x, acc_scale_y, acc_scale_z, magn_scale_x, magn_scale_y, magn_scale_z;
-	float val[12], motiondetect_old;
+	float val[13], motiondetect_old;
 	//int8_t nsamples, temp_break, instability_fix, senTemp_break;
 	int16_t DTemp, temp_corr_on; 
 	float rt, senTemp, gyro_sensitivity;

@@ -35,7 +35,7 @@
 int raw_values[11];
 //char str[512];
 float ypr[3]; // yaw pitch roll
-float val[9];
+float val[13];
 
 // Set the FreeIMU object
 FreeIMU my3IMU = FreeIMU();

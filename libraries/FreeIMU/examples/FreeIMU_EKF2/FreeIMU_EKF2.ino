@@ -72,8 +72,8 @@ float const PI_F = 3.14159265F;
 int16_t raw_values[11];
 float ypr[3]; // yaw pitch roll
 char str[128];
-float val[11];
-float val_array[18]; 
+float val[13];
+float val_array[20]; 
 unsigned long lastUpdate, now;       // sample period expressed in milliseconds
 float dt;
 

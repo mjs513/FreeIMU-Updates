@@ -48,7 +48,7 @@
 
 int raw_values[11];
 char str[512];
-float val[9], q[4];
+float val[13], q[4];
 
 unsigned long start, stop;
 

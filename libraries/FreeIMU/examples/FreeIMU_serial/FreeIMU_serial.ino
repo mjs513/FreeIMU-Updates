@@ -1,10 +1,8 @@
 /**
  * FreeIMU library serial communication protocol
 */
-#include <Wire.h>
-#include <SPI.h>
-
 //These are optional depending on your IMU configuration
+
 #include <ADXL345.h>
 #include <HMC58X3.h>
 #include <LSM303.h>
@@ -18,7 +16,8 @@
 #include <MPU60X0.h>
 #include <AK8975.h>
 #include <AK8963.h>
-#include <SFE_LSM9DS0.h>
+#include <SparkFunLSM9DS1.h>  // Uncomment for LSM9DS1
+//#include <SFE_LSM9DS0.h>  // Uncomment for LSM9DS0 Chosse one or the othe ST IMUs
 #include <BaroSensor.h>
 //#include <AP_Baro_MS5611.h>  //Uncomment for APM2.5
 
@@ -29,13 +28,17 @@
 #include <iCompass.h>
 #include <MovingAvarageFilter.h>
 
+#include <Wire.h>
+#include <SPI.h>
+
 //#define DEBUG
 #include "DebugUtils.h"
 #include "CommunicationUtils.h"
+#include "FreeIMU.h"
 #include "DCM.h"
 #include "FilteringScheme.h"
 #include "RunningAverage.h"
-#include "FreeIMU.h"
+
 
 //Intel Edison, Arduino 101, Arduino Due, Arduino Zero: no eeprom 
 #if defined(__SAMD21G18A__) || defined(__SAM3X8E__) || defined(__ARDUINO_ARC__) || defined(__SAMD21G18A__)
@@ -45,8 +48,11 @@
   #define HAS_EEPPROM 1
 #endif
 
+#define M_PI 3.14159
 #define HAS_GPS 0
 #define BaudRate 57600
+static const unsigned long GPSBaud = 57600;
+#define gpsSerial Serial1
 
 KalmanFilter kFilters[4];
 int k_index = 3;
@@ -55,27 +61,28 @@ float q[4];
 int raw_values[11];
 float ypr[3]; // yaw pitch roll
 char str[128];
-float val[12];
-float val_array[18]; 
+float val[13];
+float val_array[20]; 
+
 
 // Set the FreeIMU object and LSM303 Compass
 FreeIMU my3IMU = FreeIMU();
 
 #if HAS_GPS
-  #include <AltSoftSerial.h>
   #include <TinyGPS++.h>
-  static const unsigned long GPSBaud = 57600;
   // The TinyGPS++ object
   TinyGPSPlus gps;
-  // The serial connection to the GPS device
-  AltSoftSerial ss;
+  
+  // Setup GPS Serial and load config from i2c eeprom
+  boolean gpsStatus[] = {false, false, false, false, false, false, false};
+  unsigned long start;
 #endif
 
 //The command from the PC
 char cmd, tempCorr;
 
 void setup() {
-  Serial.begin(57600);
+  Serial.begin(BaudRate);
   Wire.begin();
   
   float qVal = 0.125; //Set Q Kalman Filter(process noise) value between 0 and 1
@@ -89,12 +96,22 @@ void setup() {
   //#if HAS_MPU6050()
   //    my3IMU.RESET();
   //#endif
-	
-  my3IMU.init(true);
-  delay(500);
   
+  my3IMU.init(true);
+
   #if HAS_GPS
-    ss.begin(GPSBaud);
+  // For Galileo,DUE and Teensy use Serial port 1
+  //Load configuration from i2c eeprom - this assumes you have saved
+  //a default configuration to the eeprom or permanent storage.
+  //If you do not have this setup you will have to remove the
+  //following lines and the additional code at the end of the sketch.
+    gpsSerial.begin(9600);  
+  //Settings Array
+  //Code based on http://playground.arduino.cc/UBlox/GPS
+  byte settingsArray[] = {0x04}; // Not really used for this example
+  configureUblox(settingsArray);
+  //Retain this line
+  gpsSerial.begin(GPSBaud); 
   #endif
   
   // LED
@@ -133,7 +150,7 @@ void loop() {
       long sea_press = Serial.parseInt();        
       my3IMU.setSeaPress(sea_press/100.0);
       //Serial.println(sea_press);
-    }    
+    } 
     else if(cmd=='r') {
       uint8_t count = serial_busy_wait();
       for(uint8_t i=0; i<count; i++) {
@@ -156,7 +173,7 @@ void loop() {
           my3IMU.acc.readAccel(&raw_values[0], &raw_values[1], &raw_values[2]);
           my3IMU.gyro.readGyroRaw(&raw_values[3], &raw_values[4], &raw_values[5]);
           writeArr(raw_values, 6, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
-        #elif HAS_MPU9150()  || HAS_MPU9250() || HAS_LSM9DS0()
+        #elif HAS_MPU9150()  || HAS_MPU9250() || HAS_LSM9DS0() || HAS_LSM9DS1()
           my3IMU.getRawValues(raw_values);
           writeArr(raw_values, 9, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
         #elif HAS_MPU6050() || HAS_MPU6000()   // MPU6050
@@ -169,7 +186,7 @@ void loop() {
         #endif
         //writeArr(raw_values, 6, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
         
-        #if IS_9DOM() && (!HAS_MPU9150()  && !HAS_MPU9250() && !HAS_ALTIMU10() && !HAS_ADA_10_DOF() && !HAS_LSM9DS0() && !HAS_TPS())
+        #if IS_9DOM() && (!HAS_MPU9150()  && !HAS_MPU9250() && !HAS_ALTIMU10() && !HAS_ADA_10_DOF() && !HAS_LSM9DS0() && !HAS_LSM9DS1() && !HAS_TPS())
           my3IMU.magn.getValues(&raw_values[0], &raw_values[1], &raw_values[2]);
           writeArr(raw_values, 3, sizeof(int));
         #endif
@@ -185,11 +202,11 @@ void loop() {
       }
     }
     else if(cmd == 'z') {
-      float val_array[18] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+      float val_array[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
       uint8_t count = serial_busy_wait();
       for(uint8_t i=0; i<count; i++) {
         my3IMU.getQ(q, val);
-	val_array[15] = my3IMU.sampleFreq;        
+        val_array[15] = my3IMU.sampleFreq;        
         //my3IMU.getValues(val);       
         val_array[7] = (val[3] * M_PI/180);
         val_array[8] = (val[4] * M_PI/180);
@@ -206,7 +223,9 @@ void loop() {
         val_array[3] = (q[3]);
         //val_array[15] = millis();
         val_array[16] = val[9];
-	
+        val_array[18] = val[11];
+        val_array[19] = val[12];
+        
         #if HAS_PRESS()
            // with baro
            val_array[17] = val[10];
@@ -214,15 +233,17 @@ void loop() {
            val_array[14] = (my3IMU.getBaroPressure());
         #elif HAS_MPU6050()
            val_array[13] = (my3IMU.DTemp/340.) + 35.;
-		#elif HAS_MPU9150()  || HAS_MPU9250()
+        #elif HAS_MPU9150()  || HAS_MPU9250()
            val_array[13] = ((float) my3IMU.DTemp) / 333.87 + 21.0;
         #elif HAS_LSM9DS0()
             val_array[13] = 21.0 + (float) my3IMU.DTemp/8.; //degrees C
         #elif HAS_ITG3200()
            val_array[13] = my3IMU.rt;
+        #elif HAS_CURIE()
+           val_array[13] = (my3IMU.DTemp/512.0) + 23.0;
         #endif
 
-        serialPrintFloatArr(val_array,18);
+        serialPrintFloatArr(val_array,20);
         //Serial.print('\n');
         
         #if HAS_GPS
@@ -247,43 +268,45 @@ void loop() {
       }
     } 
     else if(cmd == 'a') {
-      float val_array[18] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+      float val_array[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
       uint8_t count = serial_busy_wait();
-      for(uint8_t i=0; i<count; i++) {
+      for(uint8_t i=0; i < count; i++) {
         my3IMU.getQ(q, val);
         val_array[15] = my3IMU.sampleFreq;
         //my3IMU.getValues(val);        
-		val_array[7] = (val[3] * M_PI/180);
-		val_array[8] = (val[4] * M_PI/180);
-		val_array[9] = (val[5] * M_PI/180);
-		val_array[4] = (val[0]);
-		val_array[5] = (val[1]);
-		val_array[6] = (val[2]);
-		val_array[10] = (val[6]);
-		val_array[11] = (val[7]);
-		val_array[12] = (val[8]);
-		val_array[0] = kFilters[0].measureRSSI(q[0]);
-		val_array[1] = kFilters[1].measureRSSI(q[1]);
-		val_array[2] = kFilters[2].measureRSSI(q[2]);
-		val_array[3] = kFilters[3].measureRSSI(q[3]);
-		//val_array[15] = millis();
-		val_array[16] = val[9];
-
-        #if HAS_PRESS()
+        val_array[7] = (val[3] * M_PI/180);
+        val_array[8] = (val[4] * M_PI/180);
+        val_array[9] = (val[5] * M_PI/180);
+        val_array[4] = (val[0]);
+        val_array[5] = (val[1]);
+        val_array[6] = (val[2]);
+        val_array[10] = (val[6]);
+        val_array[11] = (val[7]);
+        val_array[12] = (val[8]);
+        val_array[0] = kFilters[0].measureRSSI(q[0]);
+        val_array[1] = kFilters[1].measureRSSI(q[1]);
+        val_array[2] = kFilters[2].measureRSSI(q[2]);
+        val_array[3] = kFilters[3].measureRSSI(q[3]);
+        //val_array[15] = millis();
+        val_array[16] = val[9];
+        val_array[18] = val[11];
+        val_array[19] = val[12];
+                
+        #if HAS_PRESS() 
            // with baro
            val_array[17] = val[10];
            val_array[13] = (my3IMU.getBaroTemperature());
            val_array[14] = (my3IMU.getBaroPressure());
         #elif HAS_MPU6050()
            val_array[13] = (my3IMU.DTemp/340.) + 35.;
-		#elif HAS_MPU9150()  || HAS_MPU9250()
+        #elif HAS_MPU9150()  || HAS_MPU9250()
            val_array[13] = ((float) my3IMU.DTemp) / 333.87 + 21.0;
         #elif HAS_LSM9DS0()
             val_array[13] = 21.0 + (float) my3IMU.DTemp/8.; //degrees C
         #elif HAS_ITG3200()
            val_array[13] = my3IMU.rt;
         #endif
-        serialPrintFloatArr(val_array, 18);
+        serialPrintFloatArr(val_array, 20);
         //Serial.print('\n');
         
         #if HAS_GPS
@@ -307,7 +330,25 @@ void loop() {
         #endif 
        }
      }
-
+    else if(cmd == 'y') {
+      while(1){
+        my3IMU.getYawPitchRoll(ypr);
+        serialPrintFloatArr(ypr,3);
+        Serial.print('\n');
+      }
+    }
+    
+    else if(cmd == 'j'){
+      uint8_t count = serial_busy_wait();
+      for(uint8_t i=0; i < count; i++) {
+       my3IMU.getQ(q, val);
+       for(int ic = 0; ic < 13; ic++){
+         Serial.print(val[ic], 4); Serial.print(", ");
+       }
+       Serial.print('\n'); 
+      }
+    }
+     
     #if HAS_EEPPROM
       #ifndef CALIBRATION_H
       else if(cmd == 'c') {
@@ -329,39 +370,6 @@ void loop() {
       }
       #endif
     #endif
-    else if(cmd == 'C') { // check calibration values
-      Serial.print("acc offset: ");
-      Serial.print(my3IMU.acc_off_x);
-      Serial.print(",");
-      Serial.print(my3IMU.acc_off_y);
-      Serial.print(",");
-      Serial.print(my3IMU.acc_off_z);
-      Serial.print("\n");
-      
-      Serial.print("magn offset: ");
-      Serial.print(my3IMU.magn_off_x);
-      Serial.print(",");
-      Serial.print(my3IMU.magn_off_y);
-      Serial.print(",");
-      Serial.print(my3IMU.magn_off_z);
-      Serial.print("\n");
-      
-      Serial.print("acc scale: ");
-      Serial.print(my3IMU.acc_scale_x);
-      Serial.print(",");
-      Serial.print(my3IMU.acc_scale_y);
-      Serial.print(",");
-      Serial.print(my3IMU.acc_scale_z);
-      Serial.print("\n");
-      
-      Serial.print("magn scale: ");
-      Serial.print(my3IMU.magn_scale_x);
-      Serial.print(",");
-      Serial.print(my3IMU.magn_scale_y);
-      Serial.print(",");
-      Serial.print(my3IMU.magn_scale_z);
-      Serial.print("\n");
-    }
     else if(cmd == 'C') { // check calibration values
       Serial.print("acc offset: ");
       Serial.print(my3IMU.acc_off_x);
@@ -454,8 +462,107 @@ static void smartDelay(unsigned long ms)
   unsigned long start = millis();
   do 
   {
-    while (ss.available())
-      gps.encode(ss.read());
+    while (gpsSerial.available())
+      gps.encode(gpsSerial.read());
   } while (millis() - start < ms);
   #endif
 }
+
+#if HAS_GPS
+
+  void configureUblox(byte *settingsArrayPointer) {
+  byte gpsSetSuccess = 0;
+  //Serial.println("Configuring u-Blox GPS initial state...");
+
+  //Generate the configuration string for loading from i2c eeprom
+  byte setCFG[] = {0xB5, 0x62, 0x06, 0x09, 0x0D, 0x00, 0x00, 0x00, 0x00, 0x00, 
+  0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0x04, 0x1E,
+  0xB4 };
+  calcChecksum(&setCFG[2], sizeof(setCFG) - 4);
+
+  delay(2500);
+
+  gpsSetSuccess = 0;
+  while(gpsSetSuccess < 3) {
+    //Serial.print("Loading permanent configuration... ");
+    sendUBX(&setCFG[0], sizeof(setCFG));  //Send UBX Packet
+    gpsSetSuccess += getUBX_ACK(&setCFG[2]); 
+               //Passes Class ID and Message ID to the ACK Receive function      
+    if (gpsSetSuccess == 10) gpsStatus[1] = true;
+    if (gpsSetSuccess == 5 | gpsSetSuccess == 6) gpsSetSuccess -= 4;
+  }
+  if (gpsSetSuccess == 3) Serial.println("Config update failed.");
+  gpsSetSuccess = 0;
+  }
+
+  void calcChecksum(byte *checksumPayload, byte payloadSize) {
+    byte CK_A = 0, CK_B = 0;
+    for (int i = 0; i < payloadSize ;i++) {
+      CK_A = CK_A + *checksumPayload;
+      CK_B = CK_B + CK_A;
+      checksumPayload++;
+    }
+    *checksumPayload = CK_A;
+    checksumPayload++;
+    *checksumPayload = CK_B;
+  }
+
+  void sendUBX(byte *UBXmsg, byte msgLength) {
+    for(int i = 0; i < msgLength; i++) {
+      gpsSerial.write(UBXmsg[i]);
+      gpsSerial.flush();
+    }
+    gpsSerial.println();
+    gpsSerial.flush();
+  }
+
+
+  byte getUBX_ACK(byte *msgID) {
+    byte CK_A = 0, CK_B = 0;
+    byte incoming_char;
+    boolean headerReceived = false;
+    unsigned long ackWait = millis();
+    byte ackPacket[10] = {0xB5, 0x62, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    int i = 0;
+    while (1) {
+      if (gpsSerial.available()) {
+        incoming_char = gpsSerial.read();
+        if (incoming_char == ackPacket[i]) {
+          i++;
+        }
+      else if (i > 2) {
+        ackPacket[i] = incoming_char;
+        i++;
+      }
+    }
+    if (i > 9) break;
+    if ((millis() - ackWait) > 1500) {
+      //Serial.println("ACK Timeout");
+      return 5;
+      }
+    if (i == 4 && ackPacket[3] == 0x00) {
+      //Serial.println("NAK Received");
+      return 1;
+      }
+    }
+
+    for (i = 2; i < 8 ;i++) {
+      CK_A = CK_A + ackPacket[i];
+      CK_B = CK_B + CK_A;
+    }
+  
+    if (msgID[0] == ackPacket[6] && msgID[1] == ackPacket[7] && CK_A == ackPacket[8] && CK_B == ackPacket[9]) {
+      //Serial.println("Success!");
+      //Serial.print("ACK Received! ");
+      //printHex(ackPacket, sizeof(ackPacket));
+      return 10;
+    }
+    else {
+      //Serial.print("ACK Checksum Failure: ");
+      //printHex(ackPacket, sizeof(ackPacket));
+      delay(1000);
+      return 1;
+    }
+  }
+
+#endif
