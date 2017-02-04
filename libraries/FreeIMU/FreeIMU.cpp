@@ -1709,7 +1709,7 @@ void FreeIMU::getQ(float * q, float * val) {
 		#else
 			MARGUpdateFilter(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
 		#endif
-	*/	val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[6], val[7], val[8]);
+		val[9] = maghead.iheading(1, 0, 0, val[0], val[1], val[2], val[6], val[7], val[8]); */
 	#if(MARG == 0 || MARG == 1 || MARG == 3 )
 	  #if IS_9DOM() && (not defined(DISABLE_MAGN) && defined(DISABLE_MAGJAM))
 		Serial.println("MAGJAM Defined");
