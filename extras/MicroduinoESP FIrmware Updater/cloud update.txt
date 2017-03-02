@@ -1,0 +1,30 @@
+1  云升级功能使用：
+先用通用升级程序，烧写0.92版本固件到你的模块！
+
+2  然后参照下面云升级指令完成最新版本升级
+
+
+Update steps
+1.Make sure TE(terminal equipment) is in sta or sta+ap mode
+ex. AT+CWMODE=3
+    OK
+    
+    AT+RST
+
+2.Make sure TE got ip address
+ex. AT+CWJAP="ssid","12345678"
+    OK
+
+    AT+CIFSR
+    192.168.1.134
+
+3.Let's update
+ex. AT+CIUPDATE
+    +CIPUPDATE:1    found server
+    +CIPUPDATE:2    connect server
+    +CIPUPDATE:3    got edition
+    +CIPUPDATE:4    start start
+
+    OK
+
+note. If there are mistakes in the updating, then break update and print ERROR.

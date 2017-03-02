@@ -2,10 +2,20 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Friday, December 09, 2016
+Thursday, March 02, 2017
+
+03-02-2017 Added three sketches that can support WiFi  One is for the ESP8266, the second for the ESP32 and the third
+		   third for the Microduino Wifi(ESP) module.  The 8266 sketch was tested on the LinkNode D1, the 32 sketch on
+		   a ESP32 dev board from Onehorse on Tindie.  There are also two processing sketches that you can use
+		   with the WiFi in the Processing directory.  To use you will need to install the ESP8266 Arduino library or 
+		   the Arduino ESP32 libraries on Github.  They give you detailed instructions on installation.  For the Microduino
+		   ESP module I included a copy of the Arduino WiFiEsp library.  
+		
+--------------------------------------------------------		
 
 12-09-16 Made the Magnetic Disturbance algorithm optional.  If you want to enable uncomment the following line in the FreeIMU.h file:
 #define DISABLE_MAGJAM  // Uncomment this line to disable the magnetic disturbance
+
 --------------------------------------------------------
 
 12-08-16 Added a magnectic disturbance algorithm that will detect presence of strong magnetic fields.  Algorithm is based on discussion at https://forum.pjrc.com/threads/33902-Prop-Shield-NXPSensorFusion-observations
@@ -15,7 +25,9 @@ Friday, December 09, 2016
 		 and Unscented Kalman filter and Magnetic Angular Rate Update (MARU) for an improved 
 		 Pedestrian Dead-Reckoning,
 		 https://www.researchgate.net/publication/235634565_Unscented_Kalman_filter_and_Magnetic_Angular_Rate_Update_MARU_for_an_improved_Pedestrian_Dead-Reckoning?enrichId=rgreq-3005504c-ee49-416d-9a75-95eca90fb5e5&enrichSource=Y292ZXJQYWdlOzIzNTYzNDU2NTtBUzoxMDIyMTAxMjU5NTkxNzRAMTQwMTM4MDIwMTQ5Ng%3D%3D&el=1_x_2
-----------------------------------------------------------------------------
+
+		 ----------------------------------------------------------------------------
+		 
 12-08-16 Updated code where necessary for updated Pololu libraries.
 
 ----------------------------------------------------------------------------

@@ -44,7 +44,7 @@ calibration_h_file_name = "calibration.h"
 ##
 #####
 
-word = 4
+word = 2
 
 acc_range = 25000
 magn_range = 1500
@@ -165,7 +165,7 @@ class FreeIMUCal(QMainWindow, Ui_FreeIMUCal):
     try:
       self.ser = serial.Serial(
         port= self.serial_port,
-        baudrate=115200,
+        baudrate=57600,
         parity=serial.PARITY_NONE,
         stopbits=serial.STOPBITS_ONE,
         bytesize=serial.EIGHTBITS
