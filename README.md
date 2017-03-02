@@ -10,11 +10,18 @@ Thursday, March 02, 2017
 		   with the WiFi in the Processing directory.  To use you will need to install the ESP8266 Arduino library or 
 		   the Arduino ESP32 libraries on Github.  They give you detailed instructions on installation.  For the Microduino
 		   ESP module I included a copy of the Arduino WiFiEsp library.  
+		   
+		   For the Microduino you will need to download and flash it with 1.3 AT firmware: 
+		   http://www.electrodragon.com/w/ESP8266_AT-Command_firmware
+		   I included a copy in the extras folder,
+		   
+		   The WiFiEsp library is at (for ref): https://github.com/bportaluri/WiFiEsp
+
 		
 --------------------------------------------------------		
 
 12-09-16 Made the Magnetic Disturbance algorithm optional.  If you want to enable uncomment the following line in the FreeIMU.h file:
-#define DISABLE_MAGJAM  // Uncomment this line to disable the magnetic disturbance
+>#define DISABLE_MAGJAM  // Uncomment this line to disable the magnetic disturbance
 
 --------------------------------------------------------
 
