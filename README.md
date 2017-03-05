@@ -2,7 +2,17 @@ FreeIMU-Updates
 ===============
 
 Change Log
-Thursday, March 02, 2017
+Sunday March 05, 2017
+
+
+03-05-2017 Added a FreeIMU_serial_2.ino sketch that will send continuous data to the Processing GUI.  All other functions
+		   functions remain the same.
+           Added a new Processing Gui v6 that works with the serial_2 sketch
+           Additional functions available in serial_2 sketch as well as serial sketch:
+           'y' - prints only yaw, pitch and roll values
+           'j' - prints out calibrated values
+
+--------------------------------------------------------
 
 03-02-2017 Added three sketches that can support WiFi  One is for the ESP8266, the second for the ESP32 and the third
 		   third for the Microduino Wifi(ESP) module.  The 8266 sketch was tested on the LinkNode D1, the 32 sketch on
