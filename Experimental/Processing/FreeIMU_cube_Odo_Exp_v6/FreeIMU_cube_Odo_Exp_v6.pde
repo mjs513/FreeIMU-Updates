@@ -471,7 +471,6 @@ void draw() {
 //}
  
 static final void removeExitEvent(final PSurface surf) {
-  myPort.write("v");
   final java.awt.Window win
     = ((processing.awt.PSurfaceAWT.SmoothCanvas) surf.getNative()).getFrame();
  
