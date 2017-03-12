@@ -1,9 +1,15 @@
-FreeIMU-Updates
+﻿FreeIMU-Updates
 ===============
 
 Change Log
-Sunday March 05, 2017
+Saturday March 11, 2017
 
+
+03-11-2016 Added new Processing GUI based on Multiwii GUI.  Hope I am not violating any licenses.  If I am please
+           let me know.  To use go to setup select whether you have a GPS attached and set any values you want.
+           Click on START button to connect and switch to the FreeIMU tab.
+
+--------------------------------------------------------
 
 03-05-2017 Added a FreeIMU_serial_2.ino sketch that will send continuous data to the Processing GUI.  All other functions
 		   functions remain the same.
