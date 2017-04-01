@@ -91,7 +91,7 @@ void MPU60X0::initialize() {
  * 
  */
 void MPU60X0::initialize9250() {
-	uint8_t data;
+	//uint8_t data;
     // SPI Configuration
 	if (bSPI) {
       SPI.begin();
@@ -108,7 +108,7 @@ void MPU60X0::initialize9250() {
 	setStandbyDisable();
 	setSleepEnabled(false); // thanks to Jack Elston for pointing this one out!
     setClockSource(MPU60X0_CLOCK_PLL_XGYRO);
-    setFullScaleGyroRange(MPU60X0_GYRO_FS_250);
+    setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);
     setFullScaleAccelRange(MPU60X0_ACCEL_FS_2);
 	setI2CMasterModeEnabled(false); 
 	setI2CBypassEnabled(true);
@@ -116,8 +116,329 @@ void MPU60X0::initialize9250() {
 	//data = 1000 / rate - 1;
 	//setRate(data);	
 }
- 
- 
+
+void MPU60X0::initialize9250MasterMode(){
+	#include "AK8963.h"
+	
+	uint8_t buff[3];
+    uint8_t data[7];
+	float _magScaleX, _magScaleY, _magScaleZ;	
+	
+	//set dev address for magnetometer
+	magDevAddr = AK8963_DEFAULT_ADDRESS;
+	
+    // SPI Configuration
+	if (bSPI) {
+      SPI.begin();
+    	pinMode(devAddr, OUTPUT);
+    	digitalWrite(devAddr, HIGH);
+		reset();
+		delay(100);
+		switchSPIEnabled(true);
+		delay(1);
+	} else {
+		Wire.begin(400000);
+		switchSPIEnabled(false);
+	}
+	
+	reset();
+
+	setStandbyDisable();
+	setSleepEnabled(false);
+	
+    // select clock source to gyro
+    if( !writeRegister(MPU60X0_RA_PWR_MGMT_1, MPU60X0_CLOCK_PLL_XGYRO) ){
+        Serial.println("Clock Source Not Set");
+    }
+
+    // enable I2C master mode
+    if( !writeRegister(MPU60X0_RA_USER_CTRL,I2C_MST_EN) ){
+        Serial.println("Master Mode Not Set");
+    }
+
+    // set the I2C bus speed to 400 kHz
+    if( !writeRegister(MPU60X0_RA_I2C_MST_CTRL,I2C_MST_CLK) ){
+        Serial.println("I2C Bus Speed Not Set");
+    }
+
+    // set AK8963 to Power Down
+    if( !writeAKRegister(AK8963_RA_CNTL1, AK8963_MODE_POWERDOWN) ){
+        Serial.println("AK Not Powered Down");
+    }
+
+    // reset the MPU9250
+    writeRegister(MPU60X0_RA_PWR_MGMT_1, PWR_RESET);
+
+    // wait for MPU-9250 to come back up
+    delay(1);
+
+    // reset the AK8963
+    writeAKRegister(AK8963_RA_CNTL2, PWR_RESET);
+
+    // select clock source to gyro
+    if( !writeRegister(MPU60X0_RA_PWR_MGMT_1, MPU60X0_CLOCK_PLL_XGYRO) ){
+        Serial.println("Clock Source Not Set");
+    }
+
+    // check the WHO AM I byte, expected value is 0x71 (decimal 113)
+	readRegister(MPU60X0_RA_WHO_AM_I, 1,&buff[0]);
+    if( buff[0] != 113 ){
+        Serial.println("9250 Not Recognized");
+    }
+
+    // enable accelerometer and gyro
+    if( !writeRegister(MPU60X0_RA_PWR_MGMT_2, SEN_ENABLE) ){
+        Serial.println("Accel and Gyro not Enabled");
+    }
+
+    /* setup the accel and gyro ranges */
+	setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);	// set gyro range to +/- 2000 deg/second
+	setFullScaleAccelRange(MPU60X0_ACCEL_FS_2);		// set accel range to +- 2g
+	setDLPFMode(MPU60X0_DLPF_BW_98); 
+	
+    // enable I2C master mode
+    if( !writeRegister(MPU60X0_RA_USER_CTRL,I2C_MST_EN) ){
+    	Serial.println("Master Mode Set");
+    }
+
+	// set the I2C bus speed to 400 kHz
+	if( !writeRegister(MPU60X0_RA_I2C_MST_CTRL,MPU60X0_CLOCK_PLL_XGYRO) ){
+		Serial.println("I2C Bus Set");
+	}
+
+	// check AK8963 WHO AM I register, expected value is 0x48 (decimal 72)
+	readAKRegisters(AK8963_RA_WIA, sizeof(buff), &buff[0]);
+	if(  buff[0] != 72 ){
+        Serial.print(buff[0]); Serial.print(", ");Serial.println("AK does not match");
+	}
+
+    /* get the magnetometer calibration */
+
+    // set AK8963 to Power Down
+    if( !writeAKRegister(AK8963_RA_CNTL1, AK8963_MODE_POWERDOWN) ){
+        Serial.println("AK Not Powered Down");
+    }
+    delay(100); // long wait between AK8963 mode changes
+
+    // set AK8963 to FUSE ROM access
+    if( !writeAKRegister(AK8963_RA_CNTL1, AK8963_MODE_FUSEROM)){
+        Serial.println("FUSE ROM Access Not set");
+    }
+
+    delay(100); // long wait between AK8963 mode changes
+	
+    // read the AK8963 ASA registers and compute magnetometer scale factors
+	readAKRegisters(AK8963_RA_ASAX, sizeof(buff), &buff[0]);
+	//_magScaleX = ((((float)buff[0]) - 128.0f)/(256.0f) + 1.0f) * 4912.0f / 32760.0f; // micro Tesla
+	//_magScaleY = ((((float)buff[1]) - 128.0f)/(256.0f) + 1.0f) * 4912.0f / 32760.0f; // micro Tesla
+	//_magScaleZ = ((((float)buff[2]) - 128.0f)/(256.0f) + 1.0f) * 4912.0f / 32760.0f; // micro Tesla 
+	_magScaleX = buff[0];
+	_magScaleY = buff[1];
+	_magScaleZ = buff[2];
+	//Serial.print(_magScaleX); Serial.print(", "); Serial.print(_magScaleY); 
+	//Serial.print(", "); Serial.println(_magScaleZ);
+	
+    // set AK8963 to Power Down
+    if( !writeAKRegister(AK8963_RA_CNTL1, AK8963_MODE_POWERDOWN) ){
+        Serial.println("AK Not Powered Down");
+    }
+    delay(100); // long wait between AK8963 mode changes  
+
+    // set AK8963 to 16 bit resolution, 100 Hz update rate
+    if( !writeAKRegister(AK8963_RA_CNTL1, 0x16) ){
+        Serial.println("Res Not Set");
+    }
+    delay(100); // long wait between AK8963 mode changes
+
+    // select clock source to gyro
+    if( !writeRegister(MPU60X0_RA_PWR_MGMT_1, MPU60X0_CLOCK_PLL_XGYRO) ){
+        Serial.println("Clock Source Not Set");
+    }      
+
+    // instruct the MPU9250 to get 7 bytes of data from the AK8963 at the sample rate
+    readAKRegisters(AK8963_RA_HXL,sizeof(data),&data[0]);
+	Serial.println((((int16_t)data[1]) << 8) | data[0]);  
+    Serial.println((((int16_t)data[3]) << 8) | data[2]);
+    Serial.println((((int16_t)data[5]) << 8) | data[4]);
+	
+	
+    // successful init, return 0
+	//Serial.println("FINISHED");
+}
+
+/* get magnetometer data given pointers to store the three values, return data as counts */
+void MPU60X0::get9250MagCounts(int16_t* hx, int16_t* hy, int16_t* hz){
+    uint8_t buff[7];
+    // read the magnetometer data off the external sensor buffer
+    readRegister(MPU60X0_RA_EXT_SENS_DATA_00,sizeof(buff),&buff[0]);
+
+    if( buff[6] == 0x10 ) { // check for overflow
+        *hx = (((int16_t)buff[1]) << 8) | buff[0];  // combine into 16 bit values
+        *hy = (((int16_t)buff[3]) << 8) | buff[2];
+        *hz = (((int16_t)buff[5]) << 8) | buff[4];
+    }
+    else{
+        *hx = 0;  
+        *hy = 0;
+        *hz = 0;
+    }
+}
+
+
+void MPU60X0::get9250Motion9Counts(int16_t* ax, int16_t* ay, int16_t* az, int16_t* gx, int16_t* gy, int16_t* gz, int16_t* hx, int16_t* hy, int16_t* hz)
+{
+    uint8_t buff[21];
+    int16_t axx, ayy, azz, gxx, gyy, gzz;
+    readRegister(MPU60X0_RA_ACCEL_XOUT_H, sizeof(buff), &buff[0]); // grab the data from the MPU9250
+
+    axx = (((int16_t)buff[0]) << 8) | buff[1];  // combine into 16 bit values
+    ayy = (((int16_t)buff[2]) << 8) | buff[3];
+    azz = (((int16_t)buff[4]) << 8) | buff[5];
+
+    gxx = (((int16_t)buff[8]) << 8) | buff[9];
+    gyy = (((int16_t)buff[10]) << 8) | buff[11];
+    gzz = (((int16_t)buff[12]) << 8) | buff[13];
+
+    *hx = (((int16_t)buff[15]) << 8) | buff[14];  
+    *hy = (((int16_t)buff[17]) << 8) | buff[16];
+    *hz = (((int16_t)buff[19]) << 8) | buff[18];
+
+    *ax = tX[0]*axx + tX[1]*ayy + tX[2]*azz; // transform axes
+    *ay = tY[0]*axx + tY[1]*ayy + tY[2]*azz;
+    *az = tZ[0]*axx + tZ[1]*ayy + tZ[2]*azz;
+
+    *gx = tX[0]*gxx + tX[1]*gyy + tX[2]*gzz;
+    *gy = tY[0]*gxx + tY[1]*gyy + tY[2]*gzz;
+    *gz = tZ[0]*gxx + tZ[1]*gyy + tZ[2]*gzz;
+}
+
+/* get accelerometer, gyro, and magnetometer data given pointers to store values */
+void MPU60X0::get9250Motion9(float* ax, float* ay, float* az, float* gx, float* gy, float* gz, float* hx, float* hy, float* hz){
+    int16_t accel[3];
+    int16_t gyro[3];
+    int16_t mag[3];
+
+    get9250Motion9Counts(&accel[0], &accel[1], &accel[2], &gyro[0], &gyro[1], &gyro[2], &mag[0], &mag[1], &mag[2]);
+
+    *ax = ((float) accel[0]); // typecast and scale to values
+    *ay = ((float) accel[1]);
+    *az = ((float) accel[2]);
+
+    *gx = ((float) gyro[0]);
+    *gy = ((float) gyro[1]);
+    *gz = ((float) gyro[2]);
+
+    *hx = ((float) mag[0]);
+    *hy = ((float) mag[1]);
+    *hz = ((float) mag[2]);
+
+}
+
+/* get accelerometer, magnetometer, and temperature data given pointers to store values, return data as counts */
+void MPU60X0::get9250Motion10Counts(int16_t* ax, int16_t* ay, int16_t* az, int16_t* gx, int16_t* gy, int16_t* gz, int16_t* hx, int16_t* hy, int16_t* hz, int16_t* t){
+    uint8_t buff[21];
+    int16_t axx, ayy, azz, gxx, gyy, gzz;
+
+    readRegister(MPU60X0_RA_ACCEL_XOUT_H, sizeof(buff), &buff[0]); // grab the data from the MPU9250
+
+    axx = (((int16_t)buff[0]) << 8) | buff[1];  // combine into 16 bit values
+    ayy = (((int16_t)buff[2]) << 8) | buff[3];
+    azz = (((int16_t)buff[4]) << 8) | buff[5];
+
+    *t = (((int16_t)buff[6]) << 8) | buff[7];
+
+    gxx = (((int16_t)buff[8]) << 8) | buff[9];
+    gyy = (((int16_t)buff[10]) << 8) | buff[11];
+    gzz = (((int16_t)buff[12]) << 8) | buff[13];
+
+    *hx = (((int16_t)buff[15]) << 8) | buff[14];
+    *hy = (((int16_t)buff[17]) << 8) | buff[16];
+    *hz = (((int16_t)buff[19]) << 8) | buff[18];
+
+    *ax = tX[0]*axx + tX[1]*ayy + tX[2]*azz; // transform axes
+    *ay = tY[0]*axx + tY[1]*ayy + tY[2]*azz;
+    *az = tZ[0]*axx + tZ[1]*ayy + tZ[2]*azz;
+
+    *gx = tX[0]*gxx + tX[1]*gyy + tX[2]*gzz;
+    *gy = tY[0]*gxx + tY[1]*gyy + tY[2]*gzz;
+    *gz = tZ[0]*gxx + tZ[1]*gyy + tZ[2]*gzz;
+}
+
+
+//========================================================
+void MPU60X0::readRegister(uint8_t subAddress, uint8_t count, uint8_t* dest){
+        Wire.beginTransmission(devAddr); // open the device
+        Wire.write(subAddress); // specify the starting register address
+        Wire.endTransmission(false);
+
+        Wire.requestFrom(devAddr, count); // specify the number of bytes to receive
+		
+        //uint8_t i = 0; // read the data into the buffer
+        //while( Wire.available() ){
+        //    dest[i++] = Wire.read();
+        //}
+		Wire.readBytes(dest, count);
+
+		
+}
+
+/* writes a register to the AK8963 given a register address and data */
+bool MPU60X0::writeAKRegister(uint8_t subAddress, uint8_t data){
+	uint8_t count = 1;
+	uint8_t buff[1];
+	
+	writeRegister(MPU60X0_RA_I2C_SLV0_ADDR, magDevAddr); // set slave 0 to the AK8963 and set for write
+	writeRegister(MPU60X0_RA_I2C_SLV0_REG,subAddress); // set the register to the desired AK8963 sub address
+	writeRegister(MPU60X0_RA_I2C_SLV0_DO, data); // store the data for write
+	writeRegister(MPU60X0_RA_I2C_SLV0_CTRL, I2C_SLV0_EN | count); // enable I2C and send 1 byte
+
+	// read the register and confirm
+	readAKRegisters(subAddress, sizeof(buff), &buff[0]);
+
+	if(buff[0] == data) {
+  		return true;
+  	}
+  	else{
+  		return false;
+  	}
+}
+
+
+/* reads registers from the AK8963 */
+void MPU60X0::readAKRegisters(uint8_t subAddress, uint8_t count, uint8_t* dest){
+	
+	writeRegister(MPU60X0_RA_I2C_SLV0_ADDR, magDevAddr | I2C_READ_FLAG); // set slave 0 to the AK8963 and set for read
+	writeRegister(MPU60X0_RA_I2C_SLV0_REG,  subAddress); // set the register to the desired AK8963 sub address
+	writeRegister(MPU60X0_RA_I2C_SLV0_CTRL, I2C_SLV0_EN | count); // enable I2C and request the bytes
+	delayMicroseconds(100); // takes some time for these registers to fill
+	readRegister(MPU60X0_RA_EXT_SENS_DATA_00, count, dest); // read the bytes off the MPU9250 EXT_SENS_DATA registers
+
+}
+
+bool MPU60X0::writeRegister(uint8_t subAddress, uint8_t data){
+	uint8_t buff[1];
+
+    Wire.beginTransmission(devAddr); // open the device
+    Wire.write(subAddress); // write the register address
+    Wire.write(data); // write the data
+    Wire.endTransmission();
+   
+    delay(10); // need to slow down how fast I write to MPU9250
+	
+  	/* read back the register */
+  	readRegister(subAddress,sizeof(buff),&buff[0]);
+
+  	/* check the read back register against the written register */
+  	if(buff[0] == data) {
+  		return true;
+  	}
+  	else{
+  		return false;
+  	}
+	
+}
+
+
 /** Verify the I2C/SPI connection.
  * Make sure the device is connected and responds as expected.
  * @return True if connection is valid, false otherwise
@@ -3208,4 +3529,5 @@ uint8_t MPU60X0::getDMPConfig2() {
 void MPU60X0::setDMPConfig2(uint8_t config) {
     I2Cdev::writeByte(bSPI, devAddr, MPU60X0_RA_DMP_CFG_2, config);
 }
+
 #endif
