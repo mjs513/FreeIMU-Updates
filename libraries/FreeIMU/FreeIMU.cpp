@@ -1220,15 +1220,15 @@ void FreeIMU::getRawValues(int * raw_values) {
 		gyro.readTemp(&senTemp);
 		raw_values[9] = senTemp*100;
 	#elif HAS_CURIE() || HAS_MPU6050() || HAS_MPU6000()
-	  int ax, ay, az, gx, gy, gz, mx, my, mz, rt;
-	  accgyro.readMotionSensor(ax, ay, az, gx, gy, gz);
+   int16_t ax, ay, az, gx, gy, gz, mx, my, mz, rt;
+	  accgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
       raw_values[0] = ax;
       raw_values[1] = ay;
       raw_values[2] = az;
       raw_values[3] = gx;
       raw_values[4] = gy;
       raw_values[5] = gz;
-	  raw_values[9] = accgyro.readTemperature();
+	  raw_values[9] = accgyro.getTemperature();
 	//#elif HAS_MPU6050() || HAS_MPU6000() || HAS_MPU9150() || HAS_MPU9250()
 	#elif HAS_MPU9150()
 	  accgyro.getMotion6(&raw_values[0], &raw_values[1], &raw_values[2], &raw_values[3], &raw_values[4], &raw_values[5]);  	  
