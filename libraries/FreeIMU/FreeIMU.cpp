@@ -1486,9 +1486,9 @@ void FreeIMU::getValues(float * values) {
     #endif
 
 	
-	if !HAS_MPU(){
+//	if !HAS_MPU(){
 		DTemp = accgyro.getTemperature();
-	}
+//	}
 	
 	if(temp_corr_on == 1){
 		if(DTemp < temp_break){    
