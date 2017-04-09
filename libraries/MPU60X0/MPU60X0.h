@@ -84,6 +84,7 @@ THE SOFTWARE.
 #define MPU60X0_RA_CONFIG           0x1A
 #define MPU60X0_RA_GYRO_CONFIG      0x1B
 #define MPU60X0_RA_ACCEL_CONFIG     0x1C
+#define MPU9250_RA_ACCEL_CONFIG2	0x1D
 #define MPU60X0_RA_FF_THR           0x1D
 #define MPU60X0_RA_FF_DUR           0x1E
 #define MPU60X0_RA_MOT_THR          0x1F
@@ -428,6 +429,20 @@ THE SOFTWARE.
 #define	I2C_MST_EN  	0x20
 #define I2C_MST_CLK		0x0D
 #define PWR_RESET		0x80
+		
+#define INT_DISABLE		0x00
+#define INT_PULSE_50US	0x00
+#define INT_RAW_RDY_EN	0x01
+
+enum mpu9250_dlpf_bandwidth
+{
+    DLPF_BANDWIDTH_184HZ,
+    DLPF_BANDWIDTH_92HZ,
+    DLPF_BANDWIDTH_41HZ,
+    DLPF_BANDWIDTH_20HZ,
+    DLPF_BANDWIDTH_10HZ,
+    DLPF_BANDWIDTH_5HZ
+};
 
 
 // note: DMP code memory blocks defined at end of header file
@@ -443,7 +458,12 @@ class MPU60X0 {
 		void get9250Motion9Counts(int16_t* ax, int16_t* ay, int16_t* az, int16_t* gx, int16_t* gy, int16_t* gz, int16_t* hx, int16_t* hy, int16_t* hz);
 		void get9250Motion9(float* ax, float* ay, float* az, float* gx, float* gy, float* gz, float* hx, float* hy, float* hz);
 		void get9250Motion10Counts(int16_t* ax, int16_t* ay, int16_t* az, int16_t* gx, int16_t* gy, int16_t* gz, int16_t* hx, int16_t* hy, int16_t* hz, int16_t* t);
+		void get9250AccelCounts(int16_t* ax, int16_t* ay, int16_t* az);
+		void get9250GyroCounts(int16_t* gx, int16_t* gy, int16_t* gz);
 		void get9250MagCounts(int16_t* hx, int16_t* hy, int16_t* hz);
+		void get9250TempCounts(int16_t* t);
+		int setFilt9250(mpu9250_dlpf_bandwidth bandwidth, uint8_t SRD);
+		int enableInt9250(bool enable);
 		void readAKRegisters(uint8_t subAddress, uint8_t count, uint8_t* dest);
 		bool writeAKRegister(uint8_t subAddress, uint8_t data);
 		bool writeRegister(uint8_t subAddress, uint8_t data);

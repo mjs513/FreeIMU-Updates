@@ -299,11 +299,6 @@ GNU General Public License for more details.
 12-08-16 Updated code where necessary for updated Pololu libraries.
 
 ----------------------------------------------------------------------------
-04-01-17 Added master mode support for the MPU950.  This will allow multiple MPU950s on one
-		 with different addresses.  Avoids conflict with AK8963 I2C address being
-		 the same
------------------------------------------------------------------------------
-
 */
 
 #include "Arduino.h"
@@ -354,6 +349,10 @@ GNU General Public License for more details.
 	float c0[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
 #endif
 
+enum Mscale {
+  MFS_14BITS = 0, 	// 0.6 mG per LSB
+  MFS_16BITS = 1    // 0.15 mG per LSB
+};
 
 //Setup accelerometer filter
 //butter50hz2_0 mfilter_accx;
@@ -419,7 +418,7 @@ FreeIMU::FreeIMU() {
     maghead = iCompass(MAG_DEC, WINDOW_SIZE, SAMPLE_SIZE);
   #elif HAS_MPU9250()
     accgyro = MPU60X0();
-    //mag = AK8963();  // now taken care of with master mode
+    //mag = AK8963();
     maghead = iCompass(MAG_DEC, WINDOW_SIZE, SAMPLE_SIZE);
   #elif HAS_LSM9DS0()
     //lsm = LSM9DS0(MODE_I2C, LSM9DS0_G, LSM9DS0_XM);
@@ -639,6 +638,8 @@ void FreeIMU::RESET_Q() {
 	 if(fastmode) { // switch to 400KHz I2C - eheheh
       TWBR = ((F_CPU / 400000L) - 16) / 2; 
     }
+  #else
+	Wire.setClock(400000);
   #endif
 
  
@@ -695,14 +696,8 @@ void FreeIMU::RESET_Q() {
   #elif HAS_MPU9150()
     //initialize accelerometer and gyroscope
     accgyro = MPU60X0(false, accgyro_addr);
-    #if HAS_MPU9250()
-	    accgyro.initialize9250MasterMode();
-	    //accgyro.setDLPFMode(MPU60X0_DLPF_BW_98);
-	#else
-	  accgyro.initialize();
-	  accgyro.setDLPFMode(MPU60X0_DLPF_BW_20);
-	#endif
-	
+	accgyro.initialize();
+	accgyro.setDLPFMode(MPU60X0_DLPF_BW_20);
     accgyro.setI2CMasterModeEnabled(0);
     accgyro.setI2CBypassEnabled(1);
     accgyro.setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);
@@ -715,15 +710,16 @@ void FreeIMU::RESET_Q() {
   #elif HAS_MPU9250()
 	//initialize accelerometer and gyroscope
 	accgyro = MPU60X0(false, accgyro_addr);
-	accgyro.initialize9250MasterMode();
+	//accgyro.initialize9250();
 	//accgyro.setDLPFMode(MPU60X0_DLPF_BW_20); 
 	//accgyro.setI2CMasterModeEnabled(0);
-	//accgyro.setI2CBypassEnabled(1);	// using master mode now
+	//accgyro.setI2CBypassEnabled(1);
 	//accgyro.setFullScaleGyroRange(MPU60X0_GYRO_FS_2000);
 	//accgyro.setFullScaleAccelRange(MPU60X0_ACCEL_FS_2);
+	accgyro.initialize9250MasterMode();
 	gyro_sensitivity = 16.4f;
 	delay(100);
-	//initialize magnetometer - using master mode where mag is read directly
+	//initialize magnetometer
 	//mag = AK8963(false, AK8963_DEFAULT_ADDRESS);
 	//mag.initialize();  
 	//mag.setModeRes(AK8963_MODE_CONT2, MFS_16BITS);
@@ -1205,23 +1201,23 @@ void FreeIMU::calLoad() {
 /**
  * Populates raw_values with the raw_values from the sensors
 */
-void FreeIMU::getRawValues(int * raw_values) {
+void FreeIMU::getRawValues(int16_t * raw_values) {
 	//Set raw values for Magnetometer, Press, Temp to 0 in case you are only using
 	//an accelerometer and gyro
 	//raw_values[9] will be set to MPU-6050 temp, see zeroGyro to change raw_values dimension
-	//raw_values[6] = 0;
-	//raw_values[7] = 0;
-	//raw_values[8] = 0;
+	raw_values[6] = 0;
+	raw_values[7] = 0;
+	raw_values[8] = 0;
 	//raw_values[9] = 0;
 	
   #if HAS_ITG3200()
-		acc.readAccel(&raw_values[0], &raw_values[1], &raw_values[2]);
-		gyro.readGyroRaw(&raw_values[3], &raw_values[4], &raw_values[5]);
-		gyro.readTemp(&senTemp);
-		raw_values[9] = senTemp*100;
-	#elif HAS_CURIE() || HAS_MPU6050() || HAS_MPU6000()
-	  int ax, ay, az, gx, gy, gz, mx, my, mz, rt;
-	  accgyro.readMotionSensor(ax, ay, az, gx, gy, gz);
+    acc.readAccel(&raw_values[0], &raw_values[1], &raw_values[2]);
+    gyro.readGyroRaw(&raw_values[3], &raw_values[4], &raw_values[5]);
+	gyro.readTemp(&senTemp);
+	raw_values[9] = senTemp*100;
+  #elif HAS_CURIE()
+    int ax, ay, az, gx, gy, gz, mx, my, mz, rt;
+	accgyro.readMotionSensor(ax, ay, az, gx, gy, gz);
       raw_values[0] = ax;
       raw_values[1] = ay;
       raw_values[2] = az;
@@ -1229,15 +1225,28 @@ void FreeIMU::getRawValues(int * raw_values) {
       raw_values[4] = gy;
       raw_values[5] = gz;
 	  raw_values[9] = accgyro.readTemperature();
-	//#elif HAS_MPU6050() || HAS_MPU6000() || HAS_MPU9150() || HAS_MPU9250()
-	#elif HAS_MPU9150()
+  //#elif HAS_MPU6050() || HAS_MPU6000() || HAS_MPU9150() || HAS_MPU9250()
+  #elif HAS_MPU6050() || HAS_MPU6000() || HAS_MPU9150()
+    #ifdef __AVR__
 	  accgyro.getMotion6(&raw_values[0], &raw_values[1], &raw_values[2], &raw_values[3], &raw_values[4], &raw_values[5]);  	  
  	  //#if HAS_MPU9150() || HAS_MPU9250()
-	  mag.getHeading(&raw_values[6], &raw_values[7], &raw_values[8]);			
-	  delay(10);
-	  raw_values[6] = mx;
-	  raw_values[7] = my;
-	  raw_values[8] = mz;				
+	  #if HAS_MPU9150()
+		  mag.getHeading(&raw_values[6], &raw_values[7], &raw_values[8]);			
+		  delay(10);
+		#endif
+	  rt = accgyro.getTemperature();	  
+	  raw_values[9] = rt;
+	 #else
+      int16_t ax, ay, az, gx, gy, gz, mx, my, mz, rt;
+      accgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+	  //#if HAS_MPU9150() || HAS_MPU9250() 
+	  #if HAS_MPU9150()
+		  mag.getHeading(&mx, &my, &mz);
+		  raw_values[6] = mx;
+		  raw_values[7] = my;
+		  raw_values[8] = mz;				
+		  delay(10);
+	  #endif
       raw_values[0] = ax;
       raw_values[1] = ay;
       raw_values[2] = az;
@@ -1245,10 +1254,13 @@ void FreeIMU::getRawValues(int * raw_values) {
       raw_values[4] = gy;
       raw_values[5] = gz;
       rt = accgyro.getTemperature();	  
-      raw_values[9] = rt;	  	  
-	#elif HAS_MPU9250()
-	  int16_t ax, ay, az, gx, gy, gz, mx, my, mz, rt;
-      accgyro.get9250Motion10Counts(&ax, &ay, &az, &gx, &gy, &gz, &mx, &my, &mz, &rt);
+      raw_values[9] = rt; 
+    #endif
+  #endif
+
+  #if HAS_MPU9250()
+    int16_t ax, ay, az, gx, gy, gz, mx, my, mz, rt;
+	accgyro.get9250Motion10Counts(&ax, &ay, &az, &gx, &gy, &gz, &mx, &my, &mz, &rt);
       raw_values[0] = ax;
       raw_values[1] = ay;
       raw_values[2] = az;
@@ -1257,10 +1269,10 @@ void FreeIMU::getRawValues(int * raw_values) {
       raw_values[5] = gz;
       raw_values[6] = mx;
       raw_values[7] = my;
-      raw_values[8] = mz;				
-      raw_values[9] = rt; 
-  #endif 
-
+      raw_values[8] = mz;	  
+      raw_values[9] = rt;
+  #endif
+  
   #if HAS_HMC5883L()
     magn.getValues(&raw_values[6], &raw_values[7], &raw_values[8]);
   #endif  
@@ -1442,30 +1454,9 @@ void FreeIMU::getValues(float * values) {
     values_cal[8] = (float) imz;
 	
 	DTemp = 9999;
-  #elif HAS_MPU9250()
-  	int16_t ax, ay, az, gx, gy, gz, mx, my, mz, rt;
-    accgyro.get9250Motion10Counts(&ax, &ay, &az, &gx, &gy, &gz, &mx, &my, &mz, &rt);
-	values_cal[0] = (float) ax;
-	values_cal[1] = (float) ay;
-	values_cal[2] = (float) az;
-	//values[0] = mfilter_accx.filter((float) compass.a.x);
-	//values[1] = mfilter_accy.filter((float) compass.a.y);
-	//values[2] = mfilter_accz.filter((float) compass.a.z);	
-	values_cal[3] = (float) gx;
-	values_cal[4] = (float) gy;
-	values_cal[5] = (float) gz;
-	values_cal[6] = (float) mx;
-	values_cal[7] = (float) my; 
-	values_cal[8] = (float) mz;
-	
-	values_cal[3] = (values_cal[3] - gyro_off_x) / gyro_sensitivity;  //Sensitivity set at 70 for +/-2000 deg/sec, L3GD20H
-	values_cal[4] = (values_cal[4] - gyro_off_y) / gyro_sensitivity;
-	values_cal[5] = (values_cal[5] - gyro_off_z) / gyro_sensitivity;
-	
-  	DTemp = (float) rt;
-  
   #else  // MPU6050 or other 6dof
     int16_t accgyroval[9];
+	//#if HAS_MPU9150() || HAS_MPU9250()
 	#if HAS_MPU9150()
 		mag.getHeading(&accgyroval[6], &accgyroval[7], &accgyroval[8]);	
 		delay(10);
@@ -1480,16 +1471,31 @@ void FreeIMU::getValues(float * values) {
 		values_cal[6] = mfilter_mx.filter((float) accgyroval[6]);
 		values_cal[7] = mfilter_my.filter((float) accgyroval[7]);
 		values_cal[8] = mfilter_mz.filter((float) accgyroval[8]); 
+	#elif HAS_MPU9250()
+		accgyro.get9250Motion9Counts(&accgyroval[0], &accgyroval[1], &accgyroval[2], 
+						   &accgyroval[3], &accgyroval[4], &accgyroval[5],
+						   &accgyroval[6], &accgyroval[7], &accgyroval[8]);	   
+		// read raw heading measurements from device
+		
+		accgyroval[0] = mfilter_accx.filter((float) accgyroval[0]);
+		accgyroval[1] = mfilter_accy.filter((float) accgyroval[1]);
+		accgyroval[2] = mfilter_accz.filter((float) accgyroval[2]);
+		
+		values_cal[6] = mfilter_mx.filter((float) accgyroval[6]);
+		values_cal[7] = mfilter_my.filter((float) accgyroval[7]);
+		values_cal[8] = mfilter_mz.filter((float) accgyroval[8]); 	
+	
 	#else
 		accgyro.getMotion6(&accgyroval[0], &accgyroval[1], &accgyroval[2], 
 						   &accgyroval[3], &accgyroval[4], &accgyroval[5]);
-    #endif
-
+	#endif
 	
-	if !HAS_MPU(){
+	#if HAS_MPU9250()
+		accgyro.get9250TempCounts(&DTemp);
+	#else
 		DTemp = accgyro.getTemperature();
-	}
-	
+	#endif
+
 	if(temp_corr_on == 1){
 		if(DTemp < temp_break){    
 			for( i = 0; i < 9; i++) { 
@@ -1568,7 +1574,7 @@ void FreeIMU::getValues(float * values) {
 */
 void FreeIMU::zeroGyro() {
   const int totSamples = nsamples;
-  int raw[11];
+  int16_t raw[11];
   float values[12]; 
   float tmpOffsets[] = {0,0,0};
   

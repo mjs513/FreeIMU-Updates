@@ -59,7 +59,7 @@ KalmanFilter kFilters[4];
 int k_index = 3;
 
 float q[4];
-int raw_values[11];
+int16_t raw_values[11];
 float ypr[3]; // yaw pitch roll
 char str[128];
 float val[13];
@@ -184,7 +184,7 @@ void readSerial(){
           my3IMU.acc.readAccel(&raw_values[0], &raw_values[1], &raw_values[2]);
           my3IMU.gyro.readGyroRaw(&raw_values[3], &raw_values[4], &raw_values[5]);
           writeArr(raw_values, 6, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
-        #elif HAS_MPU9150()  || HAS_MPU9250() || HAS_LSM9DS0() || HAS_LSM9DS1()
+        #elif HAS_MPU9150()  || HAS_LSM9DS0() || HAS_LSM9DS1()
           my3IMU.getRawValues(raw_values);
           writeArr(raw_values, 9, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
         #elif HAS_MPU6050() || HAS_MPU6000()   // MPU6050
@@ -194,10 +194,13 @@ void readSerial(){
         #elif HAS_ALTIMU10() || HAS_ADA_10_DOF() || HAS_TPS()
           my3IMU.getRawValues(raw_values);
           writeArr(raw_values, 9, sizeof(int)); // writes accelerometer, gyro values & mag of Altimu 10        
-        #endif
+		#elif HAS_MPU9250()
+		  my3IMU.getRawValues(raw_values);
+		  writeArr(raw_values, 9, sizeof(int));
+		#endif
         //writeArr(raw_values, 6, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
         
-        #if IS_9DOM() && (!HAS_MPU9150()  && !HAS_MPU9250() && !HAS_ALTIMU10() && !HAS_ADA_10_DOF() && !HAS_LSM9DS0() && !HAS_LSM9DS1() && !HAS_TPS())
+        #if IS_9DOM() && (!HAS_MPU9150() && !HAS_MPU9250() && !HAS_ALTIMU10() && !HAS_ADA_10_DOF() && !HAS_LSM9DS0() && !HAS_LSM9DS1() && !HAS_TPS())
           my3IMU.magn.getValues(&raw_values[0], &raw_values[1], &raw_values[2]);
           writeArr(raw_values, 3, sizeof(int));
         #endif

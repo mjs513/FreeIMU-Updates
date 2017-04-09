@@ -42,9 +42,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define GEN_MPU6050 // Generic MPU6050 breakout board. Compatible with GY-521, SEN-11028 and other MPU6050 wich have the MPU6050 AD0 pin connected to GND.
 //#define DFROBOT  //DFROBOT 10DOF SEN-1040 IMU
 //#define MPU9250_5611  //MPU-9250 IMU with MS5611 Altimeter from eBay
-//#define MPU9250_5637    //MPU-9250 IMU with MS5637 Pressure Sensor
+#define MPU9250_5637    //MPU-9250 IMU with MS5637 Pressure Sensor
 //#define GEN_MPU9150
-#define GEN_MPU9250  // Use for Invensense MPU-9250 breakout board
+//#define GEN_MPU9250  // Use for Invensense MPU-9250 breakout board
 //#define Altimu10  // Pololu AltIMU 10 - 10 DOF IMU - http://www.pololu.com/product/1269
 //#define GY_88  //GY-88 Sensor Board from eBay
 //#define GY_87  //GY-87 Sensor Board from eBay, NOTE: Pressusre sensor is BMP180 but BMP085 library should work
@@ -223,11 +223,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // *** Define Marg= 3 factors: go to line 491       ***
 // *** Define IMU Axis Alignment: go to line 500    ***
 // ****************************************************
-//#define FREEIMU_LIB_VERSION "DEV"
-#define FREEIMU_LIB_VERSION "v2.0"
+#define FREEIMU_LIB_VERSION "DEV"
 
 #define FREEIMU_DEVELOPER "Fabio Varesano - varesano.net"
-#define FREEIMU_PROD_DEV "Michael J Smorto - github.com/mjs513/"
 
 #if F_CPU == 16000000L
   #define FREEIMU_FREQ "16 MHz"
@@ -536,7 +534,7 @@ class FreeIMU
 	
     void zeroGyro();
 	void initGyros();
-    void getRawValues(int * raw_values);
+    void getRawValues(int16_t * raw_values);
     void getValues(float * values);
     void getQ(float * q, float * val);
     void getEuler(float * angles);

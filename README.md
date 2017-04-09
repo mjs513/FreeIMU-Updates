@@ -2,7 +2,27 @@
 ===============
 
 Change Log
-Saturday March 11, 2017
+Sunday April 9, 2017
+
+04-09-2017 Added Master Mode Support using elements from Brian Taylor's MPU9250 libray.  Master Mode allows
+           support for two MPU9250's on same I2C bus using its capability to have two different addresses.
+		   Usage:
+		   Establish two instances of the library:
+			1. Set the FreeIMU objects
+				FreeIMU my3IMU0 = FreeIMU();
+				FreeIMU my2IMU1 = FreeIMU();
+			
+			2. in the setup initialize the 9250s with the correct addresses
+				my3IMU0.init(0x68, true);
+				my3IMY1.init(0x69, true);
+			
+			3.When you raw data you will need to make sure you identify the data to the correct IMU object:
+				my3IMU0.getRawValues(raw_values0);
+				my3IMU1.getRawValues(raw_values1);
+				
+			4. You will need of course to do the same for calibrated values;
+				m3IMU0.getValues(q, val);
+				m3IMU1.getValues(q, val);
 
 
 03-11-2016 Added new Processing GUI based on Multiwii GUI.  Hope I am not violating any licenses.  If I am please

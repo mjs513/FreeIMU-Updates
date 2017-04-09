@@ -46,7 +46,7 @@
   #define HAS_EEPPROM 1
 #endif
 
-int raw_values[11];
+int16_t raw_values[11];
 char str[512];
 float val[13], q[4];
 

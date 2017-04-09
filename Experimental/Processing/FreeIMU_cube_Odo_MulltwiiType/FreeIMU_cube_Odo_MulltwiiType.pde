@@ -47,7 +47,7 @@ PrintWriter output;
 
 Serial myPort;  // Create object from Serial class
 
-final String serialPort = "COM13"; // replace this with your serial port. On windows you will need something like "COM1".
+final String serialPort = "COM3"; // replace this with your serial port. On windows you will need something like "COM1".
 int BaudRate=57600;
 String File_Name = "IMU-Cuire-MagDefTest.txt";
 int HAS_GPS = 0;
@@ -297,7 +297,7 @@ void setup()
 
   myDelay(2000);
 
-  while (myPort.available() > 0) {
+  while (myPort.available() != 0) {
     println(myPort.available());
       myPort.write("v");
     while ( myPort.readString() == null) {
@@ -580,14 +580,14 @@ void serialEvent(Serial p) {
          sw.start();
          println("pressed 2");
          key = '0';
-         //p.write("z");
+         p.write("z");
       } else if(key == 'r') {
             myPort.clear();
             myPort.write("1");
             sw.start();
             println("pressed 1");
             key = '0';
-            //p.write("z");
+            p.write("z");
       } else if(key == 'g') {
             myPort.clear();
             myPort.write("g");
@@ -596,21 +596,21 @@ void serialEvent(Serial p) {
             sw.start();
             println("pressed g");
             key = '0';
-            //p.write("z");
+            p.write("z");
       } else if(key == 'R') {
             myPort.clear();
             ArtHorFlg = 0;
             calib = 1;
             sea_press = 1013.25;
             setup();
-            //p.write("z");
+            p.write("z");
       } 
       
       if(seapresscmd != "99"){
          myPort.clear();
          myPort.write(seapresscmd);
          seapresscmd =  "99";
-         //p.write("z");
+         p.write("z");
       }   
       
       if(calib == 0) {
@@ -625,12 +625,12 @@ void serialEvent(Serial p) {
          myPort.write("t");
          sw.start();
          calib = 99;
-         //p.write("z");
+         p.write("z");
       }
 
       //myDelay(100);
       count = 0;
-      p.write("z");
+      //p.write("z");
 
     //}
 
