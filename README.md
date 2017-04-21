@@ -2,7 +2,9 @@
 ===============
 
 Change Log
-Sunday April 9, 2017
+Thursday April 21, 2017
+
+04-21-2017 Corrected Wire.setClock call in MPU60X0.cpp.
 
 04-09-2017 Added Master Mode Support using elements from Brian Taylor's MPU9250 libray.  Master Mode allows
            support for two MPU9250's on same I2C bus using its capability to have two different addresses.

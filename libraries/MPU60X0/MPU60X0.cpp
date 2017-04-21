@@ -137,7 +137,8 @@ void MPU60X0::initialize9250MasterMode(){
 		switchSPIEnabled(true);
 		delay(1);
 	} else {
-		Wire.begin(400000);
+		Wire.begin();
+		Wire.setClock(400000L);
 		switchSPIEnabled(false);
 	}
 	
