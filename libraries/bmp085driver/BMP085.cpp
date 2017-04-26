@@ -242,7 +242,7 @@ void BMP085::readmem(uint8_t _addr, uint8_t _nbytes, uint8_t __buff[]) {
     __buff[i] = Wire.read(); // receive DATA
     i++;
   }
-  Wire.endTransmission(); // end transmission
+  //Wire.endTransmission(); // end transmission
 }
 
 

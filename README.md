@@ -2,7 +2,9 @@
 ===============
 
 Change Log
-Thursday April 21, 2017
+Wednesday April 26, 2017
+
+04-26-2017 Updated usage of Wire.endTransmission after Wire.requestFrom
 
 04-21-2017 Corrected Wire.setClock call in MPU60X0.cpp.
 

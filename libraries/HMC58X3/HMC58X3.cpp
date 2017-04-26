@@ -320,7 +320,7 @@ void HMC58X3::getRaw(int *x,int *y,int *z) {
     #endif
     // the HMC58X3 will automatically wrap around on the next request
   }
-  Wire.endTransmission();
+  //Wire.endTransmission();
 }
 
 
@@ -354,5 +354,5 @@ void HMC58X3::getID(char id[3])
       id[1]=0;
       id[2]=0;
   }
-  Wire.endTransmission();
+  //Wire.endTransmission();
 }   // getID().

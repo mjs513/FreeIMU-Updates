@@ -91,7 +91,7 @@ void ADXL345::readFrom(byte address, int num, byte _buff[]) {
     status = ADXL345_ERROR;
     error_code = ADXL345_READ_ERROR;
   }
-  Wire.endTransmission();         // end transmission
+  //Wire.endTransmission();         // end transmission
 }
 
 // Gets the range setting and return it into rangeSetting

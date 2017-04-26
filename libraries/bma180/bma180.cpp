@@ -28,7 +28,7 @@ void BMA180::readAccel(int * x, int * y, int * z)
   Wire.beginTransmission(address);
   Wire.write(0x02);
   Wire.endTransmission();
-  Wire.requestFrom((int)address, 7);
+  result = Wire.requestFrom((int)address, 7);
   if(Wire.available()==7)
   {
     int lsb = Wire.read()>>2;
@@ -46,7 +46,7 @@ void BMA180::readAccel(int * x, int * y, int * z)
     temp = Wire.read();
     if (temp&0x80) temp|=0xff00;
   }
-  result = Wire.endTransmission();
+  //result = Wire.endTransmission();
 }
 
 float BMA180::getGSense()
@@ -85,14 +85,14 @@ int BMA180::getRegValue(int adr)
   Wire.beginTransmission(address);
   Wire.write(adr);
   Wire.endTransmission();
-  Wire.requestFrom((int)address, 1);
+  int result = Wire.requestFrom((int)address, 1);
   if (Wire.available()==1)
   {
     val = Wire.read();
   }
   else val=-1;
-  int result = Wire.endTransmission();
-  checkResult(result);
+  //int result = Wire.endTransmission();
+  //checkResult(result);
   return val;
 }
 
@@ -139,15 +139,15 @@ int BMA180::getIDs(int *id, int *version)
   Wire.beginTransmission(address);
   Wire.write(0);
   Wire.endTransmission();
-  Wire.requestFrom((int)address, 2);
+  int result = Wire.requestFrom((int)address, 2);
   if (Wire.available()==2)
   {
     *id = Wire.read();
     *version= Wire.read();
   }
   else *id=-1;
-  int result = Wire.endTransmission();
-  checkResult(result);
+  //int result = Wire.endTransmission();
+  //checkResult(result);
   return *id!=-1;
 }
 

@@ -210,7 +210,8 @@ int8_t I2Cdev::readBytes(bool useSPI, uint8_t devAddr, uint8_t regAddr, uint8_t 
 			#endif
 		}
 		if (timeout > 0 && millis() - t1 >= timeout && count < length) count = -1; // timeout
-		Wire.endTransmission();
+		//Wire.endTransmission();
+
 	} else {
 	    digitalWrite(devAddr, LOW);
 		byte Addr = regAddr | 0x80;
@@ -291,7 +292,7 @@ int8_t I2Cdev::readWords(bool useSPI, uint8_t devAddr, uint8_t regAddr, uint8_t 
 		}
 		if (timeout > 0 && millis() - t1 >= timeout && count < length) count = -1; // timeout
 
-		Wire.endTransmission();
+		//Wire.endTransmission();
 	} else {
 		uint8_t _byteCnt = (uint8_t)(length * 2);
 		byte Addr = regAddr | 0x80;	
@@ -489,8 +490,8 @@ bool I2Cdev::writeBytes(bool useSPI, uint8_t devAddr, uint8_t regAddr, uint8_t l
 		for (uint8_t cnt=0; cnt < length; cnt++) {
 			SPI.transfer(data[cnt]);
 			#ifdef I2CDEV_SERIAL_DEBUG
-				Serial.print(data[i], HEX);
-				if (i + 1 < length) Serial.print(" ");
+				Serial.print(data[cnt], HEX);
+				if (cnt + 1 < length) Serial.print(" ");
 			#endif
 		}
 		digitalWrite(devAddr, HIGH);
