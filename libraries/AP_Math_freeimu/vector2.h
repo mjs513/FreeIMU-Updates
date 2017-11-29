@@ -94,7 +94,8 @@ struct Vector2
     T operator %(const Vector2<T> &v) const;
 
     // computes the angle between this vector and another vector
-    float angle(const Vector2<T> &v2) const;
+    T angle(const Vector2<T> &v2) const;
+
 
     // computes the angle in radians between the origin and this vector
     T angle(void) const;
@@ -118,7 +119,7 @@ struct Vector2
     }
 
     // gets the length of this vector
-    float           length(void) const;
+    T           length(void) const;
 
     // normalizes this vector
     void    normalize()
@@ -158,5 +159,7 @@ typedef Vector2<uint16_t>       Vector2ui;
 typedef Vector2<int32_t>        Vector2l;
 typedef Vector2<uint32_t>       Vector2ul;
 typedef Vector2<float>          Vector2f;
+typedef Vector2<double>         Vector2d;
+typedef Vector2<int64_t>        vector2ll;
 
 #endif // VECTOR2_H

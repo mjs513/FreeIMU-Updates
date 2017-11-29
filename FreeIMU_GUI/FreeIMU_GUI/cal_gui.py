@@ -44,7 +44,7 @@ calibration_h_file_name = "calibration.h"
 ##
 #####
 
-word = 4
+word = 2
 
 acc_range = 25000
 magn_range = 1500

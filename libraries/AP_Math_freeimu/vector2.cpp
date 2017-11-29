@@ -20,7 +20,7 @@
 #include "AP_Math_freeimu.h"
 
 template <typename T>
-float Vector2<T>::length(void) const
+T Vector2<T>::length(void) const
 {
 	return pythagorous2(x, y);
 }
@@ -123,10 +123,11 @@ bool Vector2<T>::operator !=(const Vector2<T> &v) const
 }
 
 template <typename T>
-float Vector2<T>::angle(const Vector2<T> &v2) const
+T Vector2<T>::angle(const Vector2<T> &v2) const
 {
     return acosf(((*this)*v2) / (this->length()*v2.length()));
 }
+
 
 // only define for float
 template float Vector2<float>::length(void) const;
@@ -146,3 +147,22 @@ template bool Vector2<float>::operator !=(const Vector2<float> &v) const;
 template bool Vector2<float>::is_nan(void) const;
 template bool Vector2<float>::is_inf(void) const;
 template float Vector2<float>::angle(const Vector2<float> &v) const;
+
+//assuming i have to do for doubles as well
+template double Vector2<double>::length(void) const;
+template double Vector2<double>::operator *(const Vector2<double> &v) const;
+template double Vector2<double>::operator %(const Vector2<double> &v) const;
+template Vector2<double> &Vector2<double>::operator *=(const double num);
+template Vector2<double> &Vector2<double>::operator /=(const double num);
+template Vector2<double> &Vector2<double>::operator -=(const Vector2<double> &v);
+template Vector2<double> &Vector2<double>::operator +=(const Vector2<double> &v);
+template Vector2<double> Vector2<double>::operator /(const double num) const;
+template Vector2<double> Vector2<double>::operator *(const double num) const;
+template Vector2<double> Vector2<double>::operator +(const Vector2<double> &v) const;
+template Vector2<double> Vector2<double>::operator -(const Vector2<double> &v) const;
+template Vector2<double> Vector2<double>::operator -(void) const;
+template bool Vector2<double>::operator ==(const Vector2<double> &v) const;
+template bool Vector2<double>::operator !=(const Vector2<double> &v) const;
+template bool Vector2<double>::is_nan(void) const;
+template bool Vector2<double>::is_inf(void) const;
+template double Vector2<double>::angle(const Vector2<double> &v) const;

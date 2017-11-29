@@ -52,6 +52,7 @@
 
 #include <math.h>
 #include <string.h>
+#include <rotations.h>
 
 #if MATH_CHECK_INDEXES
 #include <assert.h>
@@ -214,5 +215,6 @@ typedef Vector3<uint16_t>               Vector3ui;
 typedef Vector3<int32_t>                Vector3l;
 typedef Vector3<uint32_t>               Vector3ul;
 typedef Vector3<float>                  Vector3f;
+typedef Vector3<double>                 Vector3d;
 
 #endif // VECTOR3_H
