@@ -165,7 +165,7 @@ class FreeIMUCal(QMainWindow, Ui_FreeIMUCal):
     try:
       self.ser = serial.Serial(
         port= self.serial_port,
-        baudrate=57600,
+        baudrate=115200,
         parity=serial.PARITY_NONE,
         stopbits=serial.STOPBITS_ONE,
         bytesize=serial.EIGHTBITS

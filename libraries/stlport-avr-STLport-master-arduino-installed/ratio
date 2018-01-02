@@ -1,0 +1,224 @@
+// -*- C++ -*- Time-stamp: <2011-04-21 16:37:26 ptr>
+
+/*
+ * Copyright (c) 2009-2011
+ * Petr Ovtchenkov
+ *
+ * This material is provided "as is", with absolutely no warranty expressed
+ * or implied. Any use is at your own risk.
+ *
+ * Permission to use or copy this software for any purpose is hereby granted
+ * without fee, provided the above notices are retained on all copies.
+ * Permission to modify the code and to distribute modified code is granted,
+ * provided the above notices are retained, and a notice that the code was
+ * modified is included with the above copyright notice.
+ *
+ */
+
+#ifndef _STLP_RATIO
+#define _STLP_RATIO
+
+# include <cstdint>
+# include <type_traits>
+
+#ifndef _STLP_OUTERMOST_HEADER_ID
+#  define _STLP_OUTERMOST_HEADER_ID 0x23
+#  include <stl/_prolog.h>
+#endif
+
+_STLP_BEGIN_NAMESPACE
+
+template <intmax_t N, intmax_t D = 1LL> class ratio;
+
+// ratio arithmetic
+
+template <class R1, class R2> struct ratio_add;
+template <class R1, class R2> struct ratio_subtract;
+template <class R1, class R2> struct ratio_multiply;
+template <class R1, class R2> struct ratio_divide;
+
+// ratio comparison
+
+template <class R1, class R2> struct ratio_equal;
+template <class R1, class R2> struct ratio_not_equal;
+template <class R1, class R2> struct ratio_less;
+template <class R1, class R2> struct ratio_less_equal;
+template <class R1, class R2> struct ratio_greater;
+template <class R1, class R2> struct ratio_greater_equal;
+
+// convenience SI typedefs
+
+// typedef ratio<1LL, 1000000000000000000000000LL> yocto; // see 20.6.4
+// typedef ratio<1LL, 1000000000000000000000LL> zepto; // see 20.6.4
+typedef ratio<1LL, 1000000000000000000LL> atto;
+typedef ratio<1LL,    1000000000000000LL> femto;
+typedef ratio<1LL,       1000000000000LL> pico;
+typedef ratio<1LL,          1000000000LL> nano;
+typedef ratio<1LL,             1000000LL> micro;
+typedef ratio<1LL,                1000LL> milli;
+typedef ratio<1LL,                 100LL> centi;
+typedef ratio<1LL,                  10LL> deci;
+typedef ratio<10LL,                  1LL> deca;
+typedef ratio<100LL,                 1LL> hecto;
+typedef ratio<1000LL,                1LL> kilo;
+typedef ratio<1000000LL,             1LL> mega;
+typedef ratio<1000000000LL,          1LL> giga;
+typedef ratio<1000000000000LL,       1LL> tera;
+typedef ratio<1000000000000000LL,    1LL> peta;
+typedef ratio<1000000000000000000LL, 1LL> exa;
+// typedef ratio<1000000000000000000000LL, 1LL> zetta; // see 20.6.4
+// typedef ratio<1000000000000000000000000LL, 1LL> yotta; // see 20.6.4
+
+namespace detail {
+
+template <intmax_t R>
+struct __select_sign :
+    public _STLP_STD::integral_constant<intmax_t,(R>=0) ? 1LL : -1LL>
+{
+};
+
+template <intmax_t R>
+struct __select_abs :
+    public _STLP_STD::integral_constant<intmax_t,(R>=0) ? R : -R>
+{
+};
+
+template <intmax_t U, intmax_t V>
+struct __gcd :
+    public _STLP_STD::integral_constant<intmax_t,__gcd<__select_abs<V>::value,__select_abs<U>::value % __select_abs<V>::value>::value>
+{
+};
+
+template <intmax_t U>
+struct __gcd<U, 0LL> :
+    public _STLP_STD::integral_constant<intmax_t,__select_abs<U>::value>
+{
+};
+
+} // namespace detail
+
+template <intmax_t N, intmax_t D>
+class ratio
+{
+  public:
+//#ifdef __FIT_CPP_0X
+    static constexpr intmax_t num = _STLP_STD::detail::__select_sign<D>::value * N / _STLP_STD::detail::__gcd<N,D>::value;
+    static constexpr intmax_t den = _STLP_STD::detail::__select_abs<D>::value / _STLP_STD::detail::__gcd<N,D>::value;
+//#else
+//    static const intmax_t num = _STLP_STD::detail::__select_sign<D>::value * N / _STLP_STD::detail::__gcd<N,D>::value;
+//    static const intmax_t den = _STLP_STD::detail::__select_abs<D>::value / _STLP_STD::detail::__gcd<N,D>::value;
+//#endif
+};
+
+namespace detail {
+
+template <class T>
+struct __is_ratio :
+        public _STLP_STD::false_type
+{ };
+
+template <intmax_t N, intmax_t D>
+struct __is_ratio<ratio<N,D> > :
+        public _STLP_STD::true_type
+{ };
+
+template <class R1, class R2>
+struct _ratio_add // ratio<R1::num * R2::den + R2::num * R1::den, R1::den * R2::den>
+{
+    typedef _STLP_STD::ratio<R1::num * (R2::den/_STLP_STD::detail::__gcd<R1::den,R2::den>::value) + R2::num * (R1::den/_STLP_STD::detail::__gcd<R1::den,R2::den>::value), R1::den * (R2::den/_STLP_STD::detail::__gcd<R1::den,R2::den>::value)> type;
+};
+
+template <class R1, class R2>
+struct _ratio_subtract // ratio<R1::num * R2::den - R2::num * R1::den, R1::den * R2::den>
+{
+    typedef _STLP_STD::ratio<R1::num * (R2::den/_STLP_STD::detail::__gcd<R1::den,R2::den>::value) - R2::num * (R1::den/_STLP_STD::detail::__gcd<R1::den,R2::den>::value), R1::den * (R2::den/_STLP_STD::detail::__gcd<R1::den,R2::den>::value)> type;
+};
+
+template <class R1, class R2>
+struct _ratio_multiply // ratio<R1::num * R2::num, R1::den * R2::den>
+{
+    typedef _STLP_STD::ratio<(R1::num/_STLP_STD::detail::__gcd<R1::num,R2::den>::value)*(R2::num/_STLP_STD::detail::__gcd<R2::num,R1::den>::value),(R1::den/_STLP_STD::detail::__gcd<R2::num,R1::den>::value) * (R2::den/_STLP_STD::detail::__gcd<R1::num,R2::den>::value)> type;
+};
+
+template <class R1, class R2>
+struct _ratio_divide // ratio<R1::num * R2::den, R2::num * R1::den>
+{
+    typedef _STLP_STD::ratio<(R1::num/_STLP_STD::detail::__gcd<R1::num,R2::num>::value) * (R2::den/_STLP_STD::detail::__gcd<R2::den,R1::den>::value),(R2::num/_STLP_STD::detail::__gcd<R1::num,R2::num>::value) * (R1::den/_STLP_STD::detail::__gcd<R2::den,R1::den>::value)> type;
+};
+
+} // namespace detail
+
+template <class R1, class R2>
+struct ratio_add : // ratio<R1::num * R2::den + R2::num * R1::den, R1::den * R2::den>
+    public _STLP_STD::detail::_ratio_add<R1,R2>::type
+{
+    static_assert( _STLP_STD::detail::__is_ratio<R1>::value && _STLP_STD::detail::__is_ratio<R2>::value, "paramers must be a ratio" );
+};
+
+template <class R1, class R2>
+struct ratio_subtract : // ratio<R1::num * R2::den - R2::num * R1::den, R1::den * R2::den>
+    public _STLP_STD::detail::_ratio_subtract<R1,R2>::type
+{
+    static_assert( _STLP_STD::detail::__is_ratio<R1>::value && _STLP_STD::detail::__is_ratio<R2>::value, "paramers must be a ratio" );
+};
+
+template <class R1, class R2>
+struct ratio_multiply : // ratio<R1::num * R2::num, R1::den * R2::den>
+    public _STLP_STD::detail::_ratio_multiply<R1,R2>::type
+{
+    static_assert( _STLP_STD::detail::__is_ratio<R1>::value && _STLP_STD::detail::__is_ratio<R2>::value, "paramers must be a ratio" );
+};
+
+template <class R1, class R2>
+struct ratio_divide : // ratio<R1::num * R2::den, R2::num * R1::den>
+    public _STLP_STD::detail::_ratio_divide<R1,R2>::type
+{
+    static_assert( _STLP_STD::detail::__is_ratio<R1>::value && _STLP_STD::detail::__is_ratio<R2>::value, "paramers must be a ratio" );
+};
+
+template <class R1, class R2>
+struct ratio_equal :
+    public integral_constant<bool, (R1::num == R2::num) && (R1::den == R2::den)>
+{
+    static_assert( _STLP_STD::detail::__is_ratio<R1>::value && _STLP_STD::detail::__is_ratio<R2>::value, "paramers must be a ratio" );
+};
+
+template <class R1, class R2>
+struct ratio_not_equal :
+    public integral_constant<bool, !ratio_equal<R1, R2>::value>
+{
+};
+
+template <class R1, class R2>
+struct ratio_less :
+    // public integral_constant<bool, (R1::num * R2::den) < (R2::num * R1::den)>
+    public integral_constant<bool, (ratio_divide<R1,R2>::num < ratio_divide<R1,R2>::den)>
+{
+};
+
+template <class R1, class R2>
+struct ratio_less_equal :
+    public integral_constant<bool, !ratio_less<R2, R1>::value>
+{
+};
+
+template <class R1, class R2>
+struct ratio_greater :
+    public integral_constant<bool, ratio_less<R2, R1>::value>
+{
+};
+
+template <class R1, class R2>
+struct ratio_greater_equal :
+    public integral_constant<bool, !ratio_less<R1, R2>::value>
+{
+};
+
+_STLP_END_NAMESPACE
+
+#if (_STLP_OUTERMOST_HEADER_ID == 0x23)
+#  include <stl/_epilog.h>
+#  undef _STLP_OUTERMOST_HEADER_ID
+#endif
+
+#endif // _STLP_RATIO

@@ -1,0 +1,122 @@
+/*
+ * Copyright (c) 1999
+ * Boris Fomitchev
+ *
+ * Copyright (c) 2011
+ * Petr Ovtchenkov
+ *
+ * This material is provided "as is", with absolutely no warranty expressed
+ * or implied. Any use is at your own risk.
+ *
+ * Permission to use or copy this software for any purpose is hereby granted
+ * without fee, provided the above notices are retained on all copies.
+ * Permission to modify the code and to distribute modified code is granted,
+ * provided the above notices are retained, and a notice that the code was
+ * modified is included with the above copyright notice.
+ *
+ */
+
+#ifndef _STLP_CSTDDEF
+#define _STLP_CSTDDEF
+
+#ifndef _STLP_OUTERMOST_HEADER_ID
+#  define _STLP_OUTERMOST_HEADER_ID 0x114
+#  include <stl/_prolog.h>
+#endif
+
+#if defined(__CYGWIN__) && defined(__GNUC__) && (__GNUC__ >= 3) // this total HACK is the only expedient way I could cygwin to work with GCC 3.0
+#  define __need_wint_t // mostly because wint_t didn't seem to get defined otherwise :(
+#  define __need_wchar_t
+#  define __need_size_t
+#  define __need_ptrdiff_t
+#  define __need_NULL
+#endif
+
+#include <stddef.h>
+
+#ifdef __GNUC__
+/* This for compiler's <new> header, because it has lines like:
+inline void* operator new(std::size_t, void* __p) throw() { return __p; }
+ */
+namespace _STLP_VENDOR_STD {
+using _STLP_VENDOR_CSTD::ptrdiff_t;
+using _STLP_VENDOR_CSTD::size_t;
+} /* namespace _STLP_VENDOR_STD */
+#endif /* __GNUC__ */
+
+_STLP_BEGIN_NAMESPACE
+using ::ptrdiff_t;
+using ::size_t;
+_STLP_END_NAMESPACE
+
+#if defined(_STLP_NO_NULLPTR_T)
+
+_STLP_BEGIN_NAMESPACE
+
+class nullptr_t
+{
+  public:
+    template <class T>
+    operator T* () const
+    { return NULL; }
+
+    template <class C, class T>
+    operator T C::*() const
+    { return NULL; }
+
+    operator bool () const
+    { return false; }
+
+    operator void* () const
+    { return NULL; }
+
+#  ifndef _STLP_CPP_0X
+  private:
+    void operator & () const;
+#  else
+    void operator & () const = delete;
+#  endif
+    // may be useful, if sizeof(nullptr_t) == sizeof(void*) expected
+    // private:
+    //  const void* _zero;
+};
+
+template <class C, class T>
+bool operator ==( T C::*pmf, const nullptr_t& )
+{ return pmf == 0; }
+
+template <class C, class T>
+bool operator !=( T C::*pmf, const nullptr_t& )
+{ return pmf != 0; }
+
+template <class C, class T>
+bool operator ==( const nullptr_t&, T C::*pmf )
+{ return pmf == 0; }
+
+template <class C, class T>
+bool operator !=( const nullptr_t&, T C::*pmf )
+{ return pmf != 0; }
+
+_STLP_END_NAMESPACE
+
+/* extern */ const _STLP_STD::nullptr_t nullptr = {};
+#else /* _STLP_NO_NULLPTR_T */
+
+_STLP_BEGIN_NAMESPACE
+
+typedef decltype(nullptr) nullptr_t;
+
+_STLP_END_NAMESPACE
+
+#endif /* _STLP_NO_NULLPTR_T */
+
+#if (_STLP_OUTERMOST_HEADER_ID == 0x114 )
+#  include <stl/_epilog.h>
+#  undef _STLP_OUTERMOST_HEADER_ID
+#endif
+
+#endif /* _STLP_CSTDDEF */
+
+// Local Variables:
+// mode:C++
+// End:

@@ -1,0 +1,540 @@
+// -*- C++ -*- Time-stamp: <2012-04-16 17:29:39 ptr>
+
+/*
+ * Copyright (c) 2002, 2006-2011
+ * Petr Ovtchenkov
+ *
+ * This material is provided "as is", with absolutely no warranty expressed
+ * or implied. Any use is at your own risk.
+ *
+ * Permission to use or copy this software for any purpose is hereby granted
+ * without fee, provided the above notices are retained on all copies.
+ * Permission to modify the code and to distribute modified code is granted,
+ * provided the above notices are retained, and a notice that the code was
+ * modified is included with the above copyright notice.
+ *
+ * Derived from original <misc/chrono> of 'complement' project
+ * [http://complement.sourceforge.net]
+ * to make it close to JTC1/SC22/WG21 C++ 0x working draft
+ * [http://www.open-std.org/Jtc1/sc22/wg21/docs/papers/2011/n3291.pdf]
+ */
+
+#ifndef __STLP_CHRONO
+#define __STLP_CHRONO
+
+#include <type_traits>
+#include <ratio>
+#include <functional>
+#include <limits>
+#include <ctime>
+
+#ifndef _STLP_OUTERMOST_HEADER_ID
+#  define _STLP_OUTERMOST_HEADER_ID 0x4
+#  include <stl/_cprolog.h>
+#endif
+
+_STLP_BEGIN_NAMESPACE
+
+namespace chrono {
+
+// customization traits
+
+template <class Rep>
+struct treat_as_floating_point :
+        public _STLP_STD::is_floating_point<Rep>
+{
+};
+
+template <class Rep, class Period>
+class duration;
+
+namespace detail {
+
+template <class T>
+struct __is_duration :
+        public _STLP_STD::false_type
+{ };
+
+template <class R, class P>
+struct __is_duration<duration<R,P> > :
+        public _STLP_STD::true_type
+{ };
+
+} // namespace detail
+
+namespace detail {
+
+template <class ToDuration, class CF, class CR, bool N, bool D>
+struct _duration_cast
+{
+    template <class Rep, class Period>
+    static ToDuration _cast( const duration<Rep, Period>& d )
+      {
+        return ToDuration(static_cast<typename ToDuration::rep&&>(d.count() * CF::num / CF::den) );
+      }
+};
+
+template <class ToDuration, class CF, class CR>
+struct _duration_cast<ToDuration,CF,CR,true,true>
+{
+    template <class Rep, class Period>
+    static ToDuration _cast( const duration<Rep, Period>& d )
+      {
+        return ToDuration(static_cast<typename ToDuration::rep&&>(d.count()) );
+      }
+};
+
+template <class ToDuration, class CF, class CR>
+struct _duration_cast<ToDuration,CF,CR,false,true>
+{
+    template <class Rep, class Period>
+    static ToDuration _cast( const duration<Rep, Period>& d )
+      {
+        return ToDuration(static_cast<typename ToDuration::rep&&>(d.count() * CF::num) );
+      }
+};
+
+template <class ToDuration, class CF, class CR>
+struct _duration_cast<ToDuration,CF,CR,true,false>
+{
+    template <class Rep, class Period>
+    static ToDuration _cast( const duration<Rep, Period>& d )
+      {
+        return ToDuration(static_cast<typename ToDuration::rep&&>(d.count() / CF::den) );
+      }
+};
+
+} // namespace detail
+
+template <class ToDuration, class Rep, class Period>
+constexpr typename enable_if<detail::__is_duration<ToDuration>::value,ToDuration>::type duration_cast( const duration<Rep, Period>& d )
+{
+  typedef ratio_divide<Period, typename ToDuration::period> _cf;
+#ifdef _STLP_CPP_0X
+  typedef typename _STLP_STD::common_type<typename ToDuration::rep, Rep, intmax_t>::type _cr;
+#else
+  typedef typename _STLP_STD::common_type<typename ToDuration::rep, Rep>::type _cr;
+#endif
+
+  return detail::_duration_cast<ToDuration,_cf,_cr,_cf::num == 1, _cf::den == 1>::_cast( d );
+}
+
+template <class Rep>
+struct duration_values
+{
+    static constexpr Rep zero()
+      { return Rep(0); }
+    static constexpr Rep min()
+      { return numeric_limits<Rep>::lowest(); }
+    static constexpr Rep max()
+      { return numeric_limits<Rep>::max(); }
+};
+
+template <class Rep, class Period = _STLP_STD::ratio<1> >
+class duration
+{
+#ifdef _STLP_CPP_0X
+    static_assert( !detail::__is_duration<Rep>::value, "rep can't be a duration" );
+    static_assert( _STLP_STD::detail::__is_ratio<Period>::value, "period must be a ratio specialization");
+    static_assert( Period::num > 0, "numerator must be positive" );
+#endif
+
+  public:
+    typedef typename _STLP_STD::remove_reference<Rep>::type rep;
+    typedef Period period;
+
+  private:
+    rep rep_;
+
+  public:
+    // 20.11.5.1, construct/copy/destroy:
+#ifdef _STLP_CPP_0X
+    constexpr duration() = default;
+
+#if 0
+    template <class Rep2, class =
+              typename _STLP_STD::enable_if<_STLP_STD::is_arithmetic<Rep2>::value && _STLP_STD::is_convertible<Rep2,rep>::value &&
+                                            (treat_as_floating_point<rep>::value || !treat_as_floating_point<Rep2>::value)>::type>
+    constexpr explicit duration( const Rep2 r ) :
+        rep_(static_cast<rep>(r))
+      { }
+#endif
+
+    template <class Rep2, class =
+              typename _STLP_STD::enable_if</* !_STLP_STD::is_arithmetic<Rep2>::value && */ _STLP_STD::is_convertible<Rep2,rep>::value &&
+                                            (treat_as_floating_point<rep>::value || !treat_as_floating_point<Rep2>::value)>::type>
+    constexpr explicit duration( const Rep2& r ) :
+        rep_(static_cast<rep>(r))
+      { }
+
+    template <class Rep2, class Period2, class =
+              typename _STLP_STD::enable_if<treat_as_floating_point<rep>::value ||
+                                 ((ratio_divide<Period2,period>::den == 1) && !treat_as_floating_point<Rep2>::value)>::type>
+    constexpr duration( const duration<Rep2, Period2>& d ) :
+        rep_( duration_cast<duration>(d).count() )
+      { }
+
+    ~duration() = default;
+    duration( const duration& ) = default;
+
+    duration& operator =( const duration& ) = default;
+#else // _STLP_CPP_0X
+    duration()
+      { }
+    template <class Rep2>
+    explicit duration( const Rep2& r ) :
+        rep_(static_cast<rep>(r))
+      { }
+    template <class Rep2, class Period2>
+    duration( const duration<Rep2, Period2>& d ) :
+        rep_( duration_cast<duration>(d).count() )
+      { }
+    // ~duration() = default;
+    // duration( const duration& ) = default;
+#endif // _STLP_CPP_0X
+
+    // 20.11.5.2, observer:
+    constexpr rep count() const
+      { return rep_; }
+
+    // 20.11.5.3, arithmetic:
+    constexpr duration operator +() const
+      { return *this; }
+    constexpr duration operator -() const
+      { return duration( -rep_ ); }
+    duration& operator ++()
+      { ++rep_; return *this; }
+    duration operator ++(int)
+      { return duration( rep_++ ); }
+    duration& operator --()
+      { --rep_; return *this; }
+    duration operator --(int)
+      { return duration( rep_-- ); }
+    duration& operator +=( const duration& d )
+      { rep_ += d.count(); return *this; }
+    duration& operator -=( const duration& d )
+      { rep_ -= d.count(); return *this; }
+    duration& operator *=(const rep& rhs)
+      { rep_ *= rhs; return *this; }
+    duration& operator /=( const rep& rhs )
+      { rep_ /= rhs; return *this; }
+    duration& operator %=(const rep& rhs)
+      { rep_ %= rhs; return *this; }
+    duration& operator %=(const duration& rhs)
+      { rep_ %= rhs.count(); return *this; }
+
+    // 20.11.5.4, special values:
+    static constexpr duration zero()
+      { return duration( duration_values<rep>::zero() ); }
+    static constexpr duration min()
+      { return duration( duration_values<rep>::min() ); }
+    static constexpr duration max()
+      { return duration( duration_values<rep>::max() ); }
+};
+
+template <class Clock, class Duration = typename Clock::duration>
+class time_point
+{
+  public:
+    typedef Clock clock;
+    typedef Duration duration;
+    typedef typename duration::rep rep;
+    typedef typename duration::period period;
+
+  private:
+    duration d_;
+
+  public:
+    // 20.11.6.1, construct:
+    time_point() : // has value epoch
+        d_( duration::zero() )
+      { }
+    explicit time_point( const duration& d ) : // same as time_point() + d
+        d_( d )
+      { }
+
+#ifdef _STLP_CPP_0X
+    template <class Duration2, class = typename _STLP_STD::enable_if<_STLP_STD::is_convertible<Duration2,duration>::value >::type>
+    time_point( const time_point<clock, Duration2>& t ) :
+        d_( t.time_since_epoch() /* t.d_ */ )
+      { }
+#else // _STLP_CPP_0X
+    template <class Duration2>
+    time_point( const time_point<clock, Duration2>& t ) :
+        d_( t.time_since_epoch() /* t.d_ */ )
+      { }
+#endif // _STLP_CPP_0X
+
+    // 20.11.6.2, observer:
+    duration time_since_epoch() const
+      { return d_; }
+
+    // 20.11.6.3, arithmetic:
+    time_point& operator +=( const duration& d )
+      { d_ += d; return *this; }
+    time_point& operator -=( const duration& d )
+      { d_ -= d; return *this; }
+
+    // 20.11.6.4, special values:
+    static constexpr time_point min()
+      { return time_point( duration::min() ); }
+    static constexpr time_point max()
+      { return time_point( duration::max() ); }
+};
+
+} // namespace chrono
+
+template <class Rep1, class Period1, class Rep2, class Period2>
+struct common_type<chrono::duration<Rep1, Period1>, chrono::duration<Rep2, Period2> >
+{
+    typedef chrono::duration<typename common_type<Rep1,Rep2>::type, ratio<_STLP_STD::detail::__gcd<Period1::num,Period2::num>::value, (Period1::den / _STLP_STD::detail::__gcd<Period1::den,Period2::den>::value) * Period2::den> > type;
+};
+
+template <class Clock, class Duration1, class Duration2>
+struct common_type<chrono::time_point<Clock, Duration1>, chrono::time_point<Clock, Duration2> >
+{
+    typedef chrono::time_point<Clock,typename common_type<Duration1,Duration2>::type> type;
+};
+
+namespace chrono {
+
+// duration arithmetic
+
+template <class Rep1, class Period1, class Rep2, class Period2>
+constexpr typename common_type<duration<Rep1, Period1>, duration<Rep2, Period2> >::type
+operator +( const duration<Rep1, Period1>& lhs, const duration<Rep2, Period2>& rhs )
+{
+  typedef typename common_type<duration<Rep1, Period1>, duration<Rep2, Period2> >::type _ct;
+  return _ct(_ct(lhs).count() + _ct(rhs).count());
+}
+
+template <class Rep1, class Period1, class Rep2, class Period2>
+typename common_type<duration<Rep1, Period1>, duration<Rep2, Period2> >::type
+constexpr operator -( const duration<Rep1, Period1>& lhs, const duration<Rep2, Period2>& rhs )
+{
+  typedef typename common_type<duration<Rep1, Period1>, duration<Rep2, Period2> >::type _ct;
+  return _ct(_ct(lhs).count() - _ct(rhs).count());
+}
+
+namespace detail {
+
+template <class Rep1, class Rep2, bool = is_convertible<Rep2, typename common_type<Rep1,Rep2>::type>::value>
+struct _common_type
+{
+};
+
+template <class Rep1, class Rep2>
+struct _common_type<Rep1,Rep2,true>
+{
+    typedef typename common_type<Rep1,Rep2>::type type;
+};
+
+} // namespace detail
+
+template <class Rep1, class Period, class Rep2>
+constexpr duration<typename detail::_common_type<Rep1, Rep2>::type, Period>
+operator *( const duration<Rep1, Period>& d, const Rep2& s )
+{
+  typedef duration<typename common_type<Rep1,Rep2>::type, Period> _ct;
+
+  return _ct( _ct( d ).count() * s );
+}
+
+template <class Rep1, class Period, class Rep2>
+constexpr duration<typename detail::_common_type<Rep2, Rep1>::type, Period>
+operator *( const Rep1& s, const duration<Rep2, Period>& d )
+{ return d * s; }
+
+template <class Rep1, class Period, class Rep2>
+constexpr duration<typename detail::_common_type<Rep1,typename enable_if<!detail::__is_duration<Rep2>::value,Rep2>::type>::type, Period>
+operator /( const duration<Rep1, Period>& d, const Rep2& s )
+{
+  typedef duration<typename common_type<Rep1,Rep2>::type, Period> _ct;
+
+  return _ct( _ct(d).count() / s );
+}
+
+template <class Rep1, class Period1, class Rep2, class Period2>
+constexpr typename common_type<Rep1, Rep2>::type
+operator /( const duration<Rep1, Period1>& lhs, const duration<Rep2, Period2>& rhs )
+{
+  typedef typename common_type<Rep1, Rep2>::type _ct;
+
+  return _ct(lhs).count() / _ct(rhs).count();
+}
+
+template <class Rep1, class Period, class Rep2>
+constexpr duration<typename detail::_common_type<Rep1, typename enable_if<!detail::__is_duration<Rep2>::value,Rep2>::type>::type, Period>
+operator %( const duration<Rep1, Period>& d, const Rep2& s )
+{
+  typedef duration<typename common_type<Rep1,Rep2>::type, Period> _ct;
+
+  return _ct( _ct(d).count() % s );
+}
+
+template <class Rep1, class Period1, class Rep2, class Period2>
+constexpr typename common_type<duration<Rep1, Period1>, duration<Rep2, Period2> >::type
+operator %( const duration<Rep1, Period1>& lhs, const duration<Rep2, Period2>& rhs )
+{
+  typedef typename common_type<duration<Rep1, Period1>, duration<Rep2, Period2> >::type _ct;
+
+  return _ct( _ct(lhs).count() % _ct(rhs).count() );
+}
+
+// duration comparisons
+
+template <class Rep1, class Period1, class Rep2, class Period2>
+constexpr bool operator ==( const duration<Rep1, Period1>& lhs, const duration<Rep2, Period2>& rhs )
+{
+  typedef typename common_type<duration<Rep1, Period1>, duration<Rep2, Period2> >::type _ct;
+
+  return _ct(lhs).count() == _ct(rhs).count();
+}
+
+template <class Rep1, class Period1, class Rep2, class Period2>
+constexpr bool operator !=( const duration<Rep1, Period1>& lhs, const duration<Rep2, Period2>& rhs )
+{
+  return !(lhs == rhs);
+}
+
+template <class Rep1, class Period1, class Rep2, class Period2>
+constexpr bool operator <( const duration<Rep1, Period1>& lhs, const duration<Rep2, Period2>& rhs )
+{
+  typedef typename common_type<duration<Rep1, Period1>, duration<Rep2, Period2> >::type _ct;
+
+  return _ct(lhs).count() < _ct(rhs).count();
+}
+
+template <class Rep1, class Period1, class Rep2, class Period2>
+constexpr bool operator <=( const duration<Rep1, Period1>& lhs, const duration<Rep2, Period2>& rhs )
+{
+  return !(rhs < lhs);
+}
+
+template <class Rep1, class Period1, class Rep2, class Period2>
+constexpr bool operator >( const duration<Rep1, Period1>& lhs, const duration<Rep2, Period2>& rhs )
+{
+  return rhs < lhs;
+}
+
+template <class Rep1, class Period1, class Rep2, class Period2>
+constexpr bool operator >=( const duration<Rep1, Period1>& lhs, const duration<Rep2, Period2>& rhs )
+{
+  return !(lhs < rhs);
+}
+
+// convenience typedefs
+typedef duration<int64_t,  nano>    nanoseconds;
+typedef duration<int64_t, micro>    microseconds;
+typedef duration<int64_t, milli>    milliseconds;
+typedef duration<int64_t>           seconds;
+typedef duration<int, ratio<60> >   minutes;
+typedef duration<int, ratio<3600> > hours;
+
+// time_point arithmetic
+
+template <class Clock, class Duration1, class Rep2, class Period2>
+time_point<Clock, typename common_type<Duration1, duration<Rep2, Period2> >::type>
+operator +(const time_point<Clock, Duration1>& lhs, const duration<Rep2, Period2>& rhs)
+{
+  typedef time_point<Clock, typename common_type<Duration1, duration<Rep2, Period2> >::type> _ct;
+
+  return _ct(lhs) += rhs;
+}
+
+template <class Rep1, class Period1, class Clock, class Duration2>
+time_point<Clock, typename common_type<duration<Rep1, Period1>, Duration2>::type>
+operator +(const duration<Rep1, Period1>& lhs, const time_point<Clock, Duration2>& rhs)
+{ return rhs + lhs; }
+
+template <class Clock, class Duration1, class Rep2, class Period2>
+time_point<Clock, typename common_type<Duration1, duration<Rep2, Period2> >::type>
+operator -(const time_point<Clock, Duration1>& lhs, const duration<Rep2, Period2>& rhs)
+{ return lhs + (-rhs); }
+
+template <class Clock, class Duration1, class Duration2>
+typename common_type<Duration1, Duration2>::type
+operator -(const time_point<Clock, Duration1>& lhs, const time_point<Clock, Duration2>& rhs)
+{ return lhs.time_since_epoch() - rhs.time_since_epoch(); }
+
+// time_point comparisons
+
+template <class Clock, class Duration1, class Duration2>
+bool operator ==(const time_point<Clock, Duration1>& lhs, const time_point<Clock, Duration2>& rhs)
+{ return lhs.time_since_epoch() == rhs.time_since_epoch(); }
+
+template <class Clock, class Duration1, class Duration2>
+bool operator !=(const time_point<Clock, Duration1>& lhs, const time_point<Clock, Duration2>& rhs)
+{ return !(lhs == rhs); }
+
+template <class Clock, class Duration1, class Duration2>
+bool operator <(const time_point<Clock, Duration1>& lhs, const time_point<Clock, Duration2>& rhs)
+{ return lhs.time_since_epoch() < rhs.time_since_epoch(); }
+
+template <class Clock, class Duration1, class Duration2>
+bool operator <=(const time_point<Clock, Duration1>& lhs, const time_point<Clock, Duration2>& rhs)
+{ return !(rhs < lhs); }
+
+template <class Clock, class Duration1, class Duration2>
+bool operator >(const time_point<Clock, Duration1>& lhs, const time_point<Clock, Duration2>& rhs)
+{ return rhs < lhs; }
+
+template <class Clock, class Duration1, class Duration2>
+bool operator >=(const time_point<Clock, Duration1>& lhs, const time_point<Clock, Duration2>& rhs)
+{ return !(lhs < rhs); }
+
+// time_point_cast
+template <class ToDuration, class Clock, class Duration>
+typename enable_if<detail::__is_duration<ToDuration>::value, time_point<Clock, ToDuration> >::type
+time_point_cast( const time_point<Clock, Duration>& t )
+{ return time_point<Clock, ToDuration>(duration_cast<ToDuration>(t.time_since_epoch())); }
+
+// Clocks
+
+class _STLP_CLASS_DECLSPEC system_clock
+{
+  public:
+#ifdef __unix
+    typedef chrono::nanoseconds duration;
+    typedef duration::rep rep;
+    typedef duration::period period;
+#elif defined( WIN32 )
+    typedef __int64 rep;
+    typedef ratio<1LL, 10000000LL> period;
+    typedef chrono::duration<rep, period> duration;
+#endif
+    typedef chrono::time_point<system_clock> time_point;
+
+    static const bool is_steady;
+
+    static time_point now() /* noexcept */ throw();
+
+    static time_t to_time_t( const time_point& t ) /* noexcept */ throw();
+    static time_point from_time_t( time_t t ) /* noexcept */ throw();
+};
+
+class _STLP_CLASS_DECLSPEC steady_clock
+{
+  public:
+    typedef chrono::nanoseconds duration;
+    typedef duration::rep rep;
+    typedef duration::period period;
+    typedef chrono::time_point<system_clock> time_point;
+
+    static const bool is_steady;
+
+    static time_point now() /* noexcept */ throw();
+};
+
+typedef system_clock high_resolution_clock;
+
+} // namespace chrono
+
+_STLP_END_NAMESPACE
+
+#if (_STLP_OUTERMOST_HEADER_ID == 0x4)
+#  include <stl/_epilog.h>
+#  undef _STLP_OUTERMOST_HEADER_ID
+#endif
+
+#endif // __STLP_CHRONO

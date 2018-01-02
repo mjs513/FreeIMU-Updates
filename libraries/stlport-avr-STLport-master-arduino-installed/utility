@@ -1,0 +1,325 @@
+/*
+ *
+ * Copyright (c) 1994
+ * Hewlett-Packard Company
+ *
+ * Copyright (c) 1996,1997
+ * Silicon Graphics Computer Systems, Inc.
+ *
+ * Copyright (c) 1999
+ * Boris Fomitchev
+ *
+ * This material is provided "as is", with absolutely no warranty expressed
+ * or implied. Any use is at your own risk.
+ *
+ * Permission to use or copy this software for any purpose is hereby granted
+ * without fee, provided the above notices are retained on all copies.
+ * Permission to modify the code and to distribute modified code is granted,
+ * provided the above notices are retained, and a notice that the code was
+ * modified is included with the above copyright notice.
+ *
+ */
+
+#ifndef _STLP_UTILITY
+#  define _STLP_UTILITY
+
+#ifndef _STLP_TYPE_TRAITS
+#  include <type_traits>
+#endif
+
+#ifndef _STLP_OUTERMOST_HEADER_ID
+#  define _STLP_OUTERMOST_HEADER_ID 0x75
+#  include <stl/_prolog.h>
+#endif
+
+_STLP_BEGIN_NAMESPACE
+
+template <class _Tp> void swap( _Tp&, _Tp& );
+
+template <class _Tp>
+class __move_source
+{
+  public:
+    explicit __move_source( _Tp& _src ) :
+        _M_data(_src)
+      { }
+
+    _Tp& get() const
+      { return _M_data; }
+  private:
+    _Tp& _M_data;
+
+    //We explicitely forbid assignment to avoid warning:
+    typedef __move_source<_Tp> _Self;
+
+    _Self& operator = ( _Self const& );
+};
+
+//Class used to signal move constructor support, implementation and type.
+
+template <class _Tp>
+struct __has_trivial_move :
+    public integral_constant<bool, is_trivial<_Tp>::value>
+{ };
+
+template <class _Tp>
+struct __has_move_constructor :
+    public false_type
+{ };
+
+namespace rel_ops {
+} // namespace rel_ops
+
+// template <class T>
+// struct identity
+// {
+//     typedef T type;
+//    const T& operator ()( const T& v ) const
+//       { return v; }
+// };
+
+#ifdef _STLP_CPP_0X
+
+template <class T>
+inline T&& forward( typename _STLP_STD::remove_reference<T>::type& t ) throw() // noexcept
+{ return static_cast<T&&>(t); }
+
+template <class T>
+inline T&& forward( typename _STLP_STD::remove_reference<T>::type&& t ) throw() // noexcept
+{
+  _STLP_STATIC_ASSERT( !_STLP_STD::is_lvalue_reference<T>::value )
+  return static_cast<T&&>(t);
+}
+
+template <class T>
+inline typename remove_reference<T>::type&& move( T&& t ) throw() // noexcept
+{ return static_cast<typename remove_reference<T>::type&&>(t); }
+
+//template <class T>
+//inline typename _STLP_STD::conditional<!_STLP_STD::is_nothrow_move_constructible<T>::value && _STLP_STD::is_copy_constructible<T>::value, const T&, T&&>::type move_if_noexcept(T& x) throw() // noexcept
+//{ return _STLP_STD::move(x); }
+
+#else // !_STLP_CPP_0X
+
+template <class T>
+__move_source<typename remove_const<typename remove_reference<T>::type>::type> move( const T& t )
+{ return __move_source<typename remove_const<typename remove_reference<T>::type>::type>( const_cast<T&>(t) ); }
+
+template <class T>
+__move_source<typename remove_reference<T>::type> move( T& t )
+{ return __move_source<typename remove_reference<T>::type>( t ); }
+
+#endif // !_STLP_CPP_0X
+
+template <class _T1, class _T2>
+struct pair {
+  typedef _T1 first_type;
+  typedef _T2 second_type;
+
+  _T1 first;
+  _T2 second;
+#ifndef _STLP_CPP_0X
+  pair() : first(_T1()), second(_T2()) {}
+  pair(const _T1& __a, const _T2& __b) : first(__a), second(__b) {}
+
+  template <class _U1, class _U2>
+  pair(const pair<_U1, _U2>& __p) : first(__p.first), second(__p.second) {}
+
+  pair(const pair<_T1,_T2>& __o) : first(__o.first), second(__o.second) {}
+
+#if defined (_STLP_CLASS_PARTIAL_SPECIALIZATION) && !defined (_STLP_NO_MOVE_SEMANTIC)
+  pair(__move_source<pair<_T1, _T2> > src) :
+      first(src.get().first),
+      second(src.get().second)
+    { }
+#endif
+
+  __TRIVIAL_DESTRUCTOR(pair)
+#else // _STLP_CPP_0X
+  pair( const pair& ) = default;
+  pair( pair&& ) = default;
+  constexpr pair() :
+      first(_T1()),
+      second(_T2())
+    {
+      static_assert( _STLP_STD::is_default_constructible<first_type>::value, "first_type not default constructible" );
+      static_assert( _STLP_STD::is_default_constructible<second_type>::value, "second_type not default constructible" );
+    }
+
+  pair(const _T1& __a, const _T2& __b) :
+      first(__a),
+      second(__b)
+    { }
+
+  template <class U, class V>
+  pair( U&& x, V&& y ) :
+      first( _STLP_STD::forward<U>(x) ),
+      second( _STLP_STD::forward<V>(y) )
+    { }
+
+  template <class U, class V>
+  pair( const pair<U,V>& p ) :
+      first( p.first ),
+      second( p.second )
+    { }
+
+  template <class U, class V>
+  pair( pair<U,V>&& p ) :
+      first( _STLP_STD::forward<U>(p.first) ),
+      second( _STLP_STD::forward<V>(p.second) )
+    { }
+
+  // template <class ... Args1, class ... Args2>
+  // pair(piecewise_construct_t, tuple<Args1...> first_args, tuple<Args2...> second_args);
+
+  pair& operator =(const pair& p)
+    {
+      static_assert( _STLP_STD::is_copy_assignable<first_type>::value, "first_type not copy assignable" );
+      static_assert( _STLP_STD::is_copy_assignable<second_type>::value, "second_type not copy assignable" );
+      first = p.first; second = p.second; return *this;
+    }
+
+  template <class U, class V>
+  pair& operator =(const pair<U,V>& p)
+    {
+      static_assert( is_assignable<first_type&,const U&>::value, "first_type is not assignable" );
+      static_assert( is_assignable<second_type&,const V&>::value, "second_type is not assignable" );
+      first = p.first; second = p.second; return *this;
+    }
+
+  pair& operator =(pair&& p) noexcept
+    {
+      static_assert( is_move_assignable<first_type>::value, "first_type is not move assignable" );
+      static_assert( is_move_assignable<second_type>::value, "second_type is not move assignable" );
+      first = _STLP_STD::forward<first_type>(p.first);
+      second = _STLP_STD::forward<second_type>(p.second);
+      return *this;
+    }
+
+  template <class U, class V>
+  pair& operator =(pair<U,V>&& p)
+    {
+      static_assert( is_assignable<first_type&,U&&>::value, "first_type is not assignable" );
+      static_assert( is_assignable<second_type&,V&&>::value, "second_type is not assignable" );
+      first = _STLP_STD::forward<U>(p.first);
+      second = _STLP_STD::forward<V>(p.second);
+      return *this;
+    }
+
+  void swap(pair& p) noexcept
+    { _STLP_STD::swap(first, p.first); _STLP_STD::swap(second, p.second); }
+#endif // _STLP_CPP_0X
+};
+
+template <class _T1, class _T2>
+inline bool _STLP_CALL operator==(const pair<_T1, _T2>& __x, const pair<_T1, _T2>& __y)
+{ return __x.first == __y.first && __x.second == __y.second; }
+
+template <class _T1, class _T2>
+inline bool _STLP_CALL operator<(const pair<_T1, _T2>& __x, const pair<_T1, _T2>& __y) {
+  return __x.first < __y.first ||
+         (!(__y.first < __x.first) && __x.second < __y.second);
+}
+
+#if defined (_STLP_USE_SEPARATE_RELOPS_NAMESPACE)
+template <class _T1, class _T2>
+inline bool _STLP_CALL operator!=(const pair<_T1, _T2>& __x, const pair<_T1, _T2>& __y)
+{ return !(__x == __y); }
+
+template <class _T1, class _T2>
+inline bool _STLP_CALL operator>(const pair<_T1, _T2>& __x, const pair<_T1, _T2>& __y)
+{ return __y < __x; }
+
+template <class _T1, class _T2>
+inline bool _STLP_CALL operator<=(const pair<_T1, _T2>& __x, const pair<_T1, _T2>& __y)
+{ return !(__y < __x); }
+
+template <class _T1, class _T2>
+inline bool _STLP_CALL operator>=(const pair<_T1, _T2>& __x, const pair<_T1, _T2>& __y)
+{ return !(__x < __y); }
+#endif /* _STLP_USE_SEPARATE_RELOPS_NAMESPACE */
+
+#if defined (_STLP_FUNCTION_TMPL_PARTIAL_ORDER) && !defined (_STLP_NO_EXTENSIONS)
+template <class _T1, class _T2, int _Sz>
+inline pair<_T1, _T2 const*> make_pair(_T1 const& __x,
+                                       _T2 const (&__y)[_Sz])
+{ return pair<_T1, _T2 const*>(__x, static_cast<_T2 const*>(__y)); }
+
+template <class _T1, class _T2, int _Sz>
+inline pair<_T1 const*, _T2> make_pair(_T1 const (&__x)[_Sz],
+                                       _T2 const& __y)
+{ return pair<_T1 const*, _T2>(static_cast<_T1 const*>(__x), __y); }
+
+template <class _T1, class _T2, int _Sz1, int _Sz2>
+inline pair<_T1 const*, _T2 const*> make_pair(_T1 const (&__x)[_Sz1],
+                                              _T2 const (&__y)[_Sz2]) {
+  return pair<_T1 const*, _T2 const*>(static_cast<_T1 const*>(__x),
+                                      static_cast<_T2 const*>(__y));
+}
+#endif
+
+template <class _T1, class _T2>
+inline pair<_T1, _T2> _STLP_CALL make_pair(_T1 __x, _T2 __y)
+{ return pair<_T1, _T2>(__x, __y); }
+
+_STLP_END_NAMESPACE
+
+#if defined (_STLP_USE_NAMESPACES) || !defined (_STLP_USE_SEPARATE_RELOPS_NAMESPACE)
+_STLP_BEGIN_RELOPS_NAMESPACE
+
+template <class _Tp>
+inline bool _STLP_CALL operator!=(const _Tp& __x, const _Tp& __y)
+{ return !(__x == __y); }
+
+template <class _Tp>
+inline bool _STLP_CALL operator>(const _Tp& __x, const _Tp& __y)
+{ return __y < __x; }
+
+template <class _Tp>
+inline bool _STLP_CALL operator<=(const _Tp& __x, const _Tp& __y)
+{ return !(__y < __x); }
+
+template <class _Tp>
+inline bool _STLP_CALL  operator>=(const _Tp& __x, const _Tp& __y)
+{ return !(__x < __y); }
+
+_STLP_END_RELOPS_NAMESPACE
+#endif
+
+#ifdef _STLP_CPP_0X
+
+_STLP_BEGIN_NAMESPACE
+
+namespace detail {
+
+template <class _Tp>
+struct __declval_aux
+{
+    static const bool __instance = false;
+    static typename add_rvalue_reference<_Tp>::type __dummy();
+};
+
+} // namespace detail
+
+template <class _Tp>
+inline typename add_rvalue_reference<_Tp>::type declval() _STLP_NOEXCEPT
+{
+  // protect declval() from call:
+  _STLP_STATIC_ASSERT(detail::__declval_aux<_Tp>::__instance);
+  return detail::__declval_aux<_Tp>::__dummy();
+}
+
+_STLP_END_NAMESPACE
+
+#endif // _STLP_CPP_0X
+
+#if (_STLP_OUTERMOST_HEADER_ID == 0x75)
+#  include <stl/_epilog.h>
+#  undef _STLP_OUTERMOST_HEADER_ID
+#endif
+
+#endif /* _STLP_UTILITY */
+
+// Local Variables:
+// mode:C++
+// End:
