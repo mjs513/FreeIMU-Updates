@@ -84,12 +84,12 @@ class HMC58X3
   public:
     HMC58X3();
     void init(bool setmode);
-    void init(int address, bool setmode);
-    void getValues(int *x,int *y,int *z);
+    void init(int16_t address, bool setmode);
+    void getValues(int16_t *x,int16_t *y,int16_t *z);
     void getValues(float *x,float *y,float *z);
     void getValues(float *xyz);
-    void getRaw(int *x,int *y,int *z);
-    void getRaw(int *xyz);
+    void getRaw(int16_t *x,int16_t *y,int16_t *z);
+    void getRaw(int16_t *xyz);
     void calibrate(unsigned char gain);     // Original calibrate with a few weaknesses.
     bool calibrate(unsigned char gain,unsigned int n_samples);
     void setMode(unsigned char mode);

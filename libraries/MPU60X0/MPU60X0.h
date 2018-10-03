@@ -444,6 +444,10 @@ enum mpu9250_dlpf_bandwidth
     DLPF_BANDWIDTH_5HZ
 };
 
+//enum Mscale {
+//  MFS_14BITS = 0, // 0.6 mG per LSB
+//  MFS_16BITS      // 0.15 mG per LSB
+//};
 
 // note: DMP code memory blocks defined at end of header file
 
@@ -455,6 +459,7 @@ class MPU60X0 {
         void initialize();
 		void initialize9250();
 		void initialize9250MasterMode();
+        void get9250Motion6Counts(int16_t* ax, int16_t* ay, int16_t* az, int16_t* gx, int16_t* gy, int16_t* gz);
 		void get9250Motion9Counts(int16_t* ax, int16_t* ay, int16_t* az, int16_t* gx, int16_t* gy, int16_t* gz, int16_t* hx, int16_t* hy, int16_t* hz);
 		void get9250Motion9(float* ax, float* ay, float* az, float* gx, float* gy, float* gz, float* hx, float* hy, float* hz);
 		void get9250Motion10Counts(int16_t* ax, int16_t* ay, int16_t* az, int16_t* gx, int16_t* gy, int16_t* gz, int16_t* hx, int16_t* hy, int16_t* hz, int16_t* t);
@@ -743,6 +748,9 @@ class MPU60X0 {
         // WHO_AM_I register
         uint8_t getDeviceID();
         void setDeviceID(uint8_t id);
+        uint8_t getCompassDataReady();
+        void setMagModeRes(uint8_t mode, uint8_t Mscale);
+        int set9250Srd(uint8_t srd); 
         
         // ======== UNDOCUMENTED/DMP REGISTERS/METHODS ========
         
@@ -963,9 +971,12 @@ class MPU60X0 {
 		
         // transformation matrix
         /* transform the accel and gyro axes to match the magnetometer axes */
-        int16_t tX[3] = {0,  1,  0}; 
-        int16_t tY[3] = {1,  0,  0};
-        int16_t tZ[3] = {0,  0, 1};  //was -1  transformation is done within lib.
+        //int16_t tX[3] = {0,  1,  0}; 
+        //int16_t tY[3] = {1,  0,  0};
+        //int16_t tZ[3] = {0,  0, 1};  //was -1  transformation is done within lib.
+        int16_t tX[3] = {1,  0,  0}; 
+        int16_t tY[3] = {0,  1,  0};
+        int16_t tZ[3] = {0,  0,  1};  //was -1  transformation is done within lib.
 };
 
 

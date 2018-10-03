@@ -3,23 +3,23 @@
 */
 //These are optional depending on your IMU configuration
 
-#include <ADXL345.h>
+//#include <ADXL345.h>
 #include <HMC58X3.h>
-#include <LSM303.h>
-#include <LPS.h> 
-#include <L3G.h>
-#include <ITG3200.h> //note LPS library must come before ITG lib
-#include <bma180.h>
+//#include <LSM303.h>
+//#include <LPS.h> 
+//#include <L3G.h>
+//#include <ITG3200.h> //note LPS library must come before ITG lib
+//#include <bma180.h>
 #include <MS561101BA.h> //Comment out for APM 2.5
 
-#include <BMP085.h>
+//#include <BMP085.h>
 #include <I2Cdev.h>
 #include <MPU60X0.h>
-#include <AK8975.h>
-#include <AK8963.h>
-#include <SparkFunLSM9DS1.h>  // Uncomment for LSM9DS1
+//#include <AK8975.h>
+//#include <AK8963.h>
+//#include <SparkFunLSM9DS1.h>  // Uncomment for LSM9DS1
 //#include <SFE_LSM9DS0.h>  // Uncomment for LSM9DS0 Chosse one or the othe ST IMUs
-#include <BaroSensor.h>
+//#include <BaroSensor.h>
 //#include <AP_Baro_MS5611.h>  //Uncomment for APM2.5
 
 
@@ -176,6 +176,9 @@ void readSerial(){
         Serial.println("\r\n");
      }
     }
+	else if(cmd == 'w'){
+		Serial.println(sizeof(int16_t));
+	}
     else if(cmd=='b') {
       cmd1 = '0';
       uint8_t count = serial_busy_wait();
@@ -183,26 +186,26 @@ void readSerial(){
         #if HAS_ITG3200()
           my3IMU.acc.readAccel(&raw_values[0], &raw_values[1], &raw_values[2]);
           my3IMU.gyro.readGyroRaw(&raw_values[3], &raw_values[4], &raw_values[5]);
-          writeArr(raw_values, 6, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
+          writeArr(raw_values, 6, sizeof(int16_t)); // writes accelerometer, gyro values & mag if 9150
         #elif HAS_MPU9150()  || HAS_LSM9DS0() || HAS_LSM9DS1()
           my3IMU.getRawValues(raw_values);
-          writeArr(raw_values, 9, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
+          writeArr(raw_values, 9, sizeof(int16_t)); // writes accelerometer, gyro values & mag if 9150
         #elif HAS_MPU6050() || HAS_MPU6000()   // MPU6050
           //my3IMU.accgyro.getMotion6(&raw_values[0], &raw_values[1], &raw_values[2], &raw_values[3], &raw_values[4], &raw_values[5]);
           my3IMU.getRawValues(raw_values);
-          writeArr(raw_values, 6, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
+          writeArr(raw_values, 6, sizeof(int16_t)); // writes accelerometer, gyro values & mag if 9150
         #elif HAS_ALTIMU10() || HAS_ADA_10_DOF() || HAS_TPS()
           my3IMU.getRawValues(raw_values);
-          writeArr(raw_values, 9, sizeof(int)); // writes accelerometer, gyro values & mag of Altimu 10        
+          writeArr(raw_values, 9, sizeof(int16_t)); // writes accelerometer, gyro values & mag of Altimu 10        
 		#elif HAS_MPU9250()
 		  my3IMU.getRawValues(raw_values);
-		  writeArr(raw_values, 9, sizeof(int));
+		  writeArr(raw_values, 9, sizeof(int16_t));
 		#endif
-        //writeArr(raw_values, 6, sizeof(int)); // writes accelerometer, gyro values & mag if 9150
+        //writeArr(raw_values, 6, sizeof(int16_t)); // writes accelerometer, gyro values & mag if 9150
         
         #if IS_9DOM() && (!HAS_MPU9150() && !HAS_MPU9250() && !HAS_ALTIMU10() && !HAS_ADA_10_DOF() && !HAS_LSM9DS0() && !HAS_LSM9DS1() && !HAS_TPS())
           my3IMU.magn.getValues(&raw_values[0], &raw_values[1], &raw_values[2]);
-          writeArr(raw_values, 3, sizeof(int));
+          writeArr(raw_values, 3, sizeof(int16_t));
         #endif
         Serial.println();
       }

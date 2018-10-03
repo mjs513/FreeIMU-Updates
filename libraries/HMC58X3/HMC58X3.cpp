@@ -145,7 +145,7 @@ void HMC58X3::calibrate(unsigned char gain) {
 */
 bool HMC58X3::calibrate(unsigned char gain,unsigned int n_samples) 
 {
-    int xyz[3];                     // 16 bit integer values for each axis.
+    int16_t xyz[3];                     // 16 bit integer values for each axis.
     long int xyz_total[3]={0,0,0};  // 32 bit totals so they won't overflow.
     bool bret=true;                 // Function return value.  Will return false if the wrong identifier is returned, saturation is detected or response is out of range to self test bias.
     char id[3];                     // Three identification registers should return 'H43'.
@@ -282,17 +282,17 @@ void HMC58X3::writeReg(unsigned char reg, unsigned char val) {
 }
 
 
-void HMC58X3::getValues(int *x,int *y,int *z) {
+void HMC58X3::getValues(int16_t *x,int16_t *y,int16_t *z) {
   float fx,fy,fz;
   getValues(&fx,&fy,&fz);
-  *x= (int) (fx + 0.5);
-  *y= (int) (fy + 0.5);
-  *z= (int) (fz + 0.5);
+  *x= (int16_t) (fx + 0.5);
+  *y= (int16_t) (fy + 0.5);
+  *z= (int16_t) (fz + 0.5);
 }
 
 
 void HMC58X3::getValues(float *x,float *y,float *z) {
-  int xr,yr,zr;
+  int16_t xr,yr,zr;
   
   getRaw(&xr, &yr, &zr);
   *x= ((float) xr) / x_scale;
@@ -301,7 +301,7 @@ void HMC58X3::getValues(float *x,float *y,float *z) {
 }
 
 
-void HMC58X3::getRaw(int *x,int *y,int *z) {
+void HMC58X3::getRaw(int16_t *x, int16_t *y, int16_t *z) {
   Wire.beginTransmission(HMC58X3_ADDR);
   Wire.write(HMC58X3_R_XM); // will start from DATA X MSB and fetch all the others
   Wire.endTransmission();
