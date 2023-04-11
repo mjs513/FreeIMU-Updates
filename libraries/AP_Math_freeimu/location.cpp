@@ -392,7 +392,7 @@ bool generate_WP_flyby(const double radius, const struct Location &wpA, const st
         wpB3.lng=b3.y*1e7L;
 
     }
-
+	return true;
 }
 
 Vector2d geo2planar(Vector2d &ref, Vector2d &wp)

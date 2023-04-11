@@ -33,7 +33,7 @@ void FreeIMU::AHRSupdate(float gx, float gy, float gz, float ax, float ay, float
     float q0q0, q0q1, q0q2, q0q3, q1q1, q1q2, q1q3, q2q2, q2q3, q3q3;  
 	float hx, hy, bx, bz;
 	float halfvx, halfvy, halfvz, halfwx, halfwy, halfwz;
-	float halfex, halfey, halfez;
+	float halfex = 0; float halfey = 0; float halfez = 0;
 	float qa, qb, qc;
 
 	// Auxiliary variables to avoid repeated arithmetic

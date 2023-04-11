@@ -1451,7 +1451,6 @@ void XBee::send(XBeeRequest &request) {
 	checksum+= request.getFrameId();
 
 	//std::cout << "frame length is " << static_cast<unsigned int>(request.getFrameDataLength()) << std::endl;
-
 	for (int i = 0; i < request.getFrameDataLength(); i++) {
 //		std::cout << "sending byte [" << static_cast<unsigned int>(i) << "] " << std::endl;
 		sendByte(request.getFrameData(i), AddEscape);

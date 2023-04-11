@@ -29,6 +29,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define _GPRMCterm   "GPRMC"
 #define _GPGGAterm   "GPGGA"
+#define _GNRMCterm   "GNRMC"
+#define _GNGGAterm   "GNGGA"
 
 TinyGPSPlus::TinyGPSPlus()
   :  parity(0)
@@ -207,9 +209,9 @@ bool TinyGPSPlus::endOfTermHandler()
   // the first term determines the sentence type
   if (curTermNumber == 0)
   {
-    if (!strcmp(term, _GPRMCterm))
+    if (!strcmp(term, _GPRMCterm) || !strcmp(term, _GNRMCterm))
       curSentenceType = GPS_SENTENCE_GPRMC;
-    else if (!strcmp(term, _GPGGAterm))
+    else if (!strcmp(term, _GPGGAterm) || !strcmp(term, _GNGGAterm))
       curSentenceType = GPS_SENTENCE_GPGGA;
     else
       curSentenceType = GPS_SENTENCE_OTHER;
@@ -287,11 +289,11 @@ double TinyGPSPlus::distanceBetween(double lat1, double long1, double lat2, doub
   // distance computation for hypothetical sphere of radius 6372795 meters.
   // Because Earth is no exact sphere, rounding errors may be up to 0.5%.
   // Courtesy of Maarten Lamers
-  double delta = (long1-long2)*PI/180.0f;
+  double delta = radians(long1-long2);
   double sdlong = sin(delta);
   double cdlong = cos(delta);
-  lat1 = (lat1)*PI/180.0f;
-  lat2 = (lat2)*PI/180.0f;
+  lat1 = radians(lat1);
+  lat2 = radians(lat2);
   double slat1 = sin(lat1);
   double clat1 = cos(lat1);
   double slat2 = sin(lat2);
@@ -311,9 +313,9 @@ double TinyGPSPlus::courseTo(double lat1, double long1, double lat2, double long
   // both specified as signed decimal-degrees latitude and longitude.
   // Because Earth is no exact sphere, calculated course may be off by a tiny fraction.
   // Courtesy of Maarten Lamers
-  double dlon = (long2-long1)*PI/180.0f;
-  lat1 = (lat1)*PI/180.0f;
-  lat2 = (lat2)*PI/180.0f;
+  double dlon = radians(long2-long1);
+  lat1 = radians(lat1);
+  lat2 = radians(lat2);
   double a1 = sin(dlon) * cos(lat2);
   double a2 = sin(lat1) * cos(lat2) * cos(dlon);
   a2 = cos(lat1) * sin(lat2) - a2;
@@ -322,7 +324,7 @@ double TinyGPSPlus::courseTo(double lat1, double long1, double lat2, double long
   {
     a2 += TWO_PI;
   }
-  return (a2*180.0f/PI);
+  return degrees(a2);
 }
 
 const char *TinyGPSPlus::cardinal(double course)
@@ -499,4 +501,3 @@ void TinyGPSPlus::insertCustom(TinyGPSCustom *pElt, const char *sentenceName, in
    pElt->next = *ppelt;
    *ppelt = pElt;
 }
-

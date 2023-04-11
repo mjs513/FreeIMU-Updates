@@ -200,17 +200,23 @@ float norm(const T first, const U second)
     return sqrtf(sq(first) + sq(second));
 }
 
+#ifdef MIN
+#undef MIN
 template<typename A, typename B>
 static inline auto MIN(const A &one, const B &two) -> decltype(one < two ? one : two)
 {
     return one < two ? one : two;
 }
+#endif
 
+#ifdef MAX
+#undef MAX
 template<typename A, typename B>
 static inline auto MAX(const A &one, const B &two) -> decltype(one > two ? one : two)
 {
     return one > two ? one : two;
 }
+#endif
 
 inline uint32_t hz_to_nsec(uint32_t freq)
 {

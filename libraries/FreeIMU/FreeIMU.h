@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define FREEIMU_v035
 //#define FREEIMU_v035_MS
 //#define FREEIMU_v035_BMP
-//#define FREEIMU_v04
+#define FREEIMU_v04
 
 // 3rd party boards. Please consider donating or buying a FreeIMU board to support this library development.
 //#define SEN_10121 //IMU Digital Combo Board - 6 Degrees of Freedom ITG3200/ADXL345 SEN-10121 http://www.sparkfun.com/products/10121
@@ -42,7 +42,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //#define GEN_MPU6050 // Generic MPU6050 breakout board. Compatible with GY-521, SEN-11028 and other MPU6050 wich have the MPU6050 AD0 pin connected to GND.
 //#define DFROBOT  //DFROBOT 10DOF SEN-1040 IMU
 //#define MPU9250_5611  //MPU-9250 IMU with MS5611 Altimeter from eBay
-#define MPU9250_5637    //MPU-9250 IMU with MS5637 Pressure Sensor
+//#define MPU9250_5637    //MPU-9250 IMU with MS5637 Pressure Sensor
 //#define GEN_MPU9150
 //#define GEN_MPU9250  // Use for Invensense MPU-9250 breakout board
 //#define Altimu10  // Pololu AltIMU 10 - 10 DOF IMU - http://www.pololu.com/product/1269
@@ -462,9 +462,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     #if HAS_APM25()
 	  #include <AP_Baro_MS5611.h>
     #else
-	  #include <MS561101BA.h>
-	  #define FIMU_BARO_ADDR MS561101BA_ADDR_CSB_LOW
-	  //#define FIMU_BARO_ADDR MS561101BA_ADDR_CSB_HIGH
+	  #include <MS5611.h>
     #endif
   #elif HAS_LPS()
     #include <LPS.h>
@@ -648,7 +646,8 @@ class FreeIMU
 		#if HAS_APM25()
 			AP_Baro_MS5611 baro;
 		#else
-			MS561101BA baro;
+			#define MS5611_DEFAULT_ADDRESS                0x77
+			MS5611 baro;
 		#endif
       #elif HAS_BMP085()
     	BMP085 baro085;
@@ -701,8 +700,8 @@ class FreeIMU
       #define gyroMeasDrift 3.14159265358979 * (0.02f/4.0f)	// gyroscope measurement error in rad/s/s (shown as 0.2f deg/s/s)	
 	#endif
 
-	#define beta1 sqrt(3.0f / 4.0f) * gyroMeasError 			// compute beta
-	#define zeta sqrt(3.0f / 4.0f) * gyroMeasDrift 				// compute zeta
+	float beta1 = sqrt(3.0f / 4.0f) * gyroMeasError; 			// compute beta
+	float  zeta = sqrt(3.0f / 4.0f) * gyroMeasDrift; 				// compute zeta
 	
 	// --------------------------------------------------------------------
 	// Define IMU Axis Alignment here

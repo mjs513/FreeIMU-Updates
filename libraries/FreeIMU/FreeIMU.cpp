@@ -381,7 +381,9 @@ MovingAvarageFilter motion_detect_ma(7);
 uint8_t num_gyros = 1;
 uint8_t INS_MAX_INSTANCES = 2;
 
+#ifndef M_PI
 #define M_PI 3.14159265359
+#endif
 #define rad2degs 57.295779513082320876798154814105
 
 FreeIMU::FreeIMU() {
@@ -444,8 +446,6 @@ FreeIMU::FreeIMU() {
     #if HAS_MS5611()
 	    #if HAS_APM25()
 		    baro = AP_Baro_MS5611();
-	    #else
-		    baro = MS561101BA();
 	    #endif
     #elif HAS_BMP085()
         baro085 = BMP085();
@@ -1016,7 +1016,8 @@ void FreeIMU::RESET_Q() {
 		SPI.setClockDivider(SPI_CLOCK_DIV16); // 32 = 500khz for debugging, increase later
 		baro.init();		
 	#else
-		baro.init(FIMU_BARO_ADDR);
+		baro.begin();
+		baro.setOversampling(OSR_ULTRA_HIGH);
 	#endif
   #endif
 
@@ -1135,10 +1136,9 @@ void FreeIMU::RESET_Q() {
   
   RESET_Q();
 
-  float values[11];
-
-  //DCM filter implementation set here so we can intit with calibrated values.  All initializations have to be done first.
+  //DCM filter implementation set here so we can init with calibrated values.  All initializations have to be done first.
   #if(MARG == 4)
+	float values[11];
     dcm = DCM();
     getValues( values);
     values[9] = maghead.iheading(1, 0, 0, values[0], values[1], values[2], values[6], values[7], values[8]);
@@ -1237,10 +1237,11 @@ void FreeIMU::getRawValues(int16_t * raw_values) {
 	  rt = accgyro.getTemperature();	  
 	  raw_values[9] = rt;
 	 #else
-      int16_t ax, ay, az, gx, gy, gz, mx, my, mz, rt;
+      int16_t ax, ay, az, gx, gy, gz, rt;
       accgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
 	  //#if HAS_MPU9150() || HAS_MPU9250() 
 	  #if HAS_MPU9150()
+		  int16_t mx, my, mz;
 		  mag.getHeading(&mx, &my, &mz);
 		  raw_values[6] = mx;
 		  raw_values[7] = my;
@@ -1574,17 +1575,17 @@ void FreeIMU::getValues(float * values) {
 */
 void FreeIMU::zeroGyro() {
   const int totSamples = nsamples;
-  int16_t raw[11];
-  float values[12]; 
   float tmpOffsets[] = {0,0,0};
   
   for (int i = 0; i < totSamples; i++){
 	#if HAS_ITG3200()
+	   float values[12];
 		gyro.readGyro(&values[3]);
 		tmpOffsets[0] += values[3];
 		tmpOffsets[1] += values[4];
 		tmpOffsets[2] += values[5];	
 	#else
+		int16_t raw[11];
 		getRawValues(raw);
 		tmpOffsets[0] += raw[3];
 		tmpOffsets[1] += raw[4];
@@ -1625,7 +1626,8 @@ void FreeIMU::initGyros() {
     // we try to get a good calibration estimate for up to 10 seconds
     // if the gyros are stable, we should get it in 1 second
 	for (int16_t j = 0; j <= 50 && num_converged < num_gyros; j++) {
-		Vector3f gyro_sum[INS_MAX_INSTANCES], gyro_avg[INS_MAX_INSTANCES], gyro_diff[INS_MAX_INSTANCES];
+		//Vector3f gyro_sum[INS_MAX_INSTANCES], gyro_avg[INS_MAX_INSTANCES], gyro_diff[INS_MAX_INSTANCES];
+		Vector3f gyro_avg[INS_MAX_INSTANCES], gyro_diff[INS_MAX_INSTANCES];
 		float diff_norm[INS_MAX_INSTANCES];
 		float ToRad = 0.05f * M_PI/180.0f;
 		//For FreeIMU and most boards we are using only one gyro
@@ -1838,20 +1840,20 @@ float def_sea_press = 1013.25;
 	* Returns an altitude estimate from barometer readings only using sea_press as current sea level pressure
 	*/
 	float FreeIMU::getBaroAlt(float sea_press) {
-		float temp = baro.getTemperature(MS561101BA_OSR_4096);
-		float press = baro.getPressure(MS561101BA_OSR_4096);
+		float temp = baro.getTemperature();
+		float press = baro.getPressure();
         float new_press = kPress.measureRSSI(press);
 		return ((pow((sea_press / new_press), 1/5.257) - 1.0) * (temp + 273.15)) / 0.0065;
 	}
 
 	// Returns temperature from MS5611 - added by MJS
 	float FreeIMU::getBaroTemperature() {
-		float temp1 = baro.getTemperature(MS561101BA_OSR_4096);
+		float temp1 = baro.getTemperature();
 		return(temp1);
 	}
 
 	float FreeIMU::getBaroPressure() {
-		float temp2 = baro.getPressure(MS561101BA_OSR_4096);
+		float temp2 = baro.getPressure();
 		return(temp2);
 	}
 
@@ -2128,15 +2130,15 @@ void FreeIMU::getEuler(float * angles) {
 */
 void FreeIMU::getEuler360deg(float * angles) {
   float m11, m12, m21, m31, m32;
-  float gx, gy, gz; // estimated gravity direction
+  //float gx, gy, gz; // estimated gravity direction
   float q[4]; // quaternion
   float val[13];
   
   getQ(q, val);
   
-  gx = 2 * (q[1]*q[3] - q[0]*q[2]);
-  gy = 2 * (q[0]*q[1] + q[2]*q[3]);
-  gz = q[0]*q[0] - q[1]*q[1] - q[2]*q[2] + q[3]*q[3];
+  float gx = 2 * (q[1]*q[3] - q[0]*q[2]);
+  //float gy = 2 * (q[0]*q[1] + q[2]*q[3]);
+  float gz = q[0]*q[0] - q[1]*q[1] - q[2]*q[2] + q[3]*q[3];
     
   m11 = 2.*(q[1]*q[2] + q[0]*q[3]);
   m12 = q[0]*q[0] + q[1]*q[1] - q[2]*q[2] - q[3]*q[3];
@@ -2178,15 +2180,15 @@ void FreeIMU::getEuler360deg(float * angles) {
 */
 void FreeIMU::getEuler360degAttitude(float * angles, float * q, float * val) {
   float m11, m12, m21, m31, m32;
-  float gx, gy, gz; // estimated gravity direction
+  //float gx, gy, gz; // estimated gravity direction
   //float q[4]; // quaternion
   //float val[13];
   
   getQ(q, val);
   
-  gx = 2 * (q[1]*q[3] - q[0]*q[2]);
-  gy = 2 * (q[0]*q[1] + q[2]*q[3]);
-  gz = q[0]*q[0] - q[1]*q[1] - q[2]*q[2] + q[3]*q[3];
+  float gx = 2 * (q[1]*q[3] - q[0]*q[2]);
+  //gy = 2 * (q[0]*q[1] + q[2]*q[3]);
+  float gz = q[0]*q[0] - q[1]*q[1] - q[2]*q[2] + q[3]*q[3];
     
   m11 = 2.*(q[1]*q[2] + q[0]*q[3]);
   m12 = q[0]*q[0] + q[1]*q[1] - q[2]*q[2] - q[3]*q[3];
@@ -2629,8 +2631,8 @@ float FreeIMU::invSqrt(float x) {
         {
                 /* close-to-optimal  method with low cost from
 				http://pizer.wordpress.com/2008/10/12/fast-inverse-square-root */
-                uint32_t i = 0x5F1F1412 - (*(uint32_t*)&x >> 1);
-                float tmp = *(float*)&i;
+			   uint32_t i = 0x5F1F1412 - (*(uint32_t*)&x >> 1);
+			   float tmp = *(float*)&i;
                 return tmp * (1.69000231f - 0.714158168f * x * tmp * tmp);
         }
         else
