@@ -2,7 +2,10 @@
 ===============
 
 Change Log
-Wednesday April 26, 2017
+04-11-2022 Decided to revist some of this as a result of changes going on with the Teensy processors.  So updated this library a bit.
+           1. Replaced the MS561101ba library with Rob Tillaart's MS5611 library.  Most of the example sketches have been updated.  All that is necessary is to 
+	   change #include "MS561101BA.h" with #include "MS5611.h"
+	   2.Fixed a bunch of compiler warnings and some errors that cropped up over the years.
 
 04-26-2017 Updated usage of Wire.endTransmission after Wire.requestFrom
 
