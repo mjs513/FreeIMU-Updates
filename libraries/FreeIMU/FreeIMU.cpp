@@ -2615,7 +2615,7 @@ Posted by Tobias Simon on November 2, 2012
 //int instability_fix = 1;
 
 float FreeIMU::invSqrt(float x) {
-        if (instability_fix == 0)
+    if (instability_fix == 0)
         {
              union {
                float f;
@@ -2629,11 +2629,20 @@ float FreeIMU::invSqrt(float x) {
         }
         else if (instability_fix == 1)
         {
+          union {
+            float f;
+            int32_t i;
+          } y;
+
+          y.f = x;
                 /* close-to-optimal  method with low cost from
-				http://pizer.wordpress.com/2008/10/12/fast-inverse-square-root */
-			   uint32_t i = 0x5F1F1412 - (*(uint32_t*)&x >> 1);
-			   float tmp = *(float*)&i;
-                return tmp * (1.69000231f - 0.714158168f * x * tmp * tmp);
+        http://pizer.wordpress.com/2008/10/12/fast-inverse-square-root */
+         //uint32_t i = 0x5F1F1412 - (*(uint32_t*)&x >> 1);
+         //float tmp = *(float*)&i;
+         //       return tmp * (1.69000231f - 0.714158168f * x * tmp * tmp);
+          y.i = 0x5F1F1412 - (y.i >> 1);
+          y.f = y.f * (1.69000231f - 0.714158168f *  x * y.f * y.f );
+          return y.f;
         }
         else
         {
